@@ -1,7 +1,9 @@
 "use client";
+import OrderDetailsDialog from '@/components/product/OrderDetailsDialog';
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
+import { cn } from '@/lib/utils';
 import { fetchOrders } from '@/services/api'
 import { useQuery } from '@tanstack/react-query'
 import { Badge } from 'lucide-react'
@@ -9,7 +11,10 @@ import React from 'react'
 
 function page() {
 
-    const { data: data, error } = useQuery({
+    const [selectedOrder, setSelectedOrder] = React.useState<any>(null);
+    const [open, setOpen] = React.useState(false);
+
+    const { data, error } = useQuery({
         queryKey: ['orders'],
         queryFn: fetchOrders
     })
@@ -39,33 +44,80 @@ function page() {
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            <TableRow>
-                                <TableCell className="font-medium">
-                                    <div>
-                                        <p className="font-semibold">CVL2500NT</p>
-                                        <p className="text-xs text-muted-foreground">Description for CVL2500NT</p>
-                                    </div>
-                                </TableCell>
-                                <TableCell>
-                                    plan type
-                                </TableCell>
-                                <TableCell>Something crazy</TableCell>
-                                <TableCell>Something crazy</TableCell>
-                                <TableCell>Something crazy</TableCell>
-                                <TableCell>
-                                    Active
-                                </TableCell>
-                                <TableCell className="text-sm text-muted-foreground">
-                                    10-05-2001
-                                </TableCell>
-                                <TableCell className="text-right">
-                                    <Button variant="outline" size="sm">Edit</Button>
-                                </TableCell>
-                            </TableRow>
+                            {data?.map((order: any) => {
+                                const o = order.payload.data;
+
+                                return (
+                                    <TableRow key={order.id}>
+                                        {/* Title (Product info) */}
+                                        <TableCell className="font-medium">
+                                            <div>
+                                                <p className="font-semibold">
+                                                    {o.products?.[0]?.item_code || "-"}
+                                                </p>
+                                                <p className="text-xs text-muted-foreground max-w-50 truncate">
+                                                    {o.products?.[0]?.item_title || "No description"}
+                                                </p>
+                                            </div>
+                                        </TableCell>
+
+                                        {/* Order Code */}
+                                        <TableCell>{o.code}</TableCell>
+
+                                        {/* Customer */}
+                                        <TableCell className='max-w-30'>{o.customer_name}</TableCell>
+
+                                        {/* Status */}
+                                        <TableCell>
+                                            <span className="text-blue-600 font-medium">
+                                                {o.status_txt}
+                                            </span>
+                                        </TableCell>
+
+                                        {/* Payment Status */}
+                                        <TableCell>
+                                            <span className={cn("text-red-500", o.payment_status_txt === "Paid" && "text-green-600")}>
+                                                {o.payment_status_txt}
+                                            </span>
+                                        </TableCell>
+
+                                        {/* Shipment Status */}
+                                        <TableCell>
+                                            <span className="text-green-600">
+                                                {o.part_status_txt}
+                                            </span>
+                                        </TableCell>
+
+                                        {/* Created Date */}
+                                        <TableCell className="text-sm text-muted-foreground">
+                                            {new Date(Number(o.created) * 1000).toLocaleDateString()}
+                                        </TableCell>
+
+                                        {/* Actions */}
+                                        <TableCell className="text-right">
+                                            <Button
+                                                onClick={() => {
+                                                    setSelectedOrder(order);
+                                                    setOpen(true);
+                                                }}
+                                                variant="outline" size="sm"
+                                            >
+                                                View
+                                            </Button>
+                                        </TableCell>
+                                    </TableRow>
+                                );
+                            })}
                         </TableBody>
                     </Table>
                 </CardContent>
             </Card>
+
+            <OrderDetailsDialog
+                open={open}
+                onClose={() => setOpen(false)}
+                order={selectedOrder}
+            />
         </div>
     )
 }

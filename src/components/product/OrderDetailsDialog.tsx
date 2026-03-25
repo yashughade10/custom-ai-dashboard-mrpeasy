@@ -1,0 +1,156 @@
+"use client";
+
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Badge } from "@/components/ui/badge";
+
+export default function OrderDetailsDialog({
+  open,
+  onClose,
+  order,
+}: any) {
+  if (!order) return null;
+
+  const o = order.payload.data;
+
+  return (
+    <Dialog open={open} onOpenChange={onClose}>
+      <DialogContent className="max-w-3xl">
+        <DialogHeader>
+          <DialogTitle className="text-xl font-semibold">
+            Order Details - {o.code}
+          </DialogTitle>
+        </DialogHeader>
+
+        <div className="space-y-6 mt-2">
+
+          {/* 🔹 Top Info */}
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <p className="text-sm text-muted-foreground">Customer</p>
+              <p className="font-medium">{o.customer_name}</p>
+            </div>
+
+            <div>
+              <p className="text-sm text-muted-foreground">Created</p>
+              <p className="font-medium">
+                {new Date(Number(o.created) * 1000).toLocaleString()}
+              </p>
+            </div>
+
+            <div>
+              <p className="text-sm text-muted-foreground">Status</p>
+              <Badge>{o.status_txt}</Badge>
+            </div>
+
+            <div>
+              <p className="text-sm text-muted-foreground">Payment</p>
+              <Badge variant="destructive">
+                {o.payment_status_txt}
+              </Badge>
+            </div>
+
+            <div>
+              <p className="text-sm text-muted-foreground">Invoice</p>
+              <Badge variant="secondary">
+                {o.invoice_status_txt}
+              </Badge>
+            </div>
+
+            <div>
+              <p className="text-sm text-muted-foreground">Shipment</p>
+              <Badge variant="outline">
+                {o.part_status_txt}
+              </Badge>
+            </div>
+          </div>
+
+          {/* 🔹 Products */}
+          <div>
+            <p className="font-semibold mb-2">Products</p>
+
+            <div className="border rounded-lg overflow-hidden">
+              <table className="w-full text-sm">
+                <thead className="bg-gray-100">
+                  <tr>
+                    <th className="text-left p-2">Item</th>
+                    <th className="text-left p-2">Qty</th>
+                    <th className="text-left p-2">Price</th>
+                    <th className="text-left p-2">Total</th>
+                    <th className="text-left p-2">Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {o.products.map((p: any) => (
+                    <tr key={p.line_id} className="border-t">
+                      <td className="p-2">
+                        <p className="font-medium">{p.item_code}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {p.item_title}
+                        </p>
+                      </td>
+                      <td className="p-2">{p.quantity}</td>
+                      <td className="p-2">
+                        {p.item_price_cur} {o.currency}
+                      </td>
+                      <td className="p-2">
+                        {p.total_price_cur} {o.currency}
+                      </td>
+                      <td className="p-2">
+                        <Badge variant="outline">
+                          {p.part_status_txt}
+                        </Badge>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* 🔹 Pricing */}
+          <div className="grid grid-cols-3 gap-4 border-t pt-4">
+            <div>
+              <p className="text-sm text-muted-foreground">Total Cost</p>
+              <p className="font-semibold">
+                {o.total_cost} {o.currency}
+              </p>
+            </div>
+
+            <div>
+              <p className="text-sm text-muted-foreground">Total Price</p>
+              <p className="font-semibold">
+                {o.total_price_cur} {o.currency}
+              </p>
+            </div>
+
+            <div>
+              <p className="text-sm text-muted-foreground">Profit</p>
+              <p className="font-semibold text-green-600">
+                {o.profit}
+              </p>
+            </div>
+          </div>
+
+          {/* 🔹 Shipping */}
+          {o.shipping_address && (
+            <div className="border-t pt-4">
+              <p className="font-semibold mb-2">Shipping Address</p>
+              <p className="text-sm">
+                {o.shipping_address.street_line_1},{" "}
+                {o.shipping_address.city},{" "}
+                {o.shipping_address.state},{" "}
+                {o.shipping_address.postal_code},{" "}
+                {o.shipping_address.country_code}
+              </p>
+            </div>
+          )}
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
