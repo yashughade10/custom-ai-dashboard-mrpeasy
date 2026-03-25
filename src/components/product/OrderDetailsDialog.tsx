@@ -26,9 +26,7 @@ export default function OrderDetailsDialog({
           </DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-6 mt-2">
-
-          {/* 🔹 Top Info */}
+        <div className="mt-2 space-y-6">
           <div className="grid grid-cols-2 gap-4">
             <div>
               <p className="text-sm text-muted-foreground">Customer</p>
@@ -49,39 +47,32 @@ export default function OrderDetailsDialog({
 
             <div>
               <p className="text-sm text-muted-foreground">Payment</p>
-              <Badge variant="destructive">
-                {o.payment_status_txt}
-              </Badge>
+              <Badge variant="destructive">{o.payment_status_txt}</Badge>
             </div>
 
             <div>
               <p className="text-sm text-muted-foreground">Invoice</p>
-              <Badge variant="secondary">
-                {o.invoice_status_txt}
-              </Badge>
+              <Badge variant="secondary">{o.invoice_status_txt}</Badge>
             </div>
 
             <div>
               <p className="text-sm text-muted-foreground">Shipment</p>
-              <Badge variant="outline">
-                {o.part_status_txt}
-              </Badge>
+              <Badge variant="outline">{o.part_status_txt}</Badge>
             </div>
           </div>
 
-          {/* 🔹 Products */}
           <div>
-            <p className="font-semibold mb-2">Products</p>
+            <p className="mb-2 font-semibold">Products</p>
 
-            <div className="border rounded-lg overflow-hidden">
+            <div className="overflow-hidden rounded-lg border">
               <table className="w-full text-sm">
                 <thead className="bg-gray-100">
                   <tr>
-                    <th className="text-left p-2">Item</th>
-                    <th className="text-left p-2">Qty</th>
-                    <th className="text-left p-2">Price</th>
-                    <th className="text-left p-2">Total</th>
-                    <th className="text-left p-2">Status</th>
+                    <th className="p-2 text-left">Item</th>
+                    <th className="p-2 text-left">Qty</th>
+                    <th className="p-2 text-left">Price</th>
+                    <th className="p-2 text-left">Total</th>
+                    <th className="p-2 text-left">Status</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -89,9 +80,7 @@ export default function OrderDetailsDialog({
                     <tr key={p.line_id} className="border-t">
                       <td className="p-2">
                         <p className="font-medium">{p.item_code}</p>
-                        <p className="text-xs text-muted-foreground">
-                          {p.item_title}
-                        </p>
+                        <p className="text-xs text-muted-foreground">{p.item_title}</p>
                       </td>
                       <td className="p-2">{p.quantity}</td>
                       <td className="p-2">
@@ -101,9 +90,7 @@ export default function OrderDetailsDialog({
                         {p.total_price_cur} {o.currency}
                       </td>
                       <td className="p-2">
-                        <Badge variant="outline">
-                          {p.part_status_txt}
-                        </Badge>
+                        <Badge variant="outline">{p.part_status_txt}</Badge>
                       </td>
                     </tr>
                   ))}
@@ -112,7 +99,6 @@ export default function OrderDetailsDialog({
             </div>
           </div>
 
-          {/* 🔹 Pricing */}
           <div className="grid grid-cols-3 gap-4 border-t pt-4">
             <div>
               <p className="text-sm text-muted-foreground">Total Cost</p>
@@ -130,22 +116,15 @@ export default function OrderDetailsDialog({
 
             <div>
               <p className="text-sm text-muted-foreground">Profit</p>
-              <p className="font-semibold text-green-600">
-                {o.profit}
-              </p>
+              <p className="font-semibold text-green-600">{o.profit}</p>
             </div>
           </div>
 
-          {/* 🔹 Shipping */}
           {o.shipping_address && (
             <div className="border-t pt-4">
-              <p className="font-semibold mb-2">Shipping Address</p>
+              <p className="mb-2 font-semibold">Shipping Address</p>
               <p className="text-sm">
-                {o.shipping_address.street_line_1},{" "}
-                {o.shipping_address.city},{" "}
-                {o.shipping_address.state},{" "}
-                {o.shipping_address.postal_code},{" "}
-                {o.shipping_address.country_code}
+                {o.shipping_address.street_line_1}, {o.shipping_address.city}, {o.shipping_address.state}, {o.shipping_address.postal_code}, {o.shipping_address.country_code}
               </p>
             </div>
           )}
