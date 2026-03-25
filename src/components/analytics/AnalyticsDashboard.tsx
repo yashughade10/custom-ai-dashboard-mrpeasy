@@ -6,12 +6,12 @@ import SimpleTable from "@/components/analytics/SimpleTable";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import {
-  buildAnalytics,
+  AnalyticsApiData,
   formatCurrency,
   formatDays,
   formatNumber,
   formatPercent,
-  RawOrder,
+  median,
 } from "@/lib/analytics";
 import {
   AlertTriangle,
@@ -26,25 +26,42 @@ import {
 import React from "react";
 
 type AnalyticsDashboardProps = {
-  orders: RawOrder[];
+  analytics: AnalyticsApiData | null;
+  isLoading?: boolean;
+  error?: string | null;
 };
 
-const PERIOD_LABELS: Record<string, string> = {
-  day: "Daily",
-  week: "Weekly",
-  month: "Monthly",
-  none: "Trend",
-};
+export default function AnalyticsDashboard({ analytics, isLoading, error }: AnalyticsDashboardProps) {
+  if (isLoading) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Analytics</CardTitle>
+          <CardDescription>Loading analytics data.</CardDescription>
+        </CardHeader>
+      </Card>
+    );
+  }
 
-export default function AnalyticsDashboard({ orders }: AnalyticsDashboardProps) {
-  const analytics = React.useMemo(() => buildAnalytics(orders ?? []), [orders]);
-  const currency = analytics.currency;
+  if (!analytics) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Analytics</CardTitle>
+          <CardDescription>{error ?? "Analytics data is not available yet."}</CardDescription>
+        </CardHeader>
+      </Card>
+    );
+  }
 
-  const trendLabel = analytics.revenue.trend.period === "none"
-    ? "Not enough data"
-    : analytics.revenue.trend.changePct === null
-      ? "Trend building"
-      : `${analytics.revenue.trend.changePct.toFixed(1)}% ${analytics.revenue.trend.direction}`;
+  const currency = analytics.revenue.totals.currency;
+  const growth = analytics.revenue.growth?.month ?? { previous: 0, current: 0, pct: Number.NaN };
+  const growthLabel = Number.isFinite(growth.pct)
+    ? `${growth.pct.toFixed(2)}% month over month`
+    : "Not enough data";
+
+  const fulfillmentSamples = analytics.operations.order_fulfillment_time.samples || [];
+  const fulfillmentMedian = median(fulfillmentSamples.map((sample) => sample.fulfillment_days));
 
   return (
     <div className="space-y-8">
@@ -56,34 +73,26 @@ export default function AnalyticsDashboard({ orders }: AnalyticsDashboardProps) 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         <MetricCard
           title="Total Revenue"
-          value={formatCurrency(analytics.totals.totalRevenue, currency)}
-          subtitle={`${analytics.totals.totalOrders} orders`}
+          value={formatCurrency(analytics.revenue.totals.revenue, currency)}
+          subtitle={`${analytics.revenue.totals.orders} orders`}
           icon={TrendingUp}
         />
         <MetricCard
           title="Average Order Value"
-          value={formatCurrency(analytics.totals.averageOrderValue, currency)}
+          value={formatCurrency(analytics.customers.average_order_value, currency)}
           subtitle="Across all orders"
           icon={Calendar}
         />
         <MetricCard
           title="Growth Trend"
-          value={trendLabel}
-          subtitle={PERIOD_LABELS[analytics.revenue.trend.period] + " comparison"}
+          value={growthLabel}
+          subtitle={`Prev: ${formatCurrency(growth.previous, currency)} | Current: ${formatCurrency(growth.current, currency)}`}
           icon={RefreshCw}
         />
         <MetricCard
           title="Top Customers (80/20)"
-          value={
-            analytics.customers.pareto.totalCustomers
-              ? `${analytics.customers.pareto.topCustomerCount} of ${analytics.customers.pareto.totalCustomers}`
-              : "Not enough data"
-          }
-          subtitle={
-            analytics.customers.pareto.shareOfRevenue !== null
-              ? `${(analytics.customers.pareto.shareOfRevenue * 100).toFixed(1)}% of revenue`
-              : ""
-          }
+          value={`${analytics.revenue.revenue_by_customer.pareto.customers_for_80_pct} of ${analytics.revenue.revenue_by_customer.pareto.total_customers}`}
+          subtitle={`${analytics.revenue.revenue_by_customer.pareto.top_20_pct_customers_share_pct.toFixed(2)}% share`}
           icon={Users}
         />
       </div>
@@ -98,10 +107,12 @@ export default function AnalyticsDashboard({ orders }: AnalyticsDashboardProps) 
             <SimpleTable
               columns={[
                 { key: "date", label: "Date" },
+                { key: "orders", label: "Orders", align: "right" },
                 { key: "revenue", label: "Revenue", align: "right" },
               ]}
-              rows={analytics.revenue.perDay.map((point) => ({
-                date: point.key,
+              rows={analytics.revenue.over_time.day.map((point) => ({
+                date: point.day,
+                orders: formatNumber(point.orders),
                 revenue: formatCurrency(point.revenue, currency),
               }))}
               emptyLabel="No daily revenue yet"
@@ -112,16 +123,18 @@ export default function AnalyticsDashboard({ orders }: AnalyticsDashboardProps) 
         <Card className="lg:col-span-1">
           <CardHeader>
             <CardTitle>Revenue Per Week</CardTitle>
-            <CardDescription>Weeks start on Monday (UTC).</CardDescription>
+            <CardDescription>Week totals by ISO week.</CardDescription>
           </CardHeader>
           <CardContent>
             <SimpleTable
               columns={[
-                { key: "week", label: "Week Start" },
+                { key: "week", label: "Week" },
+                { key: "orders", label: "Orders", align: "right" },
                 { key: "revenue", label: "Revenue", align: "right" },
               ]}
-              rows={analytics.revenue.perWeek.map((point) => ({
-                week: point.key,
+              rows={analytics.revenue.over_time.week.map((point) => ({
+                week: point.week,
+                orders: formatNumber(point.orders),
                 revenue: formatCurrency(point.revenue, currency),
               }))}
               emptyLabel="No weekly revenue yet"
@@ -138,10 +151,12 @@ export default function AnalyticsDashboard({ orders }: AnalyticsDashboardProps) 
             <SimpleTable
               columns={[
                 { key: "month", label: "Month" },
+                { key: "orders", label: "Orders", align: "right" },
                 { key: "revenue", label: "Revenue", align: "right" },
               ]}
-              rows={analytics.revenue.perMonth.map((point) => ({
-                month: point.key,
+              rows={analytics.revenue.over_time.month.map((point) => ({
+                month: point.month,
+                orders: formatNumber(point.orders),
                 revenue: formatCurrency(point.revenue, currency),
               }))}
               emptyLabel="No monthly revenue yet"
@@ -158,29 +173,33 @@ export default function AnalyticsDashboard({ orders }: AnalyticsDashboardProps) 
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
-              <p className="text-sm font-medium text-muted-foreground mb-2">By Revenue</p>
+              <p className="mb-2 text-sm font-medium text-muted-foreground">By Revenue</p>
               <SimpleTable
                 columns={[
                   { key: "product", label: "Product" },
                   { key: "revenue", label: "Revenue", align: "right" },
+                  { key: "quantity", label: "Qty", align: "right" },
                 ]}
-                rows={analytics.products.topByRevenue.map((product) => ({
-                  product: product.code ? `${product.name} (${product.code})` : product.name,
+                rows={analytics.revenue.top_selling_products.by_revenue.map((product) => ({
+                  product: product.item_title,
                   revenue: formatCurrency(product.revenue, currency),
+                  quantity: formatNumber(product.quantity),
                 }))}
                 emptyLabel="No product revenue yet"
               />
             </div>
             <div>
-              <p className="text-sm font-medium text-muted-foreground mb-2">By Quantity</p>
+              <p className="mb-2 text-sm font-medium text-muted-foreground">By Quantity</p>
               <SimpleTable
                 columns={[
                   { key: "product", label: "Product" },
-                  { key: "quantity", label: "Quantity", align: "right" },
+                  { key: "quantity", label: "Qty", align: "right" },
+                  { key: "revenue", label: "Revenue", align: "right" },
                 ]}
-                rows={analytics.products.topByQuantity.map((product) => ({
-                  product: product.code ? `${product.name} (${product.code})` : product.name,
+                rows={analytics.revenue.top_selling_products.by_quantity.map((product) => ({
+                  product: product.item_title,
                   quantity: formatNumber(product.quantity),
+                  revenue: formatCurrency(product.revenue, currency),
                 }))}
                 emptyLabel="No product quantities yet"
               />
@@ -197,20 +216,20 @@ export default function AnalyticsDashboard({ orders }: AnalyticsDashboardProps) 
             <SimpleTable
               columns={[
                 { key: "customer", label: "Customer" },
+                { key: "orders", label: "Orders", align: "right" },
                 { key: "revenue", label: "Revenue", align: "right" },
+                { key: "share", label: "Share", align: "right" },
               ]}
-              rows={analytics.customers.topByRevenue.map((customer) => ({
-                customer: customer.customerName,
+              rows={analytics.revenue.revenue_by_customer.customers.map((customer) => ({
+                customer: customer.customer_name,
+                orders: formatNumber(customer.orders),
                 revenue: formatCurrency(customer.revenue, currency),
+                share: `${customer.share_pct.toFixed(2)}%`,
               }))}
               emptyLabel="No customer revenue yet"
             />
             <div className="rounded-md border px-3 py-2 text-sm text-muted-foreground">
-              {analytics.customers.pareto.totalCustomers === 0
-                ? "Not enough data to calculate revenue concentration."
-                : `${analytics.customers.pareto.topCustomerCount} customers contribute ${
-                    ((analytics.customers.pareto.shareOfRevenue ?? 0) * 100).toFixed(1)
-                  }% of revenue.`}
+              {analytics.revenue.revenue_by_customer.pareto.customers_for_80_pct} customers contribute {analytics.revenue.revenue_by_customer.pareto.top_20_pct_customers_share_pct.toFixed(2)}% of revenue.
             </div>
           </CardContent>
         </Card>
@@ -224,30 +243,30 @@ export default function AnalyticsDashboard({ orders }: AnalyticsDashboardProps) 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         <MetricCard
           title="Fulfillment Time"
-          value={formatDays(analytics.operations.fulfillment.avgDays)}
-          subtitle={
-            analytics.operations.fulfillment.count
-              ? `Median ${formatDays(analytics.operations.fulfillment.medianDays)} across ${analytics.operations.fulfillment.count} orders`
-              : "No delivered orders yet"
-          }
+          value={formatDays(analytics.operations.order_fulfillment_time.average_days)}
+          // subtitle={
+          //   fulfillmentSamples.length
+          //     ? `Median ${formatDays(fulfillmentMedian)} across ${formatNumber(fulfillmentSamples.length)} samples`
+          //     : analytics.operations.order_fulfillment_time.note ?? "No delivered orders yet"
+          // }
           icon={Clock}
         />
-        <MetricCard
+        {/* <MetricCard
           title="On-Time Delivery"
-          value={formatPercent(analytics.operations.onTimeRate)}
-          subtitle="Delivered on or before promise date"
+          value={formatPercent(analytics.operations.on_time_delivery_pct)}
+          subtitle={analytics.operations.delayed_orders.note ?? "Delivered on or before promise date"}
           icon={Truck}
-        />
-        <MetricCard
+        /> */}
+        {/* <MetricCard
           title="Delayed Orders"
-          value={formatNumber(analytics.operations.delayedOrders.length)}
-          subtitle="Orders delivered after promise date"
+          value={formatNumber(analytics.operations.delayed_orders.delayed)}
+          subtitle={analytics.operations.delayed_orders.note ?? "Orders delivered after promise date"}
           icon={AlertTriangle}
-        />
+        /> */}
         <MetricCard
           title="Production Cycle"
-          value="Needs start date"
-          subtitle="Manufacturing start date not available"
+          value={formatNumber(analytics.operations.production_cycle_time.manufacturing_orders_seen)}
+          // subtitle={analytics.operations.production_cycle_time.note ?? "Manufacturing orders tracked"}
           icon={RefreshCw}
         />
       </div>
@@ -255,22 +274,20 @@ export default function AnalyticsDashboard({ orders }: AnalyticsDashboardProps) 
       <div className="grid gap-6 lg:grid-cols-2">
         <Card>
           <CardHeader>
-            <CardTitle>Delayed Orders</CardTitle>
-            <CardDescription>Orders delivered after the promised date.</CardDescription>
+            <CardTitle>Fulfillments</CardTitle>
+            <CardDescription>Order fulfillment durations.</CardDescription>
           </CardHeader>
           <CardContent>
             <SimpleTable
               columns={[
                 { key: "order", label: "Order" },
-                { key: "customer", label: "Customer" },
-                { key: "daysLate", label: "Days Late", align: "right" },
+                { key: "days", label: "Days", align: "right" },
               ]}
-              rows={analytics.operations.delayedOrders.map((order) => ({
-                order: order.code ?? "-",
-                customer: order.customerName,
-                daysLate: order.daysLate.toFixed(1),
+              rows={fulfillmentSamples.map((sample) => ({
+                order: sample.order_code,
+                days: sample.fulfillment_days.toFixed(2),
               }))}
-              emptyLabel="No delayed orders found"
+              emptyLabel="No fulfillment samples available"
             />
           </CardContent>
         </Card>
@@ -286,15 +303,12 @@ export default function AnalyticsDashboard({ orders }: AnalyticsDashboardProps) 
                 { key: "status", label: "Status" },
                 { key: "count", label: "Count", align: "right" },
               ]}
-              rows={analytics.operations.productionStatuses.map((status) => ({
-                status: status.status,
-                count: formatNumber(status.count),
+              rows={Object.entries(analytics.operations.production_cycle_time.by_status).map(([status, count]) => ({
+                status,
+                count: formatNumber(count),
               }))}
               emptyLabel="No manufacturing status data"
             />
-            <div className="mt-3 rounded-md border px-3 py-2 text-sm text-muted-foreground">
-              Production cycle time requires manufacturing start dates to be tracked.
-            </div>
           </CardContent>
         </Card>
       </div>
@@ -316,26 +330,16 @@ export default function AnalyticsDashboard({ orders }: AnalyticsDashboardProps) 
                 { key: "sku", label: "SKU" },
                 { key: "frequency", label: "Frequency", align: "right" },
                 { key: "quantity", label: "Quantity", align: "right" },
+                { key: "revenue", label: "Revenue", align: "right" },
               ]}
-              rows={analytics.products.fastMoving.map((product) => ({
-                sku: product.code ? `${product.name} (${product.code})` : product.name,
-                frequency: formatNumber(product.frequency),
-                quantity: formatNumber(product.quantity),
+              rows={analytics.inventory.fast_moving_skus.map((sku) => ({
+                sku: sku.sku,
+                frequency: formatNumber(sku.frequency),
+                quantity: formatNumber(sku.quantity),
+                revenue: formatCurrency(sku.revenue, currency),
               }))}
               emptyLabel="No SKU movement yet"
             />
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Dead Stock</CardTitle>
-            <CardDescription>Items that do not appear in orders.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="rounded-md border px-3 py-2 text-sm text-muted-foreground">
-              {analytics.inventory.deadStockNote}
-            </div>
           </CardContent>
         </Card>
       </div>
@@ -348,38 +352,53 @@ export default function AnalyticsDashboard({ orders }: AnalyticsDashboardProps) 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         <MetricCard
           title="Repeat Customers"
-          value={formatNumber(analytics.customers.repeatCount)}
-          subtitle={
-            analytics.customers.repeatRate === null
-              ? "Not enough data"
-              : `${(analytics.customers.repeatRate * 100).toFixed(1)}% of customers`
-          }
+          value={formatNumber(analytics.customers.repeat_customers.length)}
+          subtitle="More than one order"
           icon={Users}
         />
         <MetricCard
           title="Customer Lifetime Value"
-          value={formatCurrency(
-            analytics.customers.clvTop[0]?.revenue ?? 0,
-            currency
-          )}
-          subtitle={analytics.customers.clvTop[0]?.customerName ?? "Top customer"}
+          value={formatCurrency(analytics.customers.clv_top_customers[0]?.clv ?? 0, currency)}
+          subtitle={analytics.customers.clv_top_customers[0]?.customer_name ?? "Top customer"}
           icon={TrendingUp}
         />
         <MetricCard
           title="Average Order Value"
-          value={formatCurrency(analytics.totals.averageOrderValue, currency)}
+          value={formatCurrency(analytics.customers.average_order_value, currency)}
           subtitle="Total revenue / orders"
           icon={Package}
         />
         <MetricCard
           title="Total Customers"
-          value={formatNumber(analytics.customers.pareto.totalCustomers)}
+          value={formatNumber(analytics.revenue.revenue_by_customer.pareto.total_customers)}
           subtitle="Unique customers"
           icon={Users}
         />
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
+        <Card>
+          <CardHeader>
+            <CardTitle>Repeat Customers</CardTitle>
+            <CardDescription>Customers with more than one order.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <SimpleTable
+              columns={[
+                { key: "customer", label: "Customer" },
+                { key: "orders", label: "Orders", align: "right" },
+                { key: "revenue", label: "Revenue", align: "right" },
+              ]}
+              rows={analytics.customers.repeat_customers.map((customer) => ({
+                customer: customer.customer_name,
+                orders: formatNumber(customer.orders),
+                revenue: formatCurrency(customer.revenue, currency),
+              }))}
+              emptyLabel="No repeat customers yet"
+            />
+          </CardContent>
+        </Card>
+
         <Card>
           <CardHeader>
             <CardTitle>Top Customer CLV</CardTitle>
@@ -390,40 +409,15 @@ export default function AnalyticsDashboard({ orders }: AnalyticsDashboardProps) 
               columns={[
                 { key: "customer", label: "Customer" },
                 { key: "orders", label: "Orders", align: "right" },
-                { key: "revenue", label: "Revenue", align: "right" },
+                { key: "clv", label: "CLV", align: "right" },
               ]}
-              rows={analytics.customers.clvTop.map((customer) => ({
-                customer: customer.customerName,
+              rows={analytics.customers.clv_top_customers.map((customer) => ({
+                customer: customer.customer_name,
                 orders: formatNumber(customer.orders),
-                revenue: formatCurrency(customer.revenue, currency),
+                clv: formatCurrency(customer.clv, currency),
               }))}
               emptyLabel="No customer history yet"
             />
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Customer Segmentation</CardTitle>
-            <CardDescription>Quick view of repeat vs one-time buyers.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="flex flex-wrap gap-2">
-              <Badge variant="secondary">
-                Repeat: {formatNumber(analytics.customers.repeatCount)}
-              </Badge>
-              <Badge variant="outline">
-                One-time: {formatNumber(
-                  Math.max(
-                    analytics.customers.pareto.totalCustomers - analytics.customers.repeatCount,
-                    0
-                  )
-                )}
-              </Badge>
-            </div>
-            <div className="mt-3 text-sm text-muted-foreground">
-              Repeat customers are defined as those with more than one order.
-            </div>
           </CardContent>
         </Card>
       </div>

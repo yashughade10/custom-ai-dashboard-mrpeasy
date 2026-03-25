@@ -41,56 +41,72 @@ export type CustomerAggregate = {
   orders: number;
 };
 
-export type AnalyticsResult = {
-  currency: string;
-  totals: {
-    totalRevenue: number;
-    totalOrders: number;
-    averageOrderValue: number;
-  };
+export type AnalyticsApiData = {
   revenue: {
-    perDay: PeriodPoint[];
-    perWeek: PeriodPoint[];
-    perMonth: PeriodPoint[];
-    trend: {
-      period: "month" | "week" | "day" | "none";
-      changePct: number | null;
-      direction: "up" | "down" | "flat" | "none";
+    totals: { revenue: number; orders: number; currency: string };
+    over_time: {
+      day: { day: string; revenue: number; orders: number }[];
+      week: { week: string; revenue: number; orders: number }[];
+      month: { month: string; revenue: number; orders: number }[];
     };
-  };
-  products: {
-    topByRevenue: ProductAggregate[];
-    topByQuantity: ProductAggregate[];
-    fastMoving: ProductAggregate[];
-  };
-  customers: {
-    topByRevenue: CustomerAggregate[];
-    clvTop: CustomerAggregate[];
-    repeatCount: number;
-    repeatRate: number | null;
-    pareto: {
-      topCustomerCount: number;
-      totalCustomers: number;
-      shareOfCustomers: number | null;
-      shareOfRevenue: number | null;
+    growth: {
+      day: { previous: number; current: number; pct: number };
+      week: { previous: number; current: number; pct: number };
+      month: { previous: number; current: number; pct: number };
+    };
+    top_selling_products: {
+      by_revenue: { item_title: string; revenue: number; quantity: number; orders: number }[];
+      by_quantity: { item_title: string; revenue: number; quantity: number; orders: number }[];
+    };
+    revenue_by_customer: {
+      customers: {
+        customer_id: number;
+        customer_name: string;
+        revenue: number;
+        orders: number;
+        share_pct: number;
+      }[];
+      pareto: {
+        customers_for_80_pct: number;
+        total_customers: number;
+        top_20_pct_customers_share_pct: number;
+      };
     };
   };
   operations: {
-    fulfillment: {
-      count: number;
-      avgDays: number | null;
-      medianDays: number | null;
+    order_fulfillment_time: {
+      average_days: number | null;
+      samples: { order_code: string; fulfillment_days: number }[];
+      note: string | null;
     };
-    delayedOrders: {
-      code: string | null;
-      customerName: string;
-      daysLate: number;
-    }[];
-    onTimeRate: number | null;
-    productionStatuses: { status: string; count: number }[];
+    delayed_orders: {
+      delayed: number;
+      delivered_with_planned_date: number;
+      note: string | null;
+    };
+    on_time_delivery_pct: number | null;
+    production_cycle_time: {
+      manufacturing_orders_seen: number;
+      manufacturing_line_sources_seen: number;
+      by_status: Record<string, number>;
+      note: string | null;
+    };
   };
   inventory: {
-    deadStockNote: string;
+    fast_moving_skus: { sku: string; frequency: number; quantity: number; revenue: number }[];
+    dead_stock: { available: boolean; note: string };
+  };
+  customers: {
+    repeat_customers: { customer_id: number; customer_name: string; orders: number; revenue: number }[];
+    clv_top_customers: { customer_id: number; customer_name: string; clv: number; orders: number }[];
+    average_order_value: number;
+  };
+  meta: {
+    orders_total_in_db: number;
+    orders_considered: number;
+    from: string | null;
+    to: string | null;
+    topN: number;
   };
 };
 
@@ -145,7 +161,7 @@ function mapToSortedPoints(map: Map<string, number>): PeriodPoint[] {
     .map(([key, revenue]) => ({ key, revenue }));
 }
 
-function median(values: number[]): number | null {
+export function median(values: number[]): number | null {
   if (!values.length) return null;
   const sorted = [...values].sort((a, b) => a - b);
   const mid = Math.floor(sorted.length / 2);
@@ -194,189 +210,6 @@ export function normalizeOrders(orders: RawOrder[]): NormalizedOrder[] {
       currency: raw.currency ?? null,
     };
   });
-}
-
-export function buildAnalytics(rawOrders: RawOrder[]): AnalyticsResult {
-  const orders = normalizeOrders(rawOrders);
-  const totalRevenue = orders.reduce((sum, order) => sum + order.totalPrice, 0);
-  const totalOrders = orders.length;
-  const averageOrderValue = totalOrders ? totalRevenue / totalOrders : 0;
-
-  const perDayMap = new Map<string, number>();
-  const perWeekMap = new Map<string, number>();
-  const perMonthMap = new Map<string, number>();
-
-  orders.forEach((order) => {
-    if (!order.createdAt) return;
-    addToMap(perDayMap, toDayKey(order.createdAt), order.totalPrice);
-    addToMap(perWeekMap, toWeekKey(order.createdAt), order.totalPrice);
-    addToMap(perMonthMap, toMonthKey(order.createdAt), order.totalPrice);
-  });
-
-  const perDay = mapToSortedPoints(perDayMap);
-  const perWeek = mapToSortedPoints(perWeekMap);
-  const perMonth = mapToSortedPoints(perMonthMap);
-
-  const trendSource = perMonth.length >= 2 ? perMonth : perWeek.length >= 2 ? perWeek : perDay.length >= 2 ? perDay : [];
-  let trendPeriod: AnalyticsResult["revenue"]["trend"]["period"] = "none";
-  if (trendSource === perMonth) trendPeriod = "month";
-  else if (trendSource === perWeek) trendPeriod = "week";
-  else if (trendSource === perDay) trendPeriod = "day";
-
-  let changePct: number | null = null;
-  let direction: AnalyticsResult["revenue"]["trend"]["direction"] = "none";
-  if (trendSource.length >= 2) {
-    const last = trendSource[trendSource.length - 1].revenue;
-    const prev = trendSource[trendSource.length - 2].revenue;
-    if (prev !== 0) {
-      changePct = ((last - prev) / prev) * 100;
-      if (changePct > 1) direction = "up";
-      else if (changePct < -1) direction = "down";
-      else direction = "flat";
-    } else if (last !== 0) {
-      changePct = null;
-      direction = "up";
-    }
-  }
-
-  const productMap = new Map<string, ProductAggregate>();
-  orders.forEach((order) => {
-    order.products.forEach((product) => {
-      const key = `${product.code ?? ""}::${product.title}`;
-      const current = productMap.get(key) ?? {
-        name: product.title,
-        code: product.code ?? null,
-        revenue: 0,
-        quantity: 0,
-        frequency: 0,
-      };
-      current.revenue += product.totalPrice;
-      current.quantity += product.quantity;
-      current.frequency += 1;
-      productMap.set(key, current);
-    });
-  });
-
-  const products = Array.from(productMap.values());
-  const topByRevenue = [...products].sort((a, b) => b.revenue - a.revenue).slice(0, 5);
-  const topByQuantity = [...products].sort((a, b) => b.quantity - a.quantity).slice(0, 5);
-  const fastMoving = [...products]
-    .sort((a, b) => b.frequency - a.frequency || b.quantity - a.quantity)
-    .slice(0, 5);
-
-  const customerMap = new Map<string, CustomerAggregate>();
-  orders.forEach((order) => {
-    const key = String(order.customerId ?? order.customerName);
-    const current = customerMap.get(key) ?? {
-      customerId: order.customerId,
-      customerName: order.customerName,
-      revenue: 0,
-      orders: 0,
-    };
-    current.revenue += order.totalPrice;
-    current.orders += 1;
-    customerMap.set(key, current);
-  });
-
-  const customers = Array.from(customerMap.values()).sort((a, b) => b.revenue - a.revenue);
-  const clvTop = customers.slice(0, 5);
-  const repeatCount = customers.filter((c) => c.orders > 1).length;
-  const repeatRate = customers.length ? repeatCount / customers.length : null;
-
-  let paretoCount = 0;
-  let paretoRevenue = 0;
-  if (totalRevenue > 0) {
-    for (const customer of customers) {
-      paretoRevenue += customer.revenue;
-      paretoCount += 1;
-      if (paretoRevenue / totalRevenue >= 0.8) break;
-    }
-  }
-
-  const fulfillmentTimes = orders
-    .filter((order) => order.createdAt && order.actualDeliveryDate)
-    .map((order) => diffDays(order.actualDeliveryDate!, order.createdAt!));
-
-  const fulfillmentAvg = fulfillmentTimes.length
-    ? fulfillmentTimes.reduce((sum, value) => sum + value, 0) / fulfillmentTimes.length
-    : null;
-
-  const delayedOrders = orders
-    .filter((order) => order.deliveryDate && order.actualDeliveryDate && order.actualDeliveryDate > order.deliveryDate)
-    .map((order) => ({
-      code: order.code,
-      customerName: order.customerName,
-      daysLate: diffDays(order.actualDeliveryDate!, order.deliveryDate!),
-    }))
-    .sort((a, b) => b.daysLate - a.daysLate);
-
-  const deliveredOrders = orders.filter((order) => order.deliveryDate && order.actualDeliveryDate);
-  const onTimeCount = deliveredOrders.filter(
-    (order) => order.actualDeliveryDate && order.deliveryDate && order.actualDeliveryDate <= order.deliveryDate
-  ).length;
-  const onTimeRate = deliveredOrders.length ? onTimeCount / deliveredOrders.length : null;
-
-  const statusMap = new Map<string, number>();
-  orders.forEach((order) => {
-    order.manufacturingStatuses.forEach((status) => {
-      addToMap(statusMap, status, 1);
-    });
-  });
-
-  const productionStatuses = Array.from(statusMap.entries())
-    .map(([status, count]) => ({ status, count }))
-    .sort((a, b) => b.count - a.count);
-
-  const currency = orders.find((order) => order.currency)?.currency ?? "AUD";
-
-  return {
-    currency,
-    totals: {
-      totalRevenue,
-      totalOrders,
-      averageOrderValue,
-    },
-    revenue: {
-      perDay,
-      perWeek,
-      perMonth,
-      trend: {
-        period: trendPeriod,
-        changePct,
-        direction,
-      },
-    },
-    products: {
-      topByRevenue,
-      topByQuantity,
-      fastMoving,
-    },
-    customers: {
-      topByRevenue: customers.slice(0, 5),
-      clvTop,
-      repeatCount,
-      repeatRate,
-      pareto: {
-        topCustomerCount: paretoCount,
-        totalCustomers: customers.length,
-        shareOfCustomers: customers.length ? paretoCount / customers.length : null,
-        shareOfRevenue: totalRevenue ? paretoRevenue / totalRevenue : null,
-      },
-    },
-    operations: {
-      fulfillment: {
-        count: fulfillmentTimes.length,
-        avgDays: fulfillmentAvg,
-        medianDays: median(fulfillmentTimes),
-      },
-      delayedOrders,
-      onTimeRate,
-      productionStatuses,
-    },
-    inventory: {
-      deadStockNote: "Full product catalog is required to identify dead stock.",
-    },
-  };
 }
 
 export function formatCurrency(value: number, currency: string): string {

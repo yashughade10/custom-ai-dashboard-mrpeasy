@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
-import { fetchOrders } from "@/services/api";
+import { fetchAnalytics, fetchOrders } from "@/services/api";
 import { useQuery } from "@tanstack/react-query";
 import React from "react";
 
@@ -13,12 +13,24 @@ function DashboardPage() {
   const [selectedOrder, setSelectedOrder] = React.useState<any>(null);
   const [open, setOpen] = React.useState(false);
 
-  const { data, error } = useQuery({
+  const {
+    data: orders,
+    error: ordersError,
+  } = useQuery({
     queryKey: ["orders"],
     queryFn: fetchOrders,
   });
 
-  if (error) {
+  const {
+    data: analytics,
+    error: analyticsError,
+    isLoading: analyticsLoading,
+  } = useQuery({
+    queryKey: ["analytics"],
+    queryFn: fetchAnalytics,
+  });
+
+  if (ordersError) {
     return (
       <div>
         <h1 className="text-xl font-bold">Dashboard</h1>
@@ -34,7 +46,11 @@ function DashboardPage() {
         <p>Welcome to the dashboard! This is where you can manage your restaurant, view analytics, and more.</p>
       </div>
 
-      <AnalyticsDashboard orders={data ?? []} />
+      <AnalyticsDashboard
+        analytics={analytics ?? null}
+        isLoading={analyticsLoading}
+        error={analyticsError ? "Failed to load analytics." : null}
+      />
 
       <Card>
         <CardHeader>
@@ -56,7 +72,7 @@ function DashboardPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {data?.map((order: any) => {
+              {orders?.map((order: any) => {
                 const o = order.payload.data;
 
                 return (
