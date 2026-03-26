@@ -15,17 +15,16 @@ import {
 import { cn } from "@/lib/utils"
 import {
     LayoutDashboard,
-    Utensils,
-    Megaphone,
     Settings,
     LogOut,
+    ListOrdered,
 } from "lucide-react"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 
 const navItems = [
     { name: "Overview", href: "/dashboard", icon: LayoutDashboard },
-    // { name: "Menu Management", href: "/dashboard/menu-management", icon: Utensils },
+    { name: "Orders", href: "/dashboard/orders", icon: ListOrdered },
     // { name: "Announcements", href: "/dashboard/announcements", icon: Megaphone },
     { name: "Settings", href: "/dashboard/settings", icon: Settings },
 ]
