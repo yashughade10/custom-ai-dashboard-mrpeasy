@@ -3,6 +3,8 @@
 import MetricCard from "@/components/analytics/MetricCard";
 import SectionHeader from "@/components/analytics/SectionHeader";
 import SimpleTable from "@/components/analytics/SimpleTable";
+import OrdersOverTimeChart from "@/components/analytics/charts/OrdersOverTimeChart";
+import RevenueOverTimeChart from "@/components/analytics/charts/RevenueOverTimeChart";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -95,6 +97,28 @@ export default function AnalyticsDashboard({ analytics, isLoading, error }: Anal
           subtitle={`${analytics.revenue.revenue_by_customer.pareto.top_20_pct_customers_share_pct.toFixed(2)}% share`}
           icon={Users}
         />
+      </div>
+
+      <div className="grid gap-6 lg:grid-cols-2">
+        <Card>
+          <CardHeader>
+            <CardTitle>Revenue Over Time</CardTitle>
+            <CardDescription>Daily revenue trend (line).</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <RevenueOverTimeChart points={analytics.revenue.over_time.day} currency={currency} />
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Orders Over Time</CardTitle>
+            <CardDescription>Daily orders trend (bar).</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <OrdersOverTimeChart points={analytics.revenue.over_time.day} />
+          </CardContent>
+        </Card>
       </div>
 
       <div className="grid gap-6 lg:grid-cols-3">
