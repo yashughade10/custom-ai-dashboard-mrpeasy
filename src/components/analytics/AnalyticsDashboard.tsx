@@ -5,6 +5,8 @@ import SectionHeader from "@/components/analytics/SectionHeader";
 import SimpleTable from "@/components/analytics/SimpleTable";
 import OrdersOverTimeChart from "@/components/analytics/charts/OrdersOverTimeChart";
 import RevenueOverTimeChart from "@/components/analytics/charts/RevenueOverTimeChart";
+import CustomerContributionParetoChart from "@/components/analytics/charts/CustomerContributionParetoChart";
+import RevenueByCustomerChart from "@/components/analytics/charts/RevenueByCustomerChart";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -398,6 +400,43 @@ export default function AnalyticsDashboard({ analytics, isLoading, error }: Anal
           subtitle="Unique customers"
           icon={Users}
         />
+      </div>
+      
+      <SectionHeader
+        title="Customer Analytics Charts"
+        subtitle="Revenue concentration and customer contribution."
+      />
+
+      <div className="grid gap-6 lg:grid-cols-2">
+        <Card>
+          <CardHeader>
+            <CardTitle>Revenue by Customer</CardTitle>
+            <CardDescription>Horizontal ranking by revenue.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <RevenueByCustomerChart
+              customers={analytics.revenue.revenue_by_customer.customers}
+              currency={currency}
+            />
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Customer Contribution (Pareto)</CardTitle>
+            <CardDescription>Bars = revenue, line = cumulative %.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <CustomerContributionParetoChart
+              customers={analytics.revenue.revenue_by_customer.customers.map((c) => ({
+                customer_name: c.customer_name,
+                revenue: c.revenue,
+                orders: c.orders,
+              }))}
+              currency={currency}
+            />
+          </CardContent>
+        </Card>
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
