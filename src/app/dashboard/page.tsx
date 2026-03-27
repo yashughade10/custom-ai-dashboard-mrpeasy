@@ -1,7 +1,12 @@
 "use client";
+
 import AnalyticsDashboard from "@/components/analytics/AnalyticsDashboard";
-import { fetchAnalytics, fetchOrders } from "@/services/api";
+import { buttonVariants } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
+import { fetchAnalytics } from "@/services/api";
 import { useQuery } from "@tanstack/react-query";
+import Link from "next/link";
+import { ArrowRight } from "lucide-react";
 
 function DashboardPage() {
   const {
@@ -15,9 +20,21 @@ function DashboardPage() {
 
   return (
     <div className="space-y-8">
-      <div>
-        <h1 className="text-xl font-bold">Dashboard</h1>
-        <p>Welcome to the dashboard! This is where you can manage your view analytics, and more.</p>
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h1 className="text-xl font-bold">Dashboard Overview</h1>
+          <p className="text-sm text-muted-foreground">
+            Core operational and revenue overview from your MRP analytics feed.
+          </p>
+        </div>
+
+        <Link
+          href="/dashboard/ai-analytics"
+          className={cn(buttonVariants({ variant: "default" }), "gap-2")}
+        >
+          Open AI Analytics
+          <ArrowRight className="h-4 w-4" />
+        </Link>
       </div>
 
       <AnalyticsDashboard

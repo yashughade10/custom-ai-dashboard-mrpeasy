@@ -18,12 +18,14 @@ import {
     Settings,
     LogOut,
     ListOrdered,
+    Sparkles,
 } from "lucide-react"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 
 const navItems = [
     { name: "Overview", href: "/dashboard", icon: LayoutDashboard },
+    { name: "AI Analytics", href: "/dashboard/ai-analytics", icon: Sparkles },
     { name: "Orders", href: "/dashboard/orders", icon: ListOrdered },
     // { name: "Announcements", href: "/dashboard/announcements", icon: Megaphone },
     { name: "Settings", href: "/dashboard/settings", icon: Settings },
