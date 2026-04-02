@@ -901,10 +901,10 @@ export async function answerAnalyticsQuestion(question: string): Promise<AIChatR
   };
 
   const systemPrompt =
-    "You are an internal BI assistant. Return only strict JSON. Do not mention unavailable data as factual.";
+    "You are an internal BI assistant. Return only strict JSON. Do not mention unavailable data as factual. If asked about top products, fast moving SKUs, or items, explicitly list their specific names (e.g. from topProducts or inventoryForecast). If the question is nonsensical or out of domain (e.g., 'Will it rain?'), refuse politely and clarify that you only answer business data questions.";
 
   const userPrompt = JSON.stringify({
-    task: "Answer business question using provided dashboard data.",
+    task: "Answer business question using provided dashboard data. Be extremely direct and use names/numbers from the data. Do NOT give vague answers like 'Consult the charts'.",
     output_schema: {
       answer: "string",
       highlights: ["string"],

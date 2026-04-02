@@ -2,8 +2,8 @@
 
 import { askAnalyticsQuestion } from "@/services/api";
 import { useMutation } from "@tanstack/react-query";
-import { Loader2, MessageSquareText, SendHorizonal, X } from "lucide-react";
-import React, { useMemo, useState } from "react";
+import { Loader2, MessageSquareText, SendHorizonal, X, Maximize2, Minimize2 } from "lucide-react";
+import React, { useMemo, useState, useEffect, useRef } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -26,6 +26,8 @@ export default function AIAnalyticsChat() {
   const [input, setInput] = useState("");
   const [messages, setMessages] = useState<ChatMessage[]>([INITIAL_MESSAGE]);
   const [isOpen, setIsOpen] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(false);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const mutation = useMutation({
     mutationFn: askAnalyticsQuestion,
@@ -52,6 +54,10 @@ export default function AIAnalyticsChat() {
     },
   });
 
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages, mutation.isPending]);
+
   const canSend = useMemo(() => input.trim().length > 0 && !mutation.isPending, [input, mutation.isPending]);
 
   const onSubmit = (event: React.FormEvent<HTMLFormElement>) => {
@@ -68,24 +74,34 @@ export default function AIAnalyticsChat() {
   return (
     <div className="pointer-events-none fixed bottom-5 right-5 z-50">
       {isOpen ? (
-        <Card className="pointer-events-auto h-[560px] w-[min(420px,calc(100vw-2.5rem))] shadow-xl">
-          <CardHeader className="space-y-2">
+        <Card className={`pointer-events-auto flex flex-col shadow-xl transition-all duration-300 ease-in-out ${isExpanded ? 'h-[80vh] w-[min(700px,calc(100vw-2.5rem))]' : 'h-[560px] w-[min(420px,calc(100vw-2.5rem))]'}`}>
+          <CardHeader className="space-y-2 shrink-0">
             <div className="flex items-center justify-between gap-2">
-              <CardTitle className="text-base">AI Chatbot</CardTitle>
-              <Button
-                variant="ghost"
-                size="icon-sm"
-                onClick={() => setIsOpen(false)}
-                aria-label="Close chatbot"
-              >
-                <X className="h-4 w-4" />
-              </Button>
+              <CardTitle className="text-base">Vaccy AI</CardTitle>
+              <div className="flex items-center gap-1">
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
+                  onClick={() => setIsExpanded(!isExpanded)}
+                  aria-label={isExpanded ? "Collapse" : "Expand"}
+                >
+                  {isExpanded ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
+                  onClick={() => setIsOpen(false)}
+                  aria-label="Close chatbot"
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
             </div>
             <CardDescription>
               Ask natural-language questions and get KPI answers with chart and drill-down suggestions.
             </CardDescription>
           </CardHeader>
-          <CardContent className="flex h-[472px] flex-col gap-4">
+          <CardContent className="flex flex-1 min-h-0 flex-col gap-4 overflow-hidden">
             <div className="flex-1 space-y-3 overflow-y-auto rounded-md border p-3">
               {messages.map((message, index) => (
                 <div
@@ -109,7 +125,7 @@ export default function AIAnalyticsChat() {
                   {message.charts && message.charts.length > 0 ? (
                     <div className="mt-2 flex flex-wrap gap-1.5">
                       {message.charts.map((chart) => (
-                        <Badge key={chart} variant="secondary" className="text-[10px]">
+                        <Badge key={chart} variant="secondary" className="text-[10px] break-words whitespace-normal text-left max-w-full">
                           Chart: {chart}
                         </Badge>
                       ))}
@@ -119,7 +135,7 @@ export default function AIAnalyticsChat() {
                   {message.drilldowns && message.drilldowns.length > 0 ? (
                     <div className="mt-2 flex flex-wrap gap-1.5">
                       {message.drilldowns.map((drilldown) => (
-                        <Badge key={drilldown} variant="outline" className="text-[10px]">
+                        <Badge key={drilldown} variant="outline" className="text-[10px] break-words whitespace-normal text-left max-w-full">
                           Drill-down: {drilldown}
                         </Badge>
                       ))}
@@ -133,9 +149,10 @@ export default function AIAnalyticsChat() {
                   <Loader2 className="h-4 w-4 animate-spin" /> Thinking...
                 </div>
               ) : null}
+              <div ref={messagesEndRef} />
             </div>
 
-            <form onSubmit={onSubmit} className="flex items-center gap-2">
+            <form onSubmit={onSubmit} className="flex items-center gap-2 shrink-0">
               <Input
                 value={input}
                 onChange={(event) => setInput(event.target.value)}
@@ -150,7 +167,7 @@ export default function AIAnalyticsChat() {
       ) : (
         <Button className="pointer-events-auto shadow-lg" size="lg" onClick={() => setIsOpen(true)}>
           <MessageSquareText className="h-4 w-4" />
-          AI Chat
+          Vaccy AI
         </Button>
       )}
     </div>
