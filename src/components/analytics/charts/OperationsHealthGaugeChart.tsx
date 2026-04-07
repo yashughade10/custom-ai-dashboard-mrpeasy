@@ -49,7 +49,7 @@ export default function OperationsHealthGaugeChart({
           },
           axisTick: { distance: -25, splitNumber: 5, lineStyle: { color: "#fff", width: 1 } },
           splitLine: { distance: -25, length: 10, lineStyle: { color: "#fff", width: 2 } },
-          axisLabel: { color: theme.mutedForeground, distance: 25 },
+          axisLabel: { color: theme.mutedForeground, distance: 0, fontSize: 11 },
           pointer: { width: 5, length: "65%", itemStyle: { color: theme.primary } },
           anchor: { show: true, size: 10, itemStyle: { color: theme.primary } },
           title: {

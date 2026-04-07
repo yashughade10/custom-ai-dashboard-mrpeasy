@@ -109,7 +109,7 @@ export default function AIAnalyticsDashboard({ report, isLoading, error }: AIAna
         </CardContent>
       </Card>
 
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
+      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         <MetricCard
           title="Total Revenue"
           value={formatCurrency(report.kpis.totalRevenue, currency)}
@@ -122,12 +122,12 @@ export default function AIAnalyticsDashboard({ report, isLoading, error }: AIAna
           subtitle={`Week-over-week ${formatPct(report.kpis.revenueGrowthWeekPct)}`}
           icon={ChartLine}
         />
-        <MetricCard
+        {/* <MetricCard
           title="On-time Delivery"
           value={formatPct(report.kpis.onTimeDeliveryPct)}
           subtitle={`${formatNumber(report.kpis.delayedOrders)} delayed orders`}
           icon={Clock3}
-        />
+        /> */}
         <MetricCard
           title="Repeat Customers"
           value={formatNumber(report.kpis.repeatCustomers)}
@@ -166,7 +166,7 @@ export default function AIAnalyticsDashboard({ report, isLoading, error }: AIAna
         </Card>
       </div>
 
-      <div className="grid gap-6 xl:grid-cols-2">
+      <div className="grid gap-6 xl:grid-cols-1">
         <Card>
           <CardHeader>
             <CardTitle>Channel Performance</CardTitle>
@@ -176,22 +176,9 @@ export default function AIAnalyticsDashboard({ report, isLoading, error }: AIAna
             <ChannelPerformanceChart channels={report.revenue.channelPerformance} currency={currency} />
           </CardContent>
         </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Operations Health</CardTitle>
-            <CardDescription>On-time delivery and projected capacity utilization.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <OperationsHealthGaugeChart
-              onTimeDeliveryPct={report.operations.onTimeDeliveryPct}
-              capacityUtilizationPct={report.forecasting.production.capacityUtilizationPct}
-            />
-          </CardContent>
-        </Card>
       </div>
 
-      <div className="grid gap-6 xl:grid-cols-2">
+      <div className="grid gap-6 xl:grid-cols-1">
         <Card>
           <CardHeader>
             <CardTitle>Inventory Stockout Prediction</CardTitle>
@@ -213,7 +200,7 @@ export default function AIAnalyticsDashboard({ report, isLoading, error }: AIAna
         </Card>
       </div>
 
-      <div className="grid gap-6 xl:grid-cols-2">
+      <div className="grid gap-6 xl:grid-cols-1">
         <Card>
           <CardHeader>
             <CardTitle>Top Products by Quantity</CardTitle>
@@ -221,6 +208,21 @@ export default function AIAnalyticsDashboard({ report, isLoading, error }: AIAna
           </CardHeader>
           <CardContent>
             <TopProductsByQuantityChart products={report.revenue.topByQuantity} currency={currency} />
+          </CardContent>
+        </Card>
+      </div>
+
+      <div className="grid gap-6 xl:grid-cols-2">
+        <Card>
+          <CardHeader>
+            <CardTitle>Operations Health</CardTitle>
+            <CardDescription>On-time delivery and projected capacity utilization.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <OperationsHealthGaugeChart
+              onTimeDeliveryPct={report.operations.onTimeDeliveryPct}
+              capacityUtilizationPct={report.forecasting.production.capacityUtilizationPct}
+            />
           </CardContent>
         </Card>
 
@@ -258,7 +260,7 @@ export default function AIAnalyticsDashboard({ report, isLoading, error }: AIAna
         <CardContent>
           <SimpleTable
             columns={[
-              { key: "sku", label: "SKU" },
+              { key: "sku", label: "SKU", className: "max-w-[120px] break-words whitespace-normal", },
               { key: "stock", label: "Current Stock (Est)", align: "right" },
               { key: "velocity", label: "Avg Daily Sales", align: "right" },
               { key: "stockout", label: "Predicted Stockout", align: "right" },
@@ -266,7 +268,11 @@ export default function AIAnalyticsDashboard({ report, isLoading, error }: AIAna
               { key: "risk", label: "Risk", align: "right" },
             ]}
             rows={report.forecasting.inventory.map((item) => ({
-              sku: item.sku,
+              sku: (
+                <div className="max-w-[300px] break-all whitespace-normal">
+                  {item.sku}
+                </div>
+              ),
               stock: formatNumber(item.estimatedCurrentStock),
               velocity: item.avgDailySales.toFixed(2),
               stockout:

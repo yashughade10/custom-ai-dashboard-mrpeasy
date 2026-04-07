@@ -13,19 +13,12 @@ type InventoryRiskChartProps = {
   height?: number;
 };
 
-function riskColor(level: InventoryForecast["riskLevel"], colors: ReturnType<typeof useChartTheme>) {
-  if (level === "critical") return colors.danger;
-  if (level === "high") return colors.warning;
-  if (level === "medium") return colors.tertiary;
-  return colors.success;
-}
-
 function shortLabel(value: string, max = 16) {
   if (value.length <= max) return value;
   return `${value.slice(0, max - 3)}...`;
 }
 
-export default function InventoryRiskChart({ forecasts, height = 350 }: InventoryRiskChartProps) {
+export default function InventoryRiskChart({ forecasts, height = 360 }: InventoryRiskChartProps) {
   const theme = useChartTheme();
 
   const normalized = useMemo(
@@ -33,9 +26,28 @@ export default function InventoryRiskChart({ forecasts, height = 350 }: Inventor
     [forecasts],
   );
 
+  const palette = useMemo(
+    () => [
+      theme.primary,
+      theme.secondary,
+      theme.tertiary,
+      theme.quaternary,
+      theme.success,
+      theme.warning,
+      theme.danger,
+    ],
+    [theme],
+  );
+
+  const legendItems = useMemo(() => {
+    return normalized.map((item, index) => ({
+      name: item.sku,
+      color: palette[index % palette.length] ?? theme.primary,
+    }));
+  }, [normalized, palette, theme.primary]);
+
   const option: EChartsOption = useMemo(() => {
     return {
-      color: [theme.primary, theme.secondary],
       tooltip: {
         trigger: "axis",
         axisPointer: { type: "shadow" },
@@ -54,21 +66,26 @@ export default function InventoryRiskChart({ forecasts, height = 350 }: Inventor
           ].join("<br/>");
         },
       },
-      grid: { left: 12, right: 18, top: 20, bottom: 52, containLabel: true },
+      // Extra left padding prevents the y-axis name from getting clipped.
+      grid: { left: 56, right: 18, top: 20, bottom: 52, containLabel: true },
       xAxis: {
         type: "category",
+        name: "SKUs",
+        nameLocation: "middle",
+        nameGap: 28,
+        nameTextStyle: { color: theme.mutedForeground, fontSize: 12, fontWeight: 500 },
         data: normalized.map((item) => item.sku),
         axisLabel: {
-          color: theme.mutedForeground,
-          interval: 0,
-          rotate: 20,
-          formatter: (value: string) => shortLabel(value),
+          show: false,
         },
+        axisTick: { show: false },
         axisLine: { lineStyle: { color: theme.border } },
       },
       yAxis: {
         type: "value",
         name: "Days to Stockout",
+        nameLocation: "middle",
+        nameGap: 46,
         axisLabel: { color: theme.mutedForeground },
         splitLine: { lineStyle: { color: theme.border } },
       },
@@ -76,18 +93,41 @@ export default function InventoryRiskChart({ forecasts, height = 350 }: Inventor
         {
           type: "bar",
           barMaxWidth: 24,
-          data: normalized.map((item) => ({
+          data: normalized.map((item, index) => ({
             value: item.predictedStockoutDays ?? 0,
-            itemStyle: { color: riskColor(item.riskLevel, theme) },
+            itemStyle: { color: palette[index % palette.length] ?? theme.primary },
           })),
         },
       ],
     };
-  }, [normalized, theme]);
+  }, [normalized, palette, theme]);
 
   if (!normalized.length) {
     return <div className="text-sm text-muted-foreground">No stockout forecast data available.</div>;
   }
 
-  return <ReactECharts option={option} style={{ height }} />;
+  return (
+    <div className="flex flex-col gap-4 lg:flex-row lg:items-start">
+      <div className="min-w-0 flex-1">
+        <ReactECharts option={option} style={{ height }} />
+      </div>
+      <aside className="rounded-lg border bg-card p-3 lg:w-64">
+        <div className="text-xs font-medium text-muted-foreground">SKUs</div>
+        <ul className="mt-3 grid grid-cols-2 gap-x-3 gap-y-2 lg:grid-cols-1">
+          {legendItems.map((item) => (
+            <li key={item.name} className="flex min-w-0 items-center gap-2">
+              <span
+                aria-hidden="true"
+                className="size-3 shrink-0 rounded-sm"
+                style={{ backgroundColor: item.color }}
+              />
+              <span className="min-w-0 truncate text-xs" title={item.name}>
+                {shortLabel(item.name, 26)}
+              </span>
+            </li>
+          ))}
+        </ul>
+      </aside>
+    </div>
+  );
 }

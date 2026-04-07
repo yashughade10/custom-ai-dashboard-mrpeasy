@@ -67,7 +67,7 @@ export default function ChannelPerformanceChart({
         axisLabel: {
           color: theme.mutedForeground,
           interval: 0,
-          rotate: 20,
+          rotate: 0,
           formatter: (value: string) => shortLabel(value),
         },
       },

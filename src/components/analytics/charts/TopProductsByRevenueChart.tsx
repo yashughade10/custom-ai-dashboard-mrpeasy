@@ -45,6 +45,26 @@ export default function TopProductsByRevenueChart({
 
   const computedHeight = height ?? Math.min(520, Math.max(320, normalized.length * 34));
 
+  const palette = useMemo(
+    () => [
+      theme.primary,
+      theme.secondary,
+      theme.tertiary,
+      theme.quaternary,
+      theme.success,
+      theme.warning,
+      theme.danger,
+    ],
+    [theme]
+  );
+
+  const legendItems = useMemo(() => {
+    return normalized.map((p, index) => ({
+      name: p.item_title,
+      color: palette[index % palette.length] ?? theme.primary,
+    }));
+  }, [normalized, palette, theme.primary]);
+
   const option: EChartsOption = useMemo(() => {
     const labels = normalized.map((p) => p.item_title);
     const values = normalized.map((p) => p.revenue);
@@ -57,7 +77,7 @@ export default function TopProductsByRevenueChart({
     };
 
     return {
-      color: [theme.primary],
+      color: palette,
       tooltip: {
         trigger: "axis",
         axisPointer: { type: "shadow" },
@@ -73,9 +93,13 @@ export default function TopProductsByRevenueChart({
           ].join("<br/>");
         },
       },
-      grid: { left: 180, right: 18, top: 10, bottom: 18, containLabel: true },
+      grid: { left: 56, right: 18, top: 10, bottom: 44, containLabel: true },
       xAxis: {
         type: "value",
+        name: "Revenue",
+        nameLocation: "middle",
+        nameGap: 28,
+        nameTextStyle: { color: theme.mutedForeground, fontSize: 12, fontWeight: 500 },
         axisLabel: {
           color: theme.mutedForeground,
           formatter: (value: number) =>
@@ -87,26 +111,58 @@ export default function TopProductsByRevenueChart({
       },
       yAxis: {
         type: "category",
+        name: "Products",
+        nameLocation: "middle",
+        nameGap: 34,
+        nameTextStyle: { color: theme.mutedForeground, fontSize: 12, fontWeight: 500 },
         data: labels,
-        axisLabel: { color: theme.mutedForeground, formatter: (v: string) => truncateLabel(v) },
+        axisLabel: { show: false },
+        axisTick: { show: false },
         axisLine: { lineStyle: { color: theme.border } },
       },
       series: [
         {
           name: "Revenue",
           type: "bar",
-          data: values,
+          label: { show: false },
+          data: values.map((value, index) => ({
+            value,
+            itemStyle: { color: palette[index % palette.length] ?? theme.primary },
+          })),
           barMaxWidth: 18,
-          itemStyle: { opacity: 1, color: theme.primary },
-          emphasis: { focus: "none", itemStyle: { opacity: 0.85, color: theme.primary } },
+          itemStyle: { opacity: 1 },
+          emphasis: { focus: "none", itemStyle: { opacity: 0.85 } },
         },
       ],
     };
-  }, [currency, normalized, theme]);
+  }, [currency, normalized, palette, theme]);
 
   if (!normalized.length) {
     return <div className="text-sm text-muted-foreground">No product revenue yet.</div>;
   }
 
-  return <ReactECharts option={option} style={{ height: computedHeight }} />;
+  return (
+    <div className="flex flex-col gap-4 lg:flex-row lg:items-start">
+      <div className="min-w-0 flex-1">
+        <ReactECharts option={option} style={{ height: computedHeight }} />
+      </div>
+      <aside className="rounded-lg border bg-card p-3 lg:w-64">
+        <div className="text-xs font-medium text-muted-foreground">Products</div>
+        <ul className="mt-3 grid grid-cols-2 gap-x-3 gap-y-2 lg:grid-cols-1">
+          {legendItems.map((item) => (
+            <li key={item.name} className="flex min-w-0 items-center gap-2">
+              <span
+                aria-hidden="true"
+                className="size-3 shrink-0 rounded-sm"
+                style={{ backgroundColor: item.color }}
+              />
+              <span className="min-w-0 truncate text-xs" title={item.name}>
+                {truncateLabel(item.name, 26)}
+              </span>
+            </li>
+          ))}
+        </ul>
+      </aside>
+    </div>
+  );
 }

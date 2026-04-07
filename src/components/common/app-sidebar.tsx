@@ -28,7 +28,7 @@ const navItems = [
     { name: "AI Analytics", href: "/dashboard/ai-analytics", icon: Sparkles },
     { name: "Orders", href: "/dashboard/orders", icon: ListOrdered },
     // { name: "Announcements", href: "/dashboard/announcements", icon: Megaphone },
-    { name: "Settings", href: "/dashboard/settings", icon: Settings },
+    // { name: "Settings", href: "/dashboard/settings", icon: Settings },
 ]
 
 export function AppSidebar() {
@@ -36,20 +36,16 @@ export function AppSidebar() {
     const router = useRouter();
 
     const handleLogout = () => {
-        router.replace("/login");
+        router.replace("/");
     }
 
     return (
         <Sidebar className="border-r-0">
             <SidebarHeader className="px-5 py-[14px]">
                 <Link href="/dashboard" className="flex items-center gap-3">
-                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-                        <span className="text-sm font-bold">V</span>
-                    </div>
-                    <span className="text-lg font-bold tracking-tight">Vaclifts</span>
+                    <img src="https://www.vacliftaustralia.com/logo/navlogo.png" alt="logo" className="h-10 sm:h-12 lg:h-[3.6vw]" />
                 </Link>
             </SidebarHeader>
-            <SidebarSeparator />
             <SidebarContent className="px-2 py-2">
                 <SidebarGroup className="py-1">
                     <SidebarGroupContent>
@@ -66,7 +62,7 @@ export function AppSidebar() {
                                             className={cn(
                                                 "text-sm px-3 h-10 rounded-lg transition-all duration-150 gap-3",
                                                 isActive
-                                                    ? "bg-primary text-primary-foreground font-medium shadow-sm"
+                                                    ? "bg-[#014FA2] text-primary-foreground font-medium shadow-sm"
                                                     : "text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent/60"
                                             )}
                                         >
@@ -84,13 +80,13 @@ export function AppSidebar() {
             </SidebarContent>
             <SidebarSeparator />
             <SidebarFooter className="px-5 py-4">
-                <SidebarMenu className="mt-3">
+                <SidebarMenu className="mt-4 rounded-xl border border-[#014FA2] bg-[#014FA2]/10 p-2 shadow-[0_12px_30px_-20px_rgba(0,0,0,0.65)]">
                     <SidebarMenuItem>
                         <SidebarMenuButton
                             onClick={handleLogout}
                             className={cn(
-                                "text-sm px-3 h-10 rounded-lg transition-all duration-150 gap-3",
-                                "text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent/60"
+                                "text-sm px-3 h-10 rounded-lg transition-all duration-150 gap-3 bg-[#014FA2]/60",
+                                "text-white hover:text-white hover:bg-[#014FA2]/80"
                             )}
                         >
                             <LogOut className="h-[18px] w-[18px] shrink-0" />
