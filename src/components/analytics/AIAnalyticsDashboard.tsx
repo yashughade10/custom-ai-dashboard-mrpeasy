@@ -144,7 +144,7 @@ export default function AIAnalyticsDashboard({ report, isLoading, error }: AIAna
 
       <SectionHeader title="Forecasting Engine" subtitle="Sales, inventory, and production projections from historical trends." />
 
-      <div className="grid gap-6 xl:grid-cols-2">
+      <div className="grid gap-6 xl:grid-cols-1">
         <Card>
           <CardHeader>
             <CardTitle>Sales Forecast (Next Quarter)</CardTitle>
