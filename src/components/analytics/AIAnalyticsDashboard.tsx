@@ -79,7 +79,7 @@ export default function AIAnalyticsDashboard({ report, isLoading, error }: AIAna
         subtitle="Consistent analytics structure with automated insights, forecasting, and operational recommendations."
       />
 
-      <Card>
+      <Card id="executive-summary" className="scroll-mt-24">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Sparkles className="h-5 w-5" /> Executive Summary
@@ -142,7 +142,9 @@ export default function AIAnalyticsDashboard({ report, isLoading, error }: AIAna
         />
       </div>
 
-      <SectionHeader title="Forecasting Engine" subtitle="Sales, inventory, and production projections from historical trends." />
+      <div id="forecasting-engine" className="scroll-mt-10">
+        <SectionHeader title="Forecasting Engine" subtitle="Sales, inventory, and production projections from historical trends." />
+      </div>
 
       <div className="grid gap-6 xl:grid-cols-1">
         <Card>
@@ -178,8 +180,11 @@ export default function AIAnalyticsDashboard({ report, isLoading, error }: AIAna
         </Card>
       </div>
 
+      <div id="inventory-stockout-prediction" className="scroll-mt-10">
+        <SectionHeader title="Inventory Prediction" subtitle="Predicted stockout scenarios for each SKU." />
+      </div>
       <div className="grid gap-6 xl:grid-cols-1">
-        <Card>
+        <Card >
           <CardHeader>
             <CardTitle>Inventory Stockout Prediction</CardTitle>
             <CardDescription>SKU risk ranking by predicted stockout date.</CardDescription>
@@ -188,7 +193,12 @@ export default function AIAnalyticsDashboard({ report, isLoading, error }: AIAna
             <InventoryRiskChart forecasts={report.forecasting.inventory} />
           </CardContent>
         </Card>
+      </div>
 
+      <div id="top-products" className="scroll-mt-10">
+        <SectionHeader title="Top Products" subtitle="Best-performing products by revenue and quantity." />
+      </div>
+      <div className="grid gap-6 xl:grid-cols-1">
         <Card>
           <CardHeader>
             <CardTitle>Top Products by Revenue</CardTitle>
@@ -198,9 +208,7 @@ export default function AIAnalyticsDashboard({ report, isLoading, error }: AIAna
             <TopProductsByRevenueChart products={report.revenue.topByRevenue} currency={currency} />
           </CardContent>
         </Card>
-      </div>
 
-      <div className="grid gap-6 xl:grid-cols-1">
         <Card>
           <CardHeader>
             <CardTitle>Top Products by Quantity</CardTitle>
@@ -254,7 +262,9 @@ export default function AIAnalyticsDashboard({ report, isLoading, error }: AIAna
         </Card>
       </div>
 
-      <SectionHeader title="Inventory Forecasting" subtitle="Predicted stockout and reorder suggestions for fast-moving SKUs." />
+      <div id="inventory-forecasting" className="scroll-mt-10">
+        <SectionHeader title="Inventory Forecasting" subtitle="Predicted stockout and reorder suggestions for fast-moving SKUs." />
+      </div>
 
       <Card>
         <CardContent>
@@ -293,7 +303,9 @@ export default function AIAnalyticsDashboard({ report, isLoading, error }: AIAna
         </CardContent>
       </Card>
 
-      <SectionHeader title="AI Recommendations" subtitle="Action list grouped by business function." />
+      <div id="ai-recommendations" className="scroll-mt-10">
+        <SectionHeader title="AI Recommendations" subtitle="Action list grouped by business function." />
+      </div>
 
       <div className="grid gap-6 xl:grid-cols-3">
         <Card>

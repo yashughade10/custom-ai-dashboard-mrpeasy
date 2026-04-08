@@ -6,6 +6,28 @@ import { Button } from "@/components/ui/button";
 import { fetchAIReport } from "@/services/api";
 import { useQuery } from "@tanstack/react-query";
 import { RefreshCw } from "lucide-react";
+import React from "react";
+
+function scrollToHash(hash: string, behavior: ScrollBehavior) {
+  const id = hash.replace(/^#/, "");
+  if (!id) return;
+
+  let attempts = 0;
+  const tryScroll = () => {
+    const element = document.getElementById(id);
+    if (element) {
+      element.scrollIntoView({ behavior, block: "start" });
+      return;
+    }
+
+    attempts += 1;
+    if (attempts < 40) {
+      window.setTimeout(tryScroll, 100);
+    }
+  };
+
+  tryScroll();
+}
 
 export default function AIAnalyticsPage() {
   const {
@@ -19,6 +41,17 @@ export default function AIAnalyticsPage() {
     queryFn: () => fetchAIReport(false),
     staleTime: 2 * 60 * 1000,
   });
+
+  React.useEffect(() => {
+    const handler = () => scrollToHash(window.location.hash, "smooth");
+    window.addEventListener("hashchange", handler);
+    return () => window.removeEventListener("hashchange", handler);
+  }, []);
+
+  React.useEffect(() => {
+    if (!window.location.hash) return;
+    scrollToHash(window.location.hash, "auto");
+  }, [aiReport]);
 
   return (
     <div className="space-y-8 pb-24">

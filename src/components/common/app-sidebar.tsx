@@ -10,22 +10,37 @@ import {
     SidebarMenu,
     SidebarMenuButton,
     SidebarMenuItem,
+    SidebarMenuSub,
+    SidebarMenuSubButton,
+    SidebarMenuSubItem,
     SidebarSeparator,
 } from "@/components/ui/sidebar"
 import { cn } from "@/lib/utils"
 import {
     LayoutDashboard,
-    Settings,
     LogOut,
     ListOrdered,
     Sparkles,
 } from "lucide-react"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
+import React from "react"
 
 const navItems = [
     { name: "Overview", href: "/dashboard", icon: LayoutDashboard },
-    { name: "AI Analytics", href: "/dashboard/ai-analytics", icon: Sparkles },
+    {
+        name: "AI Analytics",
+        href: "/dashboard/ai-analytics",
+        icon: Sparkles,
+        children: [
+            { name: "Executive Summary", hash: "executive-summary" },
+            { name: "Forecasting Engine", hash: "forecasting-engine" },
+            { name: "Inventory Stockout Prediction", hash: "inventory-stockout-prediction" },
+            { name: "Top Products", hash: "top-products" },
+            { name: "Inventory Forecasting", hash: "inventory-forecasting" },
+            { name: "AI Recommendations", hash: "ai-recommendations" },
+        ],
+    },
     { name: "Orders", href: "/dashboard/orders", icon: ListOrdered },
     // { name: "Announcements", href: "/dashboard/announcements", icon: Megaphone },
     // { name: "Settings", href: "/dashboard/settings", icon: Settings },
@@ -34,6 +49,21 @@ const navItems = [
 export function AppSidebar() {
     const pathname = usePathname();
     const router = useRouter();
+    const [activeHash, setActiveHash] = React.useState("");
+
+    React.useEffect(() => {
+        const handleHashChange = () => {
+            setActiveHash(window.location.hash.replace(/^#/, ""));
+        };
+
+        handleHashChange();
+        window.addEventListener("hashchange", handleHashChange);
+        return () => window.removeEventListener("hashchange", handleHashChange);
+    }, []);
+
+    React.useEffect(() => {
+        setActiveHash(window.location.hash.replace(/^#/, ""));
+    }, [pathname]);
 
     const handleLogout = () => {
         router.replace("/");
@@ -70,7 +100,36 @@ export function AppSidebar() {
                                                 <item.icon className="h-[18px] w-[18px] shrink-0" />
                                                 <span>{item.name}</span>
                                             </Link>
-                                        </SidebarMenuButton>
+                                    </SidebarMenuButton>
+
+                                        {"children" in item && item.children?.length && isActive ? (
+                                            <SidebarMenuSub className="mt-1">
+                                                {item.children.map((child, index) => {
+                                                    const defaultHash = item.children?.[0]?.hash ?? "";
+                                                    const resolvedActiveHash = activeHash || defaultHash;
+                                                    const isChildActive = isActive && resolvedActiveHash === child.hash;
+                                                    return (
+                                                        <SidebarMenuSubItem key={child.hash}>
+                                                            <SidebarMenuSubButton
+                                                                asChild
+                                                                isActive={isChildActive}
+                                                                className={cn(
+                                                                    "text-xs",
+                                                                    isChildActive ? "bg-[#014FA2]/15 text-[#014FA2] font-medium" : ""
+                                                                )}
+                                                            >
+                                                                <Link
+                                                                    href={`${item.href}#${child.hash}`}
+                                                                    onClick={() => setActiveHash(child.hash)}
+                                                                >
+                                                                    <span>{child.name}</span>
+                                                                </Link>
+                                                            </SidebarMenuSubButton>
+                                                        </SidebarMenuSubItem>
+                                                    );
+                                                })}
+                                            </SidebarMenuSub>
+                                        ) : null}
                                     </SidebarMenuItem>
                                 )
                             })}
