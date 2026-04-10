@@ -1,5 +1,24 @@
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
+## AI Analytics Features
+
+- AI analytics report generated from:
+  - `https://apimrpeasy-vaclift-backend.vercel.app/api/orders`
+  - `https://apimrpeasy-vaclift-backend.vercel.app/api/analytics`
+- OpenRouter integration with model:
+  - `nvidia/nemotron-3-super-120b-a12b:free`
+- Forecasting engine (sales, inventory stockout/reorder, production workload)
+- Internal AI chatbot for business questions (revenue, delayed orders, fastest products, stockout)
+- ECharts visualizations (trend, heatmap, gauge, channel performance, forecast band, inventory risk)
+
+## Environment Variables
+
+Copy `.env.example` into `.env` and set values:
+
+- `OPENROUTER_API_KEY`
+- `NEXT_PUBLIC_API_BASE_URL` (optional override)
+- `NEXT_PUBLIC_APP_URL` (used for OpenRouter request metadata)
+
 ## Getting Started
 
 First, run the development server:

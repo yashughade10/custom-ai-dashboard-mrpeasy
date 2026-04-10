@@ -45,6 +45,26 @@ export default function RevenueByCustomerChart({
 
   const computedHeight = height ?? 360;
 
+  const palette = useMemo(
+    () => [
+      theme.primary,
+      theme.secondary,
+      theme.tertiary,
+      theme.quaternary,
+      theme.success,
+      theme.warning,
+      theme.danger,
+    ],
+    [theme]
+  );
+
+  const legendItems = useMemo(() => {
+    return normalized.map((c, index) => ({
+      name: c.customer_name,
+      color: palette[index % palette.length] ?? theme.primary,
+    }));
+  }, [normalized, palette, theme.primary]);
+
   const option: EChartsOption = useMemo(() => {
     const labels = normalized.map((c) => c.customer_name);
     const values = normalized.map((c) => c.revenue);
@@ -57,7 +77,7 @@ export default function RevenueByCustomerChart({
     };
 
     return {
-      color: [theme.primary],
+      color: palette,
       tooltip: {
         trigger: "axis",
         axisPointer: { type: "shadow" },
@@ -73,17 +93,18 @@ export default function RevenueByCustomerChart({
           ].join("<br/>");
         },
       },
-      grid: { left: 12, right: 18, top: 20, bottom: 52, containLabel: true },
+      grid: { left: 12, right: 18, top: 20, bottom: 44, containLabel: true },
       xAxis: {
         type: "category",
+        name: "Customers",
+        nameLocation: "middle",
+        nameGap: 28,
+        nameTextStyle: { color: theme.mutedForeground, fontSize: 12, fontWeight: 500 },
         data: labels,
         axisLabel: {
-          color: theme.mutedForeground,
-          interval: 0,
-          rotate: 20,
-          formatter: (v: string) => truncateLabel(v, 16),
+          show: false,
         },
-        axisTick: { alignWithLabel: true },
+        axisTick: { show: false },
         axisLine: { lineStyle: { color: theme.border } },
       },
       yAxis: {
@@ -108,18 +129,45 @@ export default function RevenueByCustomerChart({
         {
           name: "Revenue",
           type: "bar",
-          data: values,
+          label: { show: false },
+          data: values.map((value, index) => ({
+            value,
+            itemStyle: { color: palette[index % palette.length] ?? theme.primary },
+          })),
           barMaxWidth: 22,
-          itemStyle: { opacity: 1, color: theme.primary },
-          emphasis: { focus: "none", itemStyle: { opacity: 0.85, color: theme.primary } },
+          itemStyle: { opacity: 1 },
+          emphasis: { focus: "none", itemStyle: { opacity: 0.85 } },
         },
       ],
     };
-  }, [currency, normalized, theme]);
+  }, [currency, normalized, palette, theme]);
 
   if (!normalized.length) {
     return <div className="text-sm text-muted-foreground">No customer revenue yet.</div>;
   }
 
-  return <ReactECharts option={option} style={{ height: computedHeight }} />;
+  return (
+    <div className="flex flex-col gap-4 lg:flex-row lg:items-start">
+      <div className="min-w-0 flex-1">
+        <ReactECharts option={option} style={{ height: computedHeight }} />
+      </div>
+      <aside className="rounded-lg border bg-card p-3 lg:w-64">
+        <div className="text-xs font-medium text-muted-foreground">Customers</div>
+        <ul className="mt-3 grid grid-cols-2 gap-x-3 gap-y-2 lg:grid-cols-1">
+          {legendItems.map((item) => (
+            <li key={item.name} className="flex min-w-0 items-center gap-2">
+              <span
+                aria-hidden="true"
+                className="size-3 shrink-0 rounded-sm"
+                style={{ backgroundColor: item.color }}
+              />
+              <span className="min-w-0 truncate text-xs" title={item.name}>
+                {truncateLabel(item.name, 26)}
+              </span>
+            </li>
+          ))}
+        </ul>
+      </aside>
+    </div>
+  );
 }

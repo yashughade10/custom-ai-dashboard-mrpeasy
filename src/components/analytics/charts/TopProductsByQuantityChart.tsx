@@ -43,6 +43,103 @@ export default function TopProductsByQuantityChart({
       .slice(0, topN);
   }, [products, topN]);
 
+  const palette = useMemo(
+    () => [
+      theme.primary,
+      theme.secondary,
+      theme.tertiary,
+      theme.quaternary,
+      theme.success,
+      theme.warning,
+      theme.danger,
+    ],
+    [theme]
+  );
+
+  const legendItems = useMemo(() => {
+    return normalized.map((p, index) => ({
+      name: p.item_title,
+      color: palette[index % palette.length] ?? theme.secondary,
+    }));
+  }, [normalized, palette, theme.secondary]);
+
+  // const option: EChartsOption = useMemo(() => {
+  //   const labels = normalized.map((p) => p.item_title);
+  //   const values = normalized.map((p) => p.quantity);
+
+  //   const getIndex = (params: unknown) => {
+  //     const first = Array.isArray(params) ? params[0] : params;
+  //     if (!first || typeof first !== "object") return 0;
+  //     const idx = (first as { dataIndex?: unknown }).dataIndex;
+  //     return typeof idx === "number" ? idx : 0;
+  //   };
+
+  //   return {
+  //     color: palette,
+  //     tooltip: {
+  //       trigger: "axis",
+  //       axisPointer: { type: "shadow" },
+  //       formatter: (params: unknown) => {
+  //         const index = getIndex(params);
+  //         const product = normalized[index];
+  //         if (!product) return "";
+  //         return [
+  //           `<div style="font-weight:600;margin-bottom:4px">${product.item_title}</div>`,
+  //           `Qty: ${formatNumber(product.quantity)}`,
+  //           `Revenue: ${formatCurrency(product.revenue, currency)}`,
+  //           `Orders: ${formatNumber(product.orders)}`,
+  //         ].join("<br/>");
+  //       },
+  //     },
+  //     grid: { left: 12, right: 18, top: 20, bottom: 46, containLabel: true },
+  //     xAxis: {
+  //       type: "category",
+  //       name: "Products",
+  //       nameLocation: "middle",
+  //       nameGap: 28,
+  //       nameTextStyle: { color: theme.mutedForeground, fontSize: 12, fontWeight: 500 },
+  //       data: labels,
+  //       axisLabel: {
+  //         show: false,
+  //       },
+  //       axisTick: { show: false },
+  //       axisLine: { lineStyle: { color: theme.border } },
+  //     },
+  //     yAxis: {
+  //       type: "value",
+  //       axisLabel: {
+  //         color: theme.mutedForeground,
+  //         formatter: (value: number) =>
+  //           new Intl.NumberFormat("en", { notation: "compact", maximumFractionDigits: 1 }).format(
+  //             value,
+  //           ),
+  //       },
+  //       splitLine: { lineStyle: { color: theme.border } },
+  //     },
+  //     dataZoom:
+  //       normalized.length > 10
+  //         ? [
+  //           { type: "inside", zoomOnMouseWheel: true },
+  //           { type: "slider", height: 18, bottom: 10 },
+  //         ]
+  //         : undefined,
+  //     series: [
+  //       {
+  //         name: "Quantity",
+  //         type: "bar",
+  //         label: { show: false },
+  //         data: values.map((value, index) => ({
+  //           value,
+  //           itemStyle: { color: palette[index % palette.length] ?? theme.secondary },
+  //         })),
+  //         barMaxWidth: 22,
+  //         itemStyle: { opacity: 1 },
+  //         emphasis: { focus: "none", itemStyle: { opacity: 0.85 } },
+  //       },
+  //     ],
+  //   };
+  // }, [currency, normalized, palette, theme]);
+
   const option: EChartsOption = useMemo(() => {
     const labels = normalized.map((p) => p.item_title);
     const values = normalized.map((p) => p.quantity);
@@ -55,7 +152,7 @@ export default function TopProductsByQuantityChart({
     };
 
     return {
-      color: [theme.secondary],
+      color: palette,
       tooltip: {
         trigger: "axis",
         axisPointer: { type: "shadow" },
@@ -71,53 +168,117 @@ export default function TopProductsByQuantityChart({
           ].join("<br/>");
         },
       },
-      grid: { left: 12, right: 18, top: 20, bottom: 46, containLabel: true },
+
+      // ✅ FIXED GRID
+      grid: {
+        left: 70,   // 🔥 increased significantly
+        right: 20,
+        top: 20,
+        bottom: 60,
+      },
+
       xAxis: {
         type: "category",
-        data: labels,
-        axisLabel: {
+        name: "Products",
+        nameLocation: "middle",
+        nameGap: 30,
+        nameTextStyle: {
           color: theme.mutedForeground,
-          interval: 0,
-          rotate: 20,
-          formatter: (v: string) => truncateLabel(v),
+          fontSize: 12,
+          fontWeight: 500,
         },
-        axisTick: { alignWithLabel: true },
+        data: labels,
+
+        // optional: keep hidden if you want clean UI
+        axisLabel: {
+          show: false,
+        },
+
+        axisTick: { show: false },
         axisLine: { lineStyle: { color: theme.border } },
       },
+
       yAxis: {
         type: "value",
+
+        // ✅ FORCE labels to show clearly
         axisLabel: {
+          show: true,
           color: theme.mutedForeground,
-          formatter: (value: number) =>
-            new Intl.NumberFormat("en", { notation: "compact", maximumFractionDigits: 1 }).format(
-              value,
-            ),
+          fontSize: 12,
+          margin: 12, // spacing from axis
+
+          formatter: (value: number) => {
+            // 🔥 safer formatter (avoids rendering issues)
+            if (value >= 1000000) return (value / 1000000).toFixed(1) + "M";
+            if (value >= 1000) return (value / 1000).toFixed(1) + "K";
+            return value.toString();
+          },
         },
-        splitLine: { lineStyle: { color: theme.border } },
+
+        axisLine: {
+          show: true,
+          lineStyle: { color: theme.border },
+        },
+
+        axisTick: { show: false },
+
+        splitLine: {
+          show: true,
+          lineStyle: { color: theme.border },
+        },
       },
+
       dataZoom:
         normalized.length > 10
           ? [
-              { type: "inside", zoomOnMouseWheel: true },
-              { type: "slider", height: 18, bottom: 10 },
-            ]
+            { type: "inside", zoomOnMouseWheel: true },
+            { type: "slider", height: 18, bottom: 10 },
+          ]
           : undefined,
+
       series: [
         {
           name: "Quantity",
           type: "bar",
-          data: values,
+          data: values.map((value, index) => ({
+            value,
+            itemStyle: {
+              color: palette[index % palette.length] ?? theme.secondary,
+            },
+          })),
           barMaxWidth: 22,
-          itemStyle: { opacity: 1, color: theme.secondary },
-          emphasis: { focus: "none", itemStyle: { opacity: 0.85, color: theme.secondary } },
         },
       ],
     };
-  }, [currency, normalized, theme]);
+  }, [currency, normalized, palette, theme]);
 
   if (!normalized.length) {
     return <div className="text-sm text-muted-foreground">No product quantities yet.</div>;
   }
 
-  return <ReactECharts option={option} style={{ height }} />;
+  return (
+    <div className="flex flex-col gap-4 lg:flex-row lg:items-start">
+      <div className="min-w-0 flex-1">
+        <ReactECharts option={option} style={{ height }} />
+      </div>
+      <aside className="rounded-lg border bg-card p-3 lg:w-64">
+        <div className="text-xs font-medium text-muted-foreground">Products</div>
+        <ul className="mt-3 grid grid-cols-2 gap-x-3 gap-y-2 lg:grid-cols-1">
+          {legendItems.map((item) => (
+            <li key={item.name} className="flex min-w-0 items-center gap-2">
+              <span
+                aria-hidden="true"
+                className="size-3 shrink-0 rounded-sm"
+                style={{ backgroundColor: item.color }}
+              />
+              <span className="min-w-0 truncate text-xs" title={item.name}>
+                {truncateLabel(item.name, 26)}
+              </span>
+            </li>
+          ))}
+        </ul>
+      </aside>
+    </div>
+  );
 }

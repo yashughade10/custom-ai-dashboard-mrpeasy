@@ -407,7 +407,7 @@ export default function AnalyticsDashboard({ analytics, isLoading, error }: Anal
         subtitle="Revenue concentration and customer contribution."
       />
 
-      <div className="grid gap-6 lg:grid-cols-2">
+      <div className="grid gap-6 lg:grid-cols-1">
         <Card>
           <CardHeader>
             <CardTitle>Revenue by Customer</CardTitle>
