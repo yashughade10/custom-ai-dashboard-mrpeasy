@@ -15,6 +15,7 @@ import {
     SidebarMenuSubItem,
     SidebarSeparator,
 } from "@/components/ui/sidebar"
+import { removeLocalStorageItem } from "@/lib/local-storage"
 import { cn } from "@/lib/utils"
 import {
     LayoutDashboard,
@@ -66,8 +67,9 @@ export function AppSidebar() {
     }, [pathname]);
 
     const handleLogout = () => {
+        removeLocalStorageItem("auth");
         router.replace("/");
-    }
+    };
 
     return (
         <Sidebar className="border-r-0">

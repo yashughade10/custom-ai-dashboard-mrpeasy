@@ -65,4 +65,26 @@ async function askAnalyticsQuestion(question: string): Promise<AIChatResponse> {
   return result.response;
 }
 
-export { fetchOrders, fetchAnalytics, fetchAIReport, askAnalyticsQuestion };
+const loginDashboard = async (email: string, password: string) => {
+  const response = await fetch(`${API_BASE_URL}/auth/login`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ email, password }),
+  })
+
+  const data = await response.json()
+
+  if (data?.success === false) {
+    throw new Error(data?.error || data?.message || "Login failed")
+  }
+
+  if (!response.ok) {
+    throw new Error(data?.message || data?.error || `Login failed with status ${response.status}`)
+  }
+
+  return data;
+}
+
+export { fetchOrders, fetchAnalytics, fetchAIReport, askAnalyticsQuestion, loginDashboard };

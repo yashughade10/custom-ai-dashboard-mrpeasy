@@ -1,8 +1,28 @@
+
+"use client";
+
 import { SignIn } from "@/components/forms/SignIn";
 import { Card, CardContent } from "@/components/ui/card";
 import { Check } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 
 export default function Home() {
+  const router = useRouter();
+
+  useEffect(() => {
+    try {
+      const rawAuth = localStorage.getItem("auth");
+      if (!rawAuth) return;
+      const auth = JSON.parse(rawAuth) as { isLoggedIn?: boolean } | null;
+      if (auth?.isLoggedIn) {
+        router.replace("/dashboard");
+      }
+    } catch {
+      // ignore invalid JSON / storage errors
+    }
+  }, [router]);
+
   return (
     <main className="relative min-h-svh overflow-hidden bg-background">
       <div
@@ -17,9 +37,7 @@ export default function Home() {
         <div className="grid w-full items-center gap-10 lg:grid-cols-2 lg:gap-14">
           <section className="hidden lg:block">
             <div className="max-w-md">
-              <p className="text-sm font-medium text-muted-foreground">
-                Vaclift
-              </p>
+              <img src="https://www.vacliftaustralia.com/logo/navlogo.png" alt="logo" className="h-10 sm:h-12 lg:h-[5vw]" />
               <h1 className="mt-2 text-4xl font-semibold tracking-tight">
                 Welcome back
               </h1>

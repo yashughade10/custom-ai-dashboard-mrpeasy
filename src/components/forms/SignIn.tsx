@@ -6,7 +6,10 @@ import { cn } from "@/lib/utils"
 import { Button } from "../ui/button"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
-import { Eye, EyeOff } from "lucide-react"
+import { CircleAlert, Eye, EyeOff } from "lucide-react"
+import { useMutation } from "@tanstack/react-query"
+import { loginDashboard } from "@/services/api"
+import { setLocalStorageItem } from "@/lib/local-storage"
 
 export const SignIn = () => {
     // SECTION: States
@@ -18,29 +21,47 @@ export const SignIn = () => {
     const router = useRouter();
     // !SECTION
 
+    const { mutate, isPending, error } = useMutation({
+        mutationFn: ({ email, password }: { email: string, password: string }) =>
+            loginDashboard(email, password),
+        onSuccess: (data) => {
+            console.log('info', `Login response: ${JSON.stringify(data)}`);
+            if (!data || !data.token) {
+                console.error('error: ', 'Invalid response structure: missing token');
+                return;
+            }
+
+            const authData = {
+                isLoggedIn: true,
+                token: data.token,
+                user: data.user || null,
+                role: data.user?.role || 'USER',
+            };
+
+            console.log('info', `Storing auth data: ${JSON.stringify(authData)}`);
+            setLocalStorageItem('auth', JSON.stringify(authData));
+
+            router.push('/dashboard');
+
+            // Trigger auth change event to update all components
+            window.dispatchEvent(new Event('authChange'));
+        },
+        onError: (error) => {
+            console.log('error', `Login error: ${error.message || error}`);
+        }
+    })
+
+    const errorMessage =
+        error instanceof Error ? error.message : (typeof error === "string" ? error : null)
+
     // SECTION: Functions
     const handleLogin = (e: React.FormEvent) => {
         e.preventDefault();
         if (!formData.email || !formData.password) return;
 
-        // Dummy login: store a fake auth payload and route to dashboard.
-        const authData = {
-            isLoggedIn: true,
-            token: "dummy-token",
-            user: {
-                email: formData.email,
-                role: "USER",
-            },
-            role: "USER",
-        };
-
-        try {
-            localStorage.setItem("auth", JSON.stringify(authData));
-        } catch {
-            // Ignore storage errors (private mode, disabled storage, etc.)
+        if (formData.email && formData.password) {
+            mutate({ email: formData.email, password: formData.password });
         }
-        router.push('/dashboard');
-        window.dispatchEvent(new Event('authChange'));
     }
     // !SECTION
 
@@ -61,9 +82,10 @@ export const SignIn = () => {
         >
             <FieldGroup>
                 <div className="flex flex-col items-center gap-1 text-center">
-                    <p className="text-sm font-medium text-muted-foreground lg:hidden">
+                    {/* <p className="text-sm font-medium text-muted-foreground lg:hidden">
                         Vaclift
-                    </p>
+                    </p> */}
+                    <img src="https://www.vacliftaustralia.com/logo/navlogo.png" alt="logo" className="h-10 sm:h-12 lg:h-[3.6vw]" />
                     <h1 className="text-2xl font-bold tracking-tight">
                         Login to your account
                     </h1>
@@ -71,6 +93,14 @@ export const SignIn = () => {
                         Enter your email below to login to your account
                     </p>
                 </div>
+
+                {errorMessage ? (
+                    <p className="text-sm text-red-600 flex justify-center items-center gap-2" role="alert">
+                        <CircleAlert size={16} />
+                        {errorMessage}
+                    </p>
+                ) : null}
+
                 <Field>
                     <FieldLabel htmlFor="email">Email</FieldLabel>
                     <Input
@@ -82,6 +112,7 @@ export const SignIn = () => {
                         required
                         value={formData.email}
                         onChange={handleChange}
+                        disabled={isPending}
                     />
                 </Field>
                 <Field>
@@ -103,6 +134,7 @@ export const SignIn = () => {
                             required
                             value={formData.password}
                             onChange={handleChange}
+                            disabled={isPending}
                         />
                         <button
                             type="button"
@@ -110,6 +142,7 @@ export const SignIn = () => {
                             aria-label={
                                 showPassword ? "Hide password" : "Show password"
                             }
+                            disabled={isPending}
                             className="absolute right-1 top-1/2 -translate-y-1/2 rounded-md p-2 text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                         >
                             {showPassword ? (
@@ -121,8 +154,8 @@ export const SignIn = () => {
                     </div>
                 </Field>
                 <Field>
-                    <Button type="submit" className="w-full" size="lg">
-                        Login
+                    <Button type="submit" className="w-full" size="lg" disabled={isPending}>
+                        {isPending ? "Logging in..." : "Login"}
                     </Button>
                 </Field>
             </FieldGroup>
