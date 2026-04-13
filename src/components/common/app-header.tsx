@@ -19,6 +19,10 @@ function AppHeader() {
 
     const router = useRouter();
 
+    const userName = user?.name ?? "Guest";
+    const userEmail = user?.email ?? "";
+    const userInitial = typeof userName === "string" && userName.length > 0 ? userName.charAt(0) : "?";
+
     const handleLogout = () => {
         removeLocalStorageItem("auth");
         router.replace("/");
@@ -31,9 +35,9 @@ function AppHeader() {
             <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                     <Avatar className="cursor-pointer">
-                        <AvatarImage src={user.image} alt={user.name} />
+                        {/* <AvatarImage src={user.image} alt={user.name} /> */}
                         <AvatarFallback>
-                            {user.name.charAt(0)}
+                            {userInitial}
                         </AvatarFallback>
                     </Avatar>
                 </DropdownMenuTrigger>
@@ -41,10 +45,10 @@ function AppHeader() {
                 <DropdownMenuContent align="end" className="w-56">
                     <DropdownMenuLabel>
                         <div className="flex flex-col">
-                            <span className="font-medium">{user.name}</span>
-                            <span className="text-sm text-muted-foreground">
-                                {user.email}
-                            </span>
+                            <span className="font-medium">{userName}</span>
+                            {userEmail ? (
+                                <span className="text-sm text-muted-foreground">{userEmail}</span>
+                            ) : null}
                         </div>
                     </DropdownMenuLabel>
 
