@@ -165,7 +165,7 @@ export default function AIAnalyticsChat() {
           </CardContent>
         </Card>
       ) : (
-        <Button className="pointer-events-auto shadow-lg" size="lg" onClick={() => setIsOpen(true)}>
+        <Button className="pointer-events-auto shadow-lg cursor-pointer" size="lg" onClick={() => setIsOpen(true)}>
           <MessageSquareText className="h-4 w-4" />
           Vaccy AI
         </Button>
