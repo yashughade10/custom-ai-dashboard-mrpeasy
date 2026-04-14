@@ -115,12 +115,14 @@ export default function AIAnalyticsDashboard({ report, isLoading, error }: AIAna
           value={formatCurrency(report.kpis.totalRevenue, currency)}
           subtitle={`${formatNumber(report.kpis.totalOrders)} orders`}
           icon={ChartLine}
+          accentClass="bg-[#DBEAFE] text-[#1D4ED8]"
         />
         <MetricCard
           title="Revenue Growth (MoM)"
           value={formatPct(report.kpis.revenueGrowthMonthPct)}
           subtitle={`Week-over-week ${formatPct(report.kpis.revenueGrowthWeekPct)}`}
           icon={ChartLine}
+          accentClass="bg-[#FFEDD5] text-[#C2410C]"
         />
         {/* <MetricCard
           title="On-time Delivery"
@@ -133,12 +135,14 @@ export default function AIAnalyticsDashboard({ report, isLoading, error }: AIAna
           value={formatNumber(report.kpis.repeatCustomers)}
           subtitle={`${report.kpis.topCustomerSharePct.toFixed(2)}% top-customer share`}
           icon={Users}
+          accentClass="bg-[#FEF9C3] text-[#A16207]"
         />
         <MetricCard
           title="Forecast (30 days)"
           value={formatCurrency(report.forecasting.sales.next30DaysTotal, currency)}
           subtitle={`7d: ${formatCurrency(report.forecasting.sales.next7DaysTotal, currency)}`}
           icon={Sparkles}
+          accentClass="bg-[#DCFCE7] text-[#166534]"
         />
       </div>
 

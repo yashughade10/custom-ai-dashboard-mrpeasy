@@ -22,6 +22,11 @@ import {
     LogOut,
     ListOrdered,
     Sparkles,
+    FileText,
+    TrendingUp,
+    Package,
+    Star,
+    Brain,
 } from "lucide-react"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
@@ -34,12 +39,12 @@ const navItems = [
         href: "/dashboard/ai-analytics",
         icon: Sparkles,
         children: [
-            { name: "Executive Summary", hash: "executive-summary" },
-            { name: "Forecasting Engine", hash: "forecasting-engine" },
-            { name: "Inventory Stockout Prediction", hash: "inventory-stockout-prediction" },
-            { name: "Top Products", hash: "top-products" },
-            { name: "Inventory Forecasting", hash: "inventory-forecasting" },
-            { name: "AI Recommendations", hash: "ai-recommendations" },
+            { name: "Executive Summary", hash: "executive-summary", icon: FileText },
+            { name: "Forecasting Engine", hash: "forecasting-engine", icon: TrendingUp },
+            { name: "Inventory Stockout Prediction", hash: "inventory-stockout-prediction", icon: Package },
+            { name: "Top Products", hash: "top-products", icon: Star },
+            { name: "Inventory Forecasting", hash: "inventory-forecasting", icon: TrendingUp },
+            { name: "AI Recommendations", hash: "ai-recommendations", icon: Brain },
         ],
     },
     { name: "Orders", href: "/dashboard/orders", icon: ListOrdered },
@@ -102,7 +107,7 @@ export function AppSidebar() {
                                                 <item.icon className="h-[18px] w-[18px] shrink-0" />
                                                 <span>{item.name}</span>
                                             </Link>
-                                    </SidebarMenuButton>
+                                        </SidebarMenuButton>
 
                                         {"children" in item && item.children?.length && isActive ? (
                                             <SidebarMenuSub className="mt-1">
@@ -123,7 +128,16 @@ export function AppSidebar() {
                                                                 <Link
                                                                     href={`${item.href}#${child.hash}`}
                                                                     onClick={() => setActiveHash(child.hash)}
+                                                                    className="flex items-center gap-2"
                                                                 >
+                                                                    {child.icon && (
+                                                                        <child.icon
+                                                                            className={cn(
+                                                                                "h-4 w-4 shrink-0",
+                                                                                isChildActive ? "text-[#014FA2]" : "text-muted-foreground"
+                                                                            )}
+                                                                        />
+                                                                    )}
                                                                     <span>{child.name}</span>
                                                                 </Link>
                                                             </SidebarMenuSubButton>

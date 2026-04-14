@@ -8,10 +8,43 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
+import { OrderFilters } from '@/components/ui/order-filters';
+
+interface OrderData {
+    customer_name: string;
+    code: string;
+    shipping_address?: {
+        phone?: string;
+    };
+    products?: Array<{
+        item_title?: string;
+        item_code?: string;
+    }>;
+    status_txt: string;
+    payment_status_txt: string;
+    part_status_txt: string;
+    created: number;
+}
+
+type Order = {
+    id: string;
+    payload: {
+        data: OrderData;
+    };
+};
 
 function page() {
-    const [selectedOrder, setSelectedOrder] = useState<any>(null);
+    const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
     const [open, setOpen] = React.useState(false);
+    const [searchQuery, setSearchQuery] = useState("");
+    const [showFilters, setShowFilters] = useState(false)
+
+    const [filters, setFilters] = useState({
+        date: "",
+        orderStatus: "All",
+        paymentStatus: "All",
+        shipmentStatus: "All",
+    });
 
     const {
         data: orders,
@@ -30,8 +63,100 @@ function page() {
         );
     }
 
+    const filteredOrders = React.useMemo(() => {
+        if (!orders) return [];
+
+        return orders.filter((order: any) => {
+            const o = order.payload.data;
+
+            // 🔍 SEARCH
+            const search = searchQuery.toLowerCase();
+
+            const matchesSearch =
+                o.customer_name?.toLowerCase().includes(search) ||
+                o.code?.toLowerCase().includes(search) ||
+                o.shipping_address?.phone?.toLowerCase().includes(search) ||
+                o.products?.[0]?.item_title?.toLowerCase().includes(search) ||
+                o.products?.[0]?.item_code?.toLowerCase().includes(search);
+
+            // 📅 DATE
+            const createdDate = new Date(Number(o.created) * 1000);
+
+            const matchesDate = filters.date
+                ? createdDate >= new Date(filters.date)
+                : true;
+
+            // 📦 ORDER STATUS
+            const matchesOrderStatus =
+                filters.orderStatus === "All" ||
+                o.status_txt === filters.orderStatus;
+
+            // 💳 PAYMENT STATUS
+            const matchesPaymentStatus =
+                filters.paymentStatus === "All" ||
+                o.payment_status_txt === filters.paymentStatus;
+
+            // 🚚 SHIPMENT STATUS
+            const matchesShipmentStatus =
+                filters.shipmentStatus === "All" ||
+                o.part_status_txt === filters.shipmentStatus;
+
+            return (
+                matchesSearch &&
+                matchesDate &&
+                matchesOrderStatus &&
+                matchesPaymentStatus &&
+                matchesShipmentStatus
+            );
+        });
+    }, [orders, searchQuery, filters]);
+
+    const clearFilters = () => {
+        setSearchQuery("");
+        setFilters({
+            date: "",
+            orderStatus: "All",
+            paymentStatus: "All",
+            shipmentStatus: "All",
+        });
+    };
+
+    const orderStatuses = React.useMemo(
+        () => [...new Set(orders?.map((o: Order) => o.payload.data.status_txt) || [])] as string[],
+        [orders]
+    );
+
+    const paymentStatuses = React.useMemo(
+        () => [...new Set(orders?.map((o: Order) => o.payload.data.payment_status_txt) || [])] as string[],
+        [orders]
+    );
+
+    const shipmentStatuses = React.useMemo(
+        () => [...new Set(orders?.map((o: Order) => o.payload.data.part_status_txt) || [])] as string[],
+        [orders]
+    );
+
     return (
         <>
+            <Card className="p-4 rounded-md">
+                <OrderFilters
+                    searchQuery={searchQuery}
+                    setSearchQuery={setSearchQuery}
+                    filters={filters}
+                    setFilters={setFilters}
+                    showFilters={showFilters}
+                    setShowFilters={setShowFilters}
+                    orderStatuses={orderStatuses}
+                    paymentStatuses={paymentStatuses}
+                    shipmentStatuses={shipmentStatuses}
+                />
+            </Card>
+
+            {/* Results Count */}
+            <div className="text-sm text-muted-foreground">
+                Showing {filteredOrders.length} of {orders?.length} orders
+            </div>
+
             <Card>
                 <CardHeader>
                     <CardTitle className="text-xl">Orders</CardTitle>
@@ -52,7 +177,7 @@ function page() {
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {orders?.map((order: any) => {
+                            {filteredOrders.map((order: any) => {
                                 const o = order.payload.data;
 
                                 return (

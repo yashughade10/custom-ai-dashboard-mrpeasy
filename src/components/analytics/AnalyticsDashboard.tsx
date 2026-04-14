@@ -67,6 +67,8 @@ export default function AnalyticsDashboard({ analytics, isLoading, error }: Anal
   const fulfillmentSamples = analytics.operations.order_fulfillment_time.samples || [];
   const fulfillmentMedian = median(fulfillmentSamples.map((sample) => sample.fulfillment_days));
 
+  const today = new Date().toISOString().split('T')[0];
+
   return (
     <div className="space-y-8">
       <SectionHeader
@@ -80,24 +82,28 @@ export default function AnalyticsDashboard({ analytics, isLoading, error }: Anal
           value={formatCurrency(analytics.revenue.totals.revenue, currency)}
           subtitle={`${analytics.revenue.totals.orders} orders`}
           icon={TrendingUp}
+          accentClass="bg-[#DBEAFE] text-[#1D4ED8]"
         />
         <MetricCard
           title="Average Order Value"
           value={formatCurrency(analytics.customers.average_order_value, currency)}
           subtitle="Across all orders"
           icon={Calendar}
+          accentClass="bg-[#FFEDD5] text-[#C2410C]"
         />
         <MetricCard
           title="Growth Trend"
           value={growthLabel}
           subtitle={`Prev: ${formatCurrency(growth.previous, currency)} | Current: ${formatCurrency(growth.current, currency)}`}
           icon={RefreshCw}
+          accentClass="bg-[#FEF9C3] text-[#A16207]"
         />
         <MetricCard
           title="Top Customers (80/20)"
           value={`${analytics.revenue.revenue_by_customer.pareto.customers_for_80_pct} of ${analytics.revenue.revenue_by_customer.pareto.total_customers}`}
           subtitle={`${analytics.revenue.revenue_by_customer.pareto.top_20_pct_customers_share_pct.toFixed(2)}% share`}
           icon={Users}
+          accentClass="bg-[#DCFCE7] text-[#166534]"
         />
       </div>
 
@@ -136,11 +142,12 @@ export default function AnalyticsDashboard({ analytics, isLoading, error }: Anal
                 { key: "orders", label: "Orders", align: "right" },
                 { key: "revenue", label: "Revenue", align: "right" },
               ]}
-              rows={analytics.revenue.over_time.day.map((point) => ({
+              rows={analytics.revenue.over_time.day.slice().reverse().map((point) => ({
                 date: point.day,
                 orders: formatNumber(point.orders),
                 revenue: formatCurrency(point.revenue, currency),
               }))}
+              rowClassName={(row) => (row.date === today ? "bg-yellow-100" : "")}
               emptyLabel="No daily revenue yet"
             />
           </CardContent>
@@ -158,7 +165,7 @@ export default function AnalyticsDashboard({ analytics, isLoading, error }: Anal
                 { key: "orders", label: "Orders", align: "right" },
                 { key: "revenue", label: "Revenue", align: "right" },
               ]}
-              rows={analytics.revenue.over_time.week.map((point) => ({
+              rows={analytics.revenue.over_time.week.slice().reverse().map((point) => ({
                 week: point.week,
                 orders: formatNumber(point.orders),
                 revenue: formatCurrency(point.revenue, currency),
@@ -180,7 +187,7 @@ export default function AnalyticsDashboard({ analytics, isLoading, error }: Anal
                 { key: "orders", label: "Orders", align: "right" },
                 { key: "revenue", label: "Revenue", align: "right" },
               ]}
-              rows={analytics.revenue.over_time.month.map((point) => ({
+              rows={analytics.revenue.over_time.month.slice().reverse().map((point) => ({
                 month: point.month,
                 orders: formatNumber(point.orders),
                 revenue: formatCurrency(point.revenue, currency),
@@ -401,7 +408,7 @@ export default function AnalyticsDashboard({ analytics, isLoading, error }: Anal
           icon={Users}
         />
       </div>
-      
+
       <SectionHeader
         title="Customer Analytics Charts"
         subtitle="Revenue concentration and customer contribution."

@@ -12,9 +12,10 @@ type SimpleTableProps = {
   columns: Column[];
   rows: Record<string, React.ReactNode>[];
   emptyLabel?: string;
+  rowClassName?: (row: Record<string, React.ReactNode>, index: number) => string;
 };
 
-export default function SimpleTable({ columns, rows, emptyLabel = "No data available" }: SimpleTableProps) {
+export default function SimpleTable({ columns, rows, emptyLabel = "No data available", rowClassName }: SimpleTableProps) {
   return (
     <div className="border rounded-lg overflow-hidden">
       <Table>
@@ -39,7 +40,7 @@ export default function SimpleTable({ columns, rows, emptyLabel = "No data avail
             </TableRow>
           ) : (
             rows.map((row, index) => (
-              <TableRow key={index}>
+              <TableRow key={index} className={rowClassName?.(row, index)}>
                 {columns.map((column) => (
                   <TableCell
                     key={column.key}
