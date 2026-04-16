@@ -283,6 +283,7 @@ export default function AnalyticsDashboard({ analytics, isLoading, error }: Anal
           //     : analytics.operations.order_fulfillment_time.note ?? "No delivered orders yet"
           // }
           icon={Clock}
+          accentClass="bg-[#FFEDD5] text-[#C2410C]"
         />
         {/* <MetricCard
           title="On-Time Delivery"
@@ -301,6 +302,7 @@ export default function AnalyticsDashboard({ analytics, isLoading, error }: Anal
           value={formatNumber(analytics.operations.production_cycle_time.manufacturing_orders_seen)}
           // subtitle={analytics.operations.production_cycle_time.note ?? "Manufacturing orders tracked"}
           icon={RefreshCw}
+          accentClass="bg-[#DBEAFE] text-[#1D4ED8]"
         />
       </div>
 
@@ -388,24 +390,29 @@ export default function AnalyticsDashboard({ analytics, isLoading, error }: Anal
           value={formatNumber(analytics.customers.repeat_customers.length)}
           subtitle="More than one order"
           icon={Users}
+          accentClass="bg-[#DCFCE7] text-[#166534]"
+
         />
         <MetricCard
           title="Customer Lifetime Value"
           value={formatCurrency(analytics.customers.clv_top_customers[0]?.clv ?? 0, currency)}
           subtitle={analytics.customers.clv_top_customers[0]?.customer_name ?? "Top customer"}
           icon={TrendingUp}
+          accentClass="bg-[#DBEAFE] text-[#1D4ED8]"
         />
         <MetricCard
           title="Average Order Value"
           value={formatCurrency(analytics.customers.average_order_value, currency)}
           subtitle="Total revenue / orders"
           icon={Package}
+          accentClass="bg-[#FFEDD5] text-[#C2410C]"
         />
         <MetricCard
           title="Total Customers"
           value={formatNumber(analytics.revenue.revenue_by_customer.pareto.total_customers)}
           subtitle="Unique customers"
           icon={Users}
+          accentClass="bg-[#FEF9C3] text-[#A16207]"
         />
       </div>
 

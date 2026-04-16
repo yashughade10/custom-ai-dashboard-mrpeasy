@@ -85,7 +85,7 @@ export default function AIAnalyticsDashboard({ report, isLoading, error }: AIAna
             <Sparkles className="h-5 w-5" /> Executive Summary
           </CardTitle>
           <CardDescription>
-            Generated {new Date(report.generatedAt).toLocaleString()} | Analysis window {formatDate(report.period.from)} - {formatDate(report.period.to)}
+            Generated {new Date(report.generatedAt).toLocaleString()}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
