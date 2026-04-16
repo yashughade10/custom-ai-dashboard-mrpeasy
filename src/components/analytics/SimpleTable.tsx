@@ -1,4 +1,5 @@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { cn } from "@/lib/utils";
 import React from "react";
 
 type Column = {
@@ -17,14 +18,14 @@ type SimpleTableProps = {
 
 export default function SimpleTable({ columns, rows, emptyLabel = "No data available", rowClassName }: SimpleTableProps) {
   return (
-    <div className="border rounded-lg overflow-hidden">
+    <div className="w-full min-w-0 rounded-lg border">
       <Table>
         <TableHeader className="bg-muted/50">
           <TableRow>
             {columns.map((column) => (
               <TableHead
                 key={column.key}
-                className={column.align === "right" ? "text-right" : column.className}
+                className={cn(column.align === "right" && "text-right", column.className)}
               >
                 {column.label}
               </TableHead>
@@ -44,7 +45,7 @@ export default function SimpleTable({ columns, rows, emptyLabel = "No data avail
                 {columns.map((column) => (
                   <TableCell
                     key={column.key}
-                    className={column.align === "right" ? "text-right" : undefined}
+                    className={cn(column.align === "right" && "text-right", column.className)}
                   >
                     {row[column.key] ?? "-"}
                   </TableCell>

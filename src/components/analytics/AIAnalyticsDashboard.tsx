@@ -270,20 +270,35 @@ export default function AIAnalyticsDashboard({ report, isLoading, error }: AIAna
         <SectionHeader title="Inventory Forecasting" subtitle="Predicted stockout and reorder suggestions for fast-moving SKUs." />
       </div>
 
-      <Card>
+      <Card className="min-w-0">
         <CardContent>
           <SimpleTable
             columns={[
-              { key: "sku", label: "SKU", className: "max-w-[120px] break-words whitespace-normal", },
-              { key: "stock", label: "Current Stock (Est)", align: "right" },
-              { key: "velocity", label: "Avg Daily Sales", align: "right" },
+              {
+                key: "sku",
+                label: "SKU",
+                className:
+                  "min-w-[10rem] w-[55vw] max-w-[55vw] whitespace-normal break-words sm:w-auto sm:max-w-none",
+              },
+              {
+                key: "stock",
+                label: "Current Stock (Est)",
+                align: "right",
+                className: "hidden sm:table-cell whitespace-nowrap",
+              },
+              {
+                key: "velocity",
+                label: "Avg Daily Sales",
+                align: "right",
+                className: "hidden md:table-cell whitespace-nowrap",
+              },
               { key: "stockout", label: "Predicted Stockout", align: "right" },
               { key: "reorder", label: "Suggested Reorder", align: "right" },
               { key: "risk", label: "Risk", align: "right" },
             ]}
             rows={report.forecasting.inventory.map((item) => ({
               sku: (
-                <div className="max-w-[300px] break-all whitespace-normal">
+                <div className="max-w-full md:max-w-[300px] break-words whitespace-normal">
                   {item.sku}
                 </div>
               ),
@@ -292,7 +307,14 @@ export default function AIAnalyticsDashboard({ report, isLoading, error }: AIAna
               stockout:
                 item.predictedStockoutDays === null
                   ? "N/A"
-                  : `${item.predictedStockoutDays}d (${item.predictedStockoutDate ?? "N/A"})`,
+                  : (
+                      <>
+                        <span className="sm:hidden">{item.predictedStockoutDays}d</span>
+                        <span className="hidden sm:inline">
+                          {item.predictedStockoutDays}d ({item.predictedStockoutDate ?? "N/A"})
+                        </span>
+                      </>
+                    ),
               reorder: formatNumber(item.suggestedReorderUnits),
               risk: (
                 <Badge

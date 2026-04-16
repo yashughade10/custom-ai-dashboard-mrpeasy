@@ -199,7 +199,7 @@ export default function AnalyticsDashboard({ analytics, isLoading, error }: Anal
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
-        <Card>
+        <Card className="min-w-0">
           <CardHeader>
             <CardTitle>Top Selling Products</CardTitle>
             <CardDescription>Ranked by revenue and quantity.</CardDescription>
@@ -209,7 +209,7 @@ export default function AnalyticsDashboard({ analytics, isLoading, error }: Anal
               <p className="mb-2 text-sm font-medium text-muted-foreground">By Revenue</p>
               <SimpleTable
                 columns={[
-                  { key: "product", label: "Product" },
+                  { key: "product", label: "Product", className: "max-w-[12rem] whitespace-normal break-words" },
                   { key: "revenue", label: "Revenue", align: "right" },
                   { key: "quantity", label: "Qty", align: "right" },
                 ]}
@@ -225,7 +225,7 @@ export default function AnalyticsDashboard({ analytics, isLoading, error }: Anal
               <p className="mb-2 text-sm font-medium text-muted-foreground">By Quantity</p>
               <SimpleTable
                 columns={[
-                  { key: "product", label: "Product" },
+                  { key: "product", label: "Product", className: "max-w-[12rem] whitespace-normal break-words" },
                   { key: "quantity", label: "Qty", align: "right" },
                   { key: "revenue", label: "Revenue", align: "right" },
                 ]}
@@ -240,7 +240,7 @@ export default function AnalyticsDashboard({ analytics, isLoading, error }: Anal
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="min-w-0">
           <CardHeader>
             <CardTitle>Revenue By Customer</CardTitle>
             <CardDescription>Top customers and revenue concentration.</CardDescription>
@@ -248,10 +248,10 @@ export default function AnalyticsDashboard({ analytics, isLoading, error }: Anal
           <CardContent className="space-y-4">
             <SimpleTable
               columns={[
-                { key: "customer", label: "Customer" },
+                { key: "customer", label: "Customer", className: "max-w-[12rem] whitespace-normal break-words" },
                 { key: "orders", label: "Orders", align: "right" },
                 { key: "revenue", label: "Revenue", align: "right" },
-                { key: "share", label: "Share", align: "right" },
+                { key: "share", label: "Share", align: "right", className: "hidden sm:table-cell" },
               ]}
               rows={analytics.revenue.revenue_by_customer.customers.map((customer) => ({
                 customer: customer.customer_name,
@@ -354,7 +354,7 @@ export default function AnalyticsDashboard({ analytics, isLoading, error }: Anal
       />
 
       <div className="grid gap-6 lg:grid-cols-2">
-        <Card>
+        <Card className="min-w-0">
           <CardHeader>
             <CardTitle>Fast Moving SKUs</CardTitle>
             <CardDescription>High frequency and quantity items.</CardDescription>
@@ -362,8 +362,8 @@ export default function AnalyticsDashboard({ analytics, isLoading, error }: Anal
           <CardContent>
             <SimpleTable
               columns={[
-                { key: "sku", label: "SKU" },
-                { key: "frequency", label: "Frequency", align: "right" },
+                { key: "sku", label: "SKU", className: "max-w-[12rem] whitespace-normal break-words" },
+                { key: "frequency", label: "Frequency", align: "right", className: "hidden sm:table-cell" },
                 { key: "quantity", label: "Quantity", align: "right" },
                 { key: "revenue", label: "Revenue", align: "right" },
               ]}
@@ -454,7 +454,7 @@ export default function AnalyticsDashboard({ analytics, isLoading, error }: Anal
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
-        <Card>
+        <Card className="min-w-0">
           <CardHeader>
             <CardTitle>Repeat Customers</CardTitle>
             <CardDescription>Customers with more than one order.</CardDescription>
@@ -462,9 +462,9 @@ export default function AnalyticsDashboard({ analytics, isLoading, error }: Anal
           <CardContent>
             <SimpleTable
               columns={[
-                { key: "customer", label: "Customer" },
-                { key: "orders", label: "Orders", align: "right" },
-                { key: "revenue", label: "Revenue", align: "right" },
+                { key: "customer", label: "Customer", className: "max-w-[12rem] whitespace-normal break-words" },
+                { key: "orders", label: "Orders", align: "right", className: "hidden sm:table-cell whitespace-nowrap" },
+                { key: "revenue", label: "Revenue", align: "right", className: "whitespace-nowrap" },
               ]}
               rows={analytics.customers.repeat_customers.map((customer) => ({
                 customer: customer.customer_name,
@@ -476,7 +476,7 @@ export default function AnalyticsDashboard({ analytics, isLoading, error }: Anal
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="min-w-0">
           <CardHeader>
             <CardTitle>Top Customer CLV</CardTitle>
             <CardDescription>Lifetime revenue per customer.</CardDescription>
@@ -484,9 +484,9 @@ export default function AnalyticsDashboard({ analytics, isLoading, error }: Anal
           <CardContent>
             <SimpleTable
               columns={[
-                { key: "customer", label: "Customer" },
-                { key: "orders", label: "Orders", align: "right" },
-                { key: "clv", label: "CLV", align: "right" },
+                { key: "customer", label: "Customer", className: "max-w-[12rem] whitespace-normal break-words" },
+                { key: "orders", label: "Orders", align: "right", className: "hidden sm:table-cell whitespace-nowrap" },
+                { key: "clv", label: "CLV", align: "right", className: "whitespace-nowrap" },
               ]}
               rows={analytics.customers.clv_top_customers.map((customer) => ({
                 customer: customer.customer_name,

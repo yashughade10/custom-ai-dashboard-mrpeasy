@@ -28,7 +28,7 @@ async function fetchAnalytics() {
 }
 
 async function fetchAIReport(refresh = false): Promise<AIAnalyticsReport> {
-  const response = await fetch(`/api/ai-report${refresh ? "?refresh=1" : ""}`);
+  const response = await fetch(`${API_BASE_URL}/ai-report${refresh ? "?refresh=1" : ""}`);
 
   if (!response.ok) {
     throw new Error("Failed to fetch AI analytics report");
@@ -44,7 +44,7 @@ async function fetchAIReport(refresh = false): Promise<AIAnalyticsReport> {
 }
 
 async function askAnalyticsQuestion(question: string): Promise<AIChatResponse> {
-  const response = await fetch("/api/ai-chat", {
+  const response = await fetch(`${API_BASE_URL}/ai-chat`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",

@@ -19,18 +19,18 @@ export default function OrderDetailsDialog({
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-3xl">
+      <DialogContent className="flex max-h-[calc(100dvh-2rem)] flex-col overflow-hidden sm:max-w-3xl">
         <DialogHeader>
           <DialogTitle className="text-xl font-semibold">
             Order Details - {o.code}
           </DialogTitle>
         </DialogHeader>
 
-        <div className="mt-2 space-y-6">
-          <div className="grid grid-cols-2 gap-4">
+        <div className="mt-2 flex min-h-0 flex-1 flex-col gap-6 overflow-y-auto">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div>
               <p className="text-sm text-muted-foreground">Customer</p>
-              <p className="font-medium">{o.customer_name}</p>
+              <p className="break-words font-medium">{o.customer_name}</p>
             </div>
 
             <div>
@@ -64,13 +64,13 @@ export default function OrderDetailsDialog({
           <div>
             <p className="mb-2 font-semibold">Products</p>
 
-            <div className="overflow-hidden rounded-lg border">
-              <table className="w-full text-sm">
-                <thead className="bg-gray-100">
+            <div className="max-h-[45dvh] overflow-auto rounded-lg border">
+              <table className="min-w-[42rem] w-full text-sm">
+                <thead className="bg-muted/50">
                   <tr>
                     <th className="p-2 text-left">Item</th>
                     <th className="p-2 text-left">Qty</th>
-                    <th className="p-2 text-left">Price</th>
+                    <th className="hidden p-2 text-left sm:table-cell">Price</th>
                     <th className="p-2 text-left">Total</th>
                     <th className="p-2 text-left">Status</th>
                   </tr>
@@ -83,7 +83,7 @@ export default function OrderDetailsDialog({
                         <p className="text-xs text-muted-foreground">{p.item_title}</p>
                       </td>
                       <td className="p-2">{p.quantity}</td>
-                      <td className="p-2">
+                      <td className="hidden p-2 sm:table-cell">
                         {p.item_price_cur} {o.currency}
                       </td>
                       <td className="p-2">
@@ -99,7 +99,7 @@ export default function OrderDetailsDialog({
             </div>
           </div>
 
-          <div className="grid grid-cols-3 gap-4 border-t pt-4">
+          <div className="grid grid-cols-1 gap-4 border-t pt-4 sm:grid-cols-3">
             <div>
               <p className="text-sm text-muted-foreground">Total Cost</p>
               <p className="font-semibold">
@@ -123,7 +123,7 @@ export default function OrderDetailsDialog({
           {o.shipping_address && (
             <div className="border-t pt-4">
               <p className="mb-2 font-semibold">Shipping Address</p>
-              <p className="text-sm">
+              <p className="break-words text-sm">
                 {o.shipping_address.street_line_1}, {o.shipping_address.city}, {o.shipping_address.state}, {o.shipping_address.postal_code}, {o.shipping_address.country_code}
               </p>
             </div>
