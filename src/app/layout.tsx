@@ -21,6 +21,13 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Vaclift AI Dashboard",
   description: "AI Dashboard for Vaclift",
+  openGraph: {
+    title: "Vaclift AI Dashboard",
+    description:
+      "Monitor, analyze, and manage Vaclift systems with our AI-powered dashboard. Built for efficiency and real-time insights.",
+    url: "https://dashboard.vacliftaustralia.com",
+    images: ['/favicon2.ico'],
+  },
 };
 
 export default function RootLayout({
