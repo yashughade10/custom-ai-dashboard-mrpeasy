@@ -1,6 +1,7 @@
 "use client";
 
 import MetricCard from "@/components/analytics/MetricCard";
+import PaginatedSimpleTable from "@/components/analytics/PaginatedSimpleTable";
 import SectionHeader from "@/components/analytics/SectionHeader";
 import SimpleTable from "@/components/analytics/SimpleTable";
 import OrdersOverTimeChart from "@/components/analytics/charts/OrdersOverTimeChart";
@@ -136,7 +137,7 @@ export default function AnalyticsDashboard({ analytics, isLoading, error }: Anal
             <CardDescription>Daily totals based on order created date.</CardDescription>
           </CardHeader>
           <CardContent>
-            <SimpleTable
+            <PaginatedSimpleTable
               columns={[
                 { key: "date", label: "Date" },
                 { key: "orders", label: "Orders", align: "right" },
@@ -149,6 +150,7 @@ export default function AnalyticsDashboard({ analytics, isLoading, error }: Anal
               }))}
               rowClassName={(row) => (row.date === today ? "bg-yellow-100" : "")}
               emptyLabel="No daily revenue yet"
+              initialPageSize={10}
             />
           </CardContent>
         </Card>
@@ -159,7 +161,7 @@ export default function AnalyticsDashboard({ analytics, isLoading, error }: Anal
             <CardDescription>Week totals by ISO week.</CardDescription>
           </CardHeader>
           <CardContent>
-            <SimpleTable
+            <PaginatedSimpleTable
               columns={[
                 { key: "week", label: "Week" },
                 { key: "orders", label: "Orders", align: "right" },
@@ -171,6 +173,7 @@ export default function AnalyticsDashboard({ analytics, isLoading, error }: Anal
                 revenue: formatCurrency(point.revenue, currency),
               }))}
               emptyLabel="No weekly revenue yet"
+              initialPageSize={10}
             />
           </CardContent>
         </Card>
@@ -181,7 +184,7 @@ export default function AnalyticsDashboard({ analytics, isLoading, error }: Anal
             <CardDescription>Monthly totals based on order created date.</CardDescription>
           </CardHeader>
           <CardContent>
-            <SimpleTable
+            <PaginatedSimpleTable
               columns={[
                 { key: "month", label: "Month" },
                 { key: "orders", label: "Orders", align: "right" },
@@ -193,6 +196,7 @@ export default function AnalyticsDashboard({ analytics, isLoading, error }: Anal
                 revenue: formatCurrency(point.revenue, currency),
               }))}
               emptyLabel="No monthly revenue yet"
+              initialPageSize={10}
             />
           </CardContent>
         </Card>
