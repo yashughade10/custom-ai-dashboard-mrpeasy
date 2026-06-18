@@ -2,7 +2,7 @@
 
 ## 1. Introduction
 
-This document provides a step-by-step development implementation plan for transforming the current Vaclift AI Dashboard into a **Unified Operations & Smart Inventory Platform** that replaces both HubSpot (CRM) and MRPeasy (ERP). Each phase is broken into concrete development tasks, organized by priority and dependency.
+This document provides a step-by-step development implementation plan for transforming the current Vaclift AI Dashboard into a **Unified Operations & Smart Inventory Platform** that replaces **HubSpot** (CRM), **MRPeasy** (ERP), and **Xero** (Accounting). Each phase is broken into concrete development tasks, organized by priority and dependency.
 
 > **Note**: This plan does not include timelines. All phases are ordered by dependency — each phase must be completed before the next begins, unless explicitly marked as parallelizable.
 
@@ -17,9 +17,10 @@ This document provides a step-by-step development implementation plan for transf
 | **Phase 3** | Manufacturing & Production | BOM, work orders, production scheduling, quality control | Phase 2 |
 | **Phase 4** | Live Shopify Integration | Direct Shopify webhooks, bi-directional sync, auto-triggers | Phase 2 |
 | **Phase 5** | Customer Management & CRM | Contact management, lead pipeline, interactions, deals, quotes | Phase 1 |
+| **Phase 5A** | Accounting & Finance | Chart of accounts, invoicing, payments, bank reconciliation, GL, financial reports | Phase 1, Phase 2 |
 | **Phase 6** | Email Marketing Engine | Templates, campaigns, bulk sending, open/click tracking | Phase 5 |
 | **Phase 7** | Enhanced AI & Forecasting | Advanced ML models, real inventory data, automated reordering | Phase 2, Phase 4 |
-| **Phase 8** | Data Migration | HubSpot + MRPeasy data export, cleaning, import, parallel testing | Phase 5, Phase 3 |
+| **Phase 8** | Data Migration | HubSpot + MRPeasy + Xero data export, cleaning, import, reconciliation, parallel testing | Phase 5, Phase 3, Phase 5A |
 | **Phase 9** | Security Hardening & Infrastructure | Production deployment, backups, monitoring, WAF, audit trail | All phases |
 
 ```
@@ -35,6 +36,9 @@ Phase 1 (Foundation)
     │       │       │
     │       │       └──→ Phase 7 (Enhanced AI)
     │       │
+    │       └──→ Phase 5A (Accounting & Finance)
+    │               │
+    │               └──→ Phase 8 (Data Migration)
     │
     └──→ Phase 5 (CRM & Contacts)
             │
@@ -461,6 +465,148 @@ Build a full contact management system that replaces HubSpot's core CRM function
 
 ---
 
+## 7.5. Phase 5A — Accounting & Finance (Replace Xero)
+
+### Objective
+Build a full accounting system with double-entry bookkeeping, invoicing, payments, bank reconciliation, and financial reporting that replaces Xero.
+
+### 7.5.1 Backend Tasks
+
+#### 7.5.1.1 Database Schema — Accounting Tables
+- Create `accounts` table (code, name, type, sub_type, tax_type, xero_account_id)
+- Create `tax_rates` table (name, rate, tax_type, xero_tax_type)
+- Create `invoices` + `invoice_lines` tables (sales + purchase invoices)
+- Create `payments` table (payment against invoices, bank account linkage)
+- Create `credit_notes` table (sales + purchase credit notes)
+- Create `bank_transactions` table (spend/receive, reconciliation status)
+- Create `journal_entries` + `journal_lines` tables (double-entry GL)
+- Create `expense_claims` + `expense_claim_lines` tables
+- Create `recurring_invoices` table
+- Add migration script with forward/rollback capability
+
+#### 7.5.1.2 Chart of Accounts Service
+- `createAccount(data)` — create account with code uniqueness validation
+- `updateAccount(id, data)` — update account details
+- `getAccounts(filters)` — list by type, active status
+- `getAccountBalances(dateRange)` — trial balance data
+- `seedDefaultAccounts()` — seed standard Australian chart of accounts
+
+#### 7.5.1.3 Invoice Service
+- `createInvoice(data)` — create sales/purchase invoice with lines, auto-generate number
+- `updateInvoice(id, data)` — edit draft invoices only
+- `submitInvoice(id)` — move from draft to submitted/sent
+- `voidInvoice(id)` — void with reversing journal entry
+- `getInvoices(filters)` — paginated list with type/status/contact/date filters
+- `getInvoice(id)` — full detail with lines, payments, credit notes applied
+- `generateInvoicePDF(id)` — PDF generation for email/download
+- `sendInvoice(id)` — email invoice PDF to contact
+- Auto-generate GL journal entries on invoice submission
+
+#### 7.5.1.4 Payment Service
+- `recordPayment(invoiceId, data)` — record full or partial payment
+- `getPayments(filters)` — payment history with date/contact/method filters
+- `voidPayment(id)` — reverse payment with journal entry
+- Auto-update invoice status (partially_paid → paid)
+- Auto-generate GL journal entries on payment recording
+
+#### 7.5.1.5 Bank Reconciliation Service
+- `importBankTransactions(data)` — import bank statement (CSV/OFX)
+- `getBankTransactions(filters)` — list unreconciled/reconciled transactions
+- `reconcileTransaction(bankTxId, targetType, targetId)` — match bank transaction to invoice/payment
+- `getReconciliationSummary(bankAccountId)` — reconciled vs unreconciled totals
+
+#### 7.5.1.6 General Ledger Service
+- `createJournalEntry(data)` — manual journal entry (debits must equal credits)
+- `getJournalEntries(filters)` — list with date/account/source filters
+- `getAccountLedger(accountId, dateRange)` — all transactions for an account
+- `getTrialBalance(asOfDate)` — trial balance report data
+
+#### 7.5.1.7 Financial Reports Service
+- `getProfitAndLoss(dateRange)` — revenue - expenses breakdown
+- `getBalanceSheet(asOfDate)` — assets, liabilities, equity snapshot
+- `getCashFlowStatement(dateRange)` — operating, investing, financing activities
+- `getAgedReceivables(asOfDate)` — overdue invoices by aging bucket (current, 30, 60, 90+)
+- `getAgedPayables(asOfDate)` — overdue bills by aging bucket
+- `getGSTReport(dateRange)` — GST collected vs paid for BAS lodgement
+
+#### 7.5.1.8 API Routes — Accounting
+- Full CRUD for accounts: `/api/accounts`
+- Full CRUD for tax rates: `/api/tax-rates`
+- Full CRUD for invoices: `/api/invoices`
+- `POST /api/invoices/:id/send` — email invoice
+- `GET /api/invoices/:id/pdf` — download PDF
+- Full CRUD for payments: `/api/payments`
+- Full CRUD for credit notes: `/api/credit-notes`
+- Bank transactions: `/api/bank-transactions`
+- `POST /api/bank-transactions/import` — import bank statement
+- `POST /api/bank-transactions/:id/reconcile` — reconcile
+- Journal entries: `/api/journal-entries`
+- `GET /api/reports/profit-loss` — P&L report
+- `GET /api/reports/balance-sheet` — balance sheet
+- `GET /api/reports/cash-flow` — cash flow
+- `GET /api/reports/aged-receivables` — aged receivables
+- `GET /api/reports/aged-payables` — aged payables
+- `GET /api/reports/gst` — GST/BAS report
+- `GET /api/reports/trial-balance` — trial balance
+
+### 7.5.2 Frontend Tasks
+
+#### 7.5.2.1 Accounting Dashboard
+- New page: `/dashboard/accounting`
+- Summary cards: Total receivables, Total payables, Bank balances, P&L this month
+- Cash flow mini chart
+- Overdue invoices alert list
+- Recent transactions feed
+
+#### 7.5.2.2 Invoicing Page
+- New page: `/dashboard/accounting/invoices`
+- Invoice list with tabs: All, Draft, Sent, Overdue, Paid
+- Create invoice form: select contact, add line items (description, qty, price, account, tax)
+- Invoice preview with print/PDF/email actions
+- Payment recording from invoice detail view
+- Invoice status workflow visualization
+
+#### 7.5.2.3 Bills (Purchase Invoices) Page
+- New page: `/dashboard/accounting/bills`
+- Bills list with status filters
+- Create bill form: select supplier, add lines, link to PO
+- Bill approval workflow (if RBAC requires it)
+- Record payment against bill
+
+#### 7.5.2.4 Bank Reconciliation Page
+- New page: `/dashboard/accounting/bank`
+- Bank account selector
+- Unreconciled transactions list
+- Matching interface: bank transaction ↔ invoice/payment
+- One-click reconcile for exact matches
+- Manual matching for partial/split transactions
+- Reconciliation summary and statement balance
+
+#### 7.5.2.5 Chart of Accounts Page
+- New page: `/dashboard/accounting/chart-of-accounts`
+- Hierarchical account list grouped by type (Asset, Liability, Equity, Revenue, Expense)
+- Create/edit account form
+- Account balance display
+
+#### 7.5.2.6 Financial Reports Page
+- New page: `/dashboard/accounting/reports`
+- Report selector: P&L, Balance Sheet, Cash Flow, Aged Receivables, Aged Payables, GST, Trial Balance
+- Date range picker for each report
+- Printable/exportable (PDF, CSV) report output
+- Drill-down from report line items to underlying transactions
+
+#### 7.5.2.7 Expense Claims Page
+- New page: `/dashboard/accounting/expenses`
+- Submit expense form with receipt upload
+- Expense list with status badges
+- Admin approval workflow
+
+#### 7.5.2.8 Sidebar Navigation Update
+- Add **Accounting** group to sidebar:
+  - Dashboard, Invoices, Bills, Bank, Chart of Accounts, Reports, Expenses
+
+---
+
 ## 8. Phase 6 — Email Marketing Engine
 
 ### Objective
@@ -592,7 +738,7 @@ Upgrade the AI forecasting engine to use real inventory data, advanced ML models
 ## 10. Phase 8 — Data Migration
 
 ### Objective
-Safely migrate all historical data from HubSpot and MRPeasy into the new unified system.
+Safely migrate all historical data from **HubSpot**, **MRPeasy**, and **Xero** into the new unified system.
 
 ### 10.1 Pre-Migration Tasks
 
@@ -610,11 +756,25 @@ Safely migrate all historical data from HubSpot and MRPeasy into the new unified
   - Work orders & production history
   - Purchase orders
   - Supplier information
+- Export all data from Xero via Accounting API (OAuth 2.0):
+  - Chart of Accounts (`/Accounts`)
+  - Contacts — customers & suppliers (`/Contacts`)
+  - Sales Invoices & Purchase Bills (`/Invoices`)
+  - Credit Notes (`/CreditNotes`)
+  - Payments (`/Payments`)
+  - Bank Transactions (`/BankTransactions`)
+  - Bank Transfers (`/BankTransfers`)
+  - Manual Journals (`/ManualJournals`)
+  - Tax Rates (`/TaxRates`)
+  - Expense Claims (`/ExpenseClaims`)
+  - Repeating Invoices (`/RepeatingInvoices`)
+  - Report snapshots: Trial Balance, P&L, Balance Sheet (for reconciliation)
 - Document all data formats, field mappings, and relationships
 
 #### 10.1.2 Field Mapping Document
 - Create detailed mapping: HubSpot field → New system field
 - Create detailed mapping: MRPeasy field → New system field
+- Create detailed mapping: Xero field → New system field
 - Identify unmappable fields → decide: create new fields or discard
 - Identify data type conversions (dates, currencies, enums)
 
@@ -629,6 +789,12 @@ Safely migrate all historical data from HubSpot and MRPeasy into the new unified
   - Read MRPeasy export → transform → insert into `products`, `inventory_stock`, `work_orders`, `suppliers`, `purchase_orders`
   - Convert MRPeasy order format to new `orders` format
   - Reconstruct BOM relationships
+- Create `migration/xero-import.js`:
+  - Read Xero export → transform → insert into `accounts`, `tax_rates`, `invoices`, `payments`, `bank_transactions`, `journal_entries`, `credit_notes`, `expense_claims`
+  - **Migration order**: Tax Rates → Chart of Accounts → Contacts (merge with HubSpot) → Invoices → Payments → Credit Notes → Bank Transactions → Journal Entries → Expense Claims
+  - Handle Xero ContactID → system contact_id mapping (merge with HubSpot/MRPeasy contacts by email)
+  - Preserve Xero source IDs in `xero_*_id` columns for audit trail
+  - Handle multi-currency conversions (store original currency + exchange rate)
 - Create `migration/shopify-initial-sync.js`:
   - Pull all products from Shopify API
   - Pull all orders from Shopify API
@@ -641,14 +807,21 @@ Safely migrate all historical data from HubSpot and MRPeasy into the new unified
 - Validate email addresses
 - Fix character encoding issues
 - Standardize date formats to ISO
-- Reconcile order histories between HubSpot and MRPeasy
+- Reconcile order histories between HubSpot, MRPeasy, and Xero
+- Cross-reference contacts across all 3 platforms (email + name matching)
+- Validate Xero account codes are valid in new chart of accounts
 
 #### 10.2.3 Validation Suite
 - Row count validation: source count = destination count
 - Revenue reconciliation: total revenue in MRPeasy = total revenue in new system
+- **Xero financial reconciliation**:
+  - Trial balance in Xero = trial balance in new system (as of migration date)
+  - Total accounts receivable in Xero = sum of unpaid sales invoices in new system
+  - Total accounts payable in Xero = sum of unpaid purchase bills in new system
+  - Bank account balances match
 - Contact completeness check: no orphaned records
 - Referential integrity check: all foreign keys valid
-- Sample-based spot checks: randomly verify 50 records manually
+- Sample-based spot checks: randomly verify 50 records per platform manually
 
 ### 10.3 Execution Strategy
 
@@ -671,7 +844,8 @@ Safely migrate all historical data from HubSpot and MRPeasy into the new unified
 - Switch Shopify webhooks to point to new system
 - Verify all integrations are operational
 - Decommission Zapier webhooks to MRPeasy
-- Keep HubSpot/MRPeasy in read-only mode for 30 days (safety net)
+- Disable Xero integrations / switch to read-only
+- Keep HubSpot/MRPeasy/Xero in read-only mode for 30 days (safety net)
 
 ---
 
@@ -811,6 +985,10 @@ The following existing capabilities carry forward without major changes:
 | Shopify API rate limits during sync | Medium | Medium | Queue-based sync with backoff + batch operations |
 | MRPeasy API lacks export for all needed data | Medium | High | Early discovery phase to catalog all available data |
 | HubSpot export misses email thread content | Low | Medium | Document what cannot be migrated, set expectations |
+| Xero API rate limits during bulk export | Medium | Medium | Use pagination + token refresh handling + throttled requests |
+| Xero financial data doesn't balance post-migration | Medium | High | Trial balance reconciliation gate — block cutover until balanced |
+| Xero multi-currency transactions cause rounding issues | Medium | Medium | Store original currency + exchange rate, reconcile per currency |
+| Contact duplication across HubSpot, MRPeasy, Xero | High | Medium | Email-based dedup with manual review for conflicts |
 | AI model costs increase with production use | Medium | Medium | Start with free models, monitor usage, budget for paid |
 | Manufacturing workflows don't match Vaclift process | Medium | High | Discovery interviews with workshop staff before building Phase 3 |
 | Performance degrades with larger dataset | Low | Medium | Database indexing strategy, query optimization, read replicas |

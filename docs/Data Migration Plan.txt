@@ -1,0 +1,499 @@
+================================================================================
+        DATA MIGRATION PLAN — HUBSPOT + MRPEASY + XERO
+        Vaclift Unified Operations & Smart Inventory Platform
+================================================================================
+
+
+OVERVIEW
+--------
+
+We are replacing 3 third-party platforms with our own custom-built system:
+
+  1. HubSpot    — CRM (contacts, deals, emails, campaigns)
+  2. MRPeasy    — ERP (orders, products, inventory, manufacturing, suppliers)
+  3. Xero       — Accounting (invoices, payments, bank transactions, reports)
+
+All historical data from these 3 platforms must be migrated into our new
+unified database. Shopify stays as the storefront but will be directly
+integrated (replacing the current Zapier middleman).
+
+
+================================================================================
+SECTION 1: CREDENTIALS & ACCESS REQUIRED FROM THE CLIENT
+================================================================================
+
+We need the following credentials and access from the client before we can
+begin any migration work. Please share these securely (password manager or
+encrypted channel — never over plain email).
+
+
+FROM HUBSPOT
+~~~~~~~~~~~~~
+
+  1. HubSpot Account Login
+     - Admin-level email and password for HubSpot account
+     - This is needed to create the API credentials below
+
+  2. HubSpot Private App Access Token
+     - We need a Private App created in HubSpot with the following scopes:
+         * crm.objects.contacts.read
+         * crm.objects.companies.read
+         * crm.objects.deals.read
+         * crm.objects.owners.read
+         * sales-email-read
+         * crm.objects.marketing.read (if email marketing is used)
+         * content (for email templates/campaigns)
+     - This gives us a Bearer token to pull all CRM data via API
+
+  3. HubSpot Portal ID (Hub ID)
+     - Found in account settings, top right corner of HubSpot dashboard
+     - Needed to target the correct HubSpot account
+
+
+FROM MRPEASY
+~~~~~~~~~~~~~
+
+  4. MRPeasy Account Login
+     - Admin-level username and password
+     - Needed for both API access and manual CSV exports
+
+  5. MRPeasy API Key
+     - Generated from MRPeasy Settings > Integrations > API
+     - Provides programmatic access to orders, products, inventory, etc.
+
+  6. MRPeasy Subdomain / Account URL
+     - The URL the client uses to access MRPeasy (e.g., vaclift.mrpeasy.com)
+
+  7. MRPeasy CSV Exports (if API is limited)
+     - Some MRPeasy data may not be fully available via API
+     - In that case, we will need the client to export CSVs from:
+         * Sales Orders (all historical)
+         * Products list
+         * Bills of Materials
+         * Current inventory levels (per warehouse)
+         * Work orders / production history
+         * Purchase orders
+         * Supplier list
+         * Stock movement history
+
+
+FROM XERO
+~~~~~~~~~~
+
+  8. Xero Organisation Login
+     - Admin-level email and password for the Xero organisation
+     - Needed to authorise our migration app via OAuth
+
+  9. Xero OAuth 2.0 App Credentials
+     - We will create a "Custom Connection" or "Web App" in the Xero
+       Developer Portal (developer.xero.com)
+     - The client must authorise this app to access their Xero organisation
+     - This gives us:
+         * Client ID
+         * Client Secret
+         * Authorised Tenant ID (their Xero organisation ID)
+     - Alternatively, the client can create the app themselves and share
+       the Client ID + Client Secret with us
+
+  10. Xero Organisation Name and Region
+      - Needed to confirm tax settings (Australian GST assumed)
+      - Confirm whether multi-currency is in use
+
+  11. Xero Report Exports (for reconciliation)
+      - We need the client to export the following reports as PDFs or CSVs
+        from Xero, as of a specific cutoff date we agree on:
+          * Trial Balance
+          * Profit & Loss (current financial year)
+          * Balance Sheet
+          * Aged Receivables Summary
+          * Aged Payables Summary
+      - These are used to verify our migration is financially accurate
+
+
+FROM SHOPIFY
+~~~~~~~~~~~~~
+
+  12. Shopify Store URL
+      - e.g., vaclift.myshopify.com
+
+  13. Shopify Admin API Access Token
+      - Created from Shopify Admin > Settings > Apps > Develop Apps
+      - Scopes needed:
+          * read_products, write_products
+          * read_orders
+          * read_customers
+          * read_inventory, write_inventory
+          * read_locations
+      - This is for the initial data sync and ongoing integration
+
+  14. Shopify Webhook Secret
+      - For verifying incoming webhooks from Shopify (HMAC validation)
+      - Generated when we register webhooks via the API
+
+
+GENERAL ACCESS
+~~~~~~~~~~~~~~~
+
+  15. Database Access (our existing system)
+      - TiDB Cloud connection credentials (host, port, user, password, database)
+      - We already have these, but confirming they allow schema changes
+
+  16. Email Service (Resend)
+      - Existing Resend API key (we already have this)
+      - Confirm the sending domain is verified for new email types
+
+  17. Staging/Test Environment
+      - We will set up a separate staging database
+      - The client does NOT need to provide anything for this
+
+
+SUMMARY OF CREDENTIALS NEEDED
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+  Platform     What We Need                              Who Creates It
+  ----------   ----------------------------------------  ----------------
+  HubSpot      Private App Token + Portal ID             Client or us
+  MRPeasy      API Key + Admin Login + CSVs (maybe)      Client
+  Xero         OAuth App (Client ID + Secret) + Reports  Us (client authorises)
+  Shopify      Admin API Token + Webhook Secret           Client or us
+  TiDB Cloud   Connection string (already have)           Already available
+  Resend       API Key (already have)                     Already available
+
+
+================================================================================
+SECTION 2: WHAT DATA WE PULL FROM EACH PLATFORM
+================================================================================
+
+
+FROM HUBSPOT (CRM)
+~~~~~~~~~~~~~~~~~~~
+
+  - All contacts (customers, leads, prospects) with custom fields
+  - All companies
+  - All deals (pipeline stages, values, close dates)
+  - All activities: calls, emails, meetings, notes
+  - Email campaign history (templates, send logs, open/click data)
+  - Contact lists and segments
+
+
+FROM MRPEASY (ERP)
+~~~~~~~~~~~~~~~~~~~
+
+  - All sales orders (full history)
+  - Product catalog (SKUs, names, pricing)
+  - Bills of Materials (component trees)
+  - Current inventory levels (per warehouse)
+  - Historical stock movements
+  - All work orders and production history
+  - All purchase orders with goods receipts
+  - Supplier directory (contact info, lead times)
+
+
+FROM XERO (ACCOUNTING)
+~~~~~~~~~~~~~~~~~~~~~~~
+
+  - Chart of Accounts (all account codes, names, types)
+  - Tax rates and GST configuration
+  - All contacts (customers and suppliers — these overlap with HubSpot)
+  - All sales invoices with line items
+  - All purchase bills with line items
+  - All credit notes (sales and purchase)
+  - All payments (linked to invoices)
+  - All bank transactions
+  - All bank transfers
+  - All manual journal entries
+  - All expense claims
+  - Repeating (recurring) invoice templates
+  - Financial report snapshots for reconciliation (Trial Balance, P&L, Balance Sheet)
+
+
+================================================================================
+SECTION 3: MIGRATION ORDER (STEP BY STEP)
+================================================================================
+
+The migration must happen in a specific order because later data depends on
+earlier data. For example, we cannot import invoices until contacts and
+products are already in the system.
+
+
+  STEP 1 — FOUNDATION (no platform dependency)
+  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  - Create user accounts in the new system
+  - Set up warehouse records (from MRPeasy configuration)
+  - Import tax rates (from Xero)
+  - Import chart of accounts (from Xero)
+
+  This step must complete first because invoices, payments, and journal
+  entries all reference accounts and tax rates.
+
+
+  STEP 2 — CONTACTS (cross-platform, this is the hardest part)
+  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  - Import HubSpot contacts first (richest CRM data)
+  - Then match MRPeasy customers by email address
+      * If match found: merge the records (add MRPeasy info to existing contact)
+      * If no match: create a new contact
+  - Then match Xero contacts by email address
+      * If match found: merge (add Xero ID to existing contact)
+      * If no match: try matching by company name + last name
+      * If still no match: create a new contact
+  - Then match Shopify customers by email address
+      * If match found: add Shopify ID
+      * If no match: create a new contact
+  - Flag any ambiguous matches for manual review by the client
+
+  WHY THIS IS TRICKY: The same customer may exist in all 3 platforms with
+  slightly different names, emails, or spellings. We use email as the
+  primary matching key, with name as a fallback.
+
+
+  STEP 3 — PRODUCTS & INVENTORY (from MRPeasy)
+  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  - Import all products (SKU, name, pricing)
+  - Import Bills of Materials (component trees)
+  - Import current inventory levels per warehouse
+  - Import historical stock movements
+  - Import supplier directory
+
+
+  STEP 4 — ORDERS & OPERATIONS (from MRPeasy)
+  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  - Import all historical sales orders
+  - Import all work orders and production history
+  - Import all purchase orders and goods receipts
+
+
+  STEP 5 — FINANCIAL DATA (from Xero)
+  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  This is the most sensitive step. Financial data must be accurate.
+
+  Migration sub-order within this step:
+    a) Sales invoices (with line items)
+    b) Purchase bills (with line items)
+    c) Credit notes
+    d) Payments (linked to their invoices)
+    e) Bank transactions
+    f) Manual journal entries
+    g) Expense claims
+    h) Recurring invoice templates
+
+  After this step, we run the financial reconciliation checks (see Section 5).
+
+
+  STEP 6 — CRM HISTORY (from HubSpot)
+  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  - Import all deals (pipeline stages, values)
+  - Import all interaction history (calls, emails, meetings, notes)
+  - Import quotes
+  - Import email campaign data (templates, send logs)
+
+
+  STEP 7 — SHOPIFY SYNC
+  ~~~~~~~~~~~~~~~~~~~~~~~
+  - Pull all current products from Shopify
+  - Pull all current orders from Shopify
+  - Pull current inventory levels
+  - Link with already-migrated data
+
+
+================================================================================
+SECTION 4: CONTACT DEDUPLICATION — HOW IT WORKS
+================================================================================
+
+The same person or company often exists in multiple platforms. Here is how
+we handle duplicates:
+
+
+  PRIMARY MATCHING KEY:  Email address (case-insensitive, trimmed)
+
+  SECONDARY MATCHING:   Company name + last name (for contacts without email)
+
+  FUZZY MATCHING:       Names that are very similar but not identical
+                        (e.g., "John Smith" vs "Jon Smith") are flagged
+                        for manual review — we do NOT auto-merge these.
+
+
+  WHAT GETS MERGED:
+  - If the same email exists in HubSpot and Xero, we create ONE contact
+    record that has data from both:
+      * CRM data (lifecycle stage, lead score) from HubSpot
+      * Financial data (invoices, payments) linked via Xero ID
+      * Order data linked via MRPeasy
+      * Shopify customer ID linked for storefront
+
+  WHAT GETS FLAGGED FOR MANUAL REVIEW:
+  - Same phone number but different email
+  - Same company name but different person name
+  - Very similar names (possible typos)
+  - Contacts that exist in Xero but not HubSpot (may be supplier-only)
+
+
+  TRACEABILITY:
+  Every contact in the new system keeps all original IDs:
+    * hubspot_contact_id
+    * mrpeasy_customer_id
+    * xero_contact_id
+    * shopify_customer_id
+  This means we can always trace back to the original record if needed.
+
+
+================================================================================
+SECTION 5: FINANCIAL RECONCILIATION (XERO DATA VERIFICATION)
+================================================================================
+
+Before we go live, the financial data MUST balance. We cannot have
+discrepancies in accounting data — this could cause compliance and
+tax reporting issues.
+
+
+  CHECK 1 — TRIAL BALANCE
+  The total debits must equal total credits in the new system.
+  We compare against the Xero Trial Balance report.
+  Tolerance: exactly zero. Must match perfectly.
+
+  CHECK 2 — ACCOUNTS RECEIVABLE
+  The total unpaid amount on sales invoices in the new system must match
+  the Xero Aged Receivables total.
+  Tolerance: 1 cent (for rounding).
+
+  CHECK 3 — ACCOUNTS PAYABLE
+  The total unpaid amount on purchase bills in the new system must match
+  the Xero Aged Payables total.
+  Tolerance: 1 cent (for rounding).
+
+  CHECK 4 — BANK BALANCES
+  Each bank account balance in the new system must match Xero.
+  Tolerance: 1 cent (for rounding).
+
+  CHECK 5 — INVOICE COUNT
+  The number of invoices by status (draft, sent, paid, overdue, voided)
+  must exactly match between Xero and the new system.
+
+  CHECK 6 — PAYMENT COUNT
+  The total number of payments must match.
+
+
+  IF ANY CHECK FAILS:
+  1. We generate a discrepancy report showing exactly which accounts or
+     records don't match
+  2. We investigate the cause (usually rounding, timezone differences,
+     or records that didn't export cleanly)
+  3. We fix the migration script and re-run on the staging environment
+  4. We re-check until everything balances
+  5. We do NOT proceed to go-live until all checks pass
+
+
+================================================================================
+SECTION 6: EXECUTION PLAN — 3 STAGES
+================================================================================
+
+
+  STAGE 1 — STAGING MIGRATION (before go-live, no risk)
+  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+  What happens:
+  - We set up a separate test database (staging environment)
+  - We run the full migration against this test database
+  - We run all automated validation checks
+  - The team manually spot-checks 50 records per platform
+  - We fix any issues found in the migration scripts
+  - We re-run until everything is clean
+
+  Impact on the client: NONE. The client continues using HubSpot, MRPeasy,
+  and Xero as normal during this stage.
+
+
+  STAGE 2 — PARALLEL RUN (1-2 weeks, low risk)
+  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+  What happens:
+  - The new system runs alongside the existing platforms
+  - All new orders and invoices are entered in BOTH the old and new systems
+  - Every day, we automatically compare new entries between old and new
+  - Staff receive training on the new system during this period
+  - We monitor for any data drift or issues
+
+  Impact on the client: Slight extra work (double entry) during this period.
+  This is essential to build confidence that the new system works correctly.
+
+
+  STAGE 3 — CUTOVER (one weekend, this is the switch)
+  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+  Friday evening:
+  - Freeze all changes in HubSpot, MRPeasy, and Xero
+  - No one makes any new entries from this point
+
+  Saturday morning:
+  - Run the final migration (only records that changed since the last run)
+  - This is fast because most data was already migrated in Stage 1
+
+  Saturday afternoon:
+  - Run all reconciliation checks (Section 5)
+  - All checks must pass before we proceed
+
+  Sunday:
+  - Switch Shopify webhooks to point to the new system
+  - Verify all integrations are working
+  - Decommission the old Zapier webhooks
+
+  Monday:
+  - The new system is live
+  - HubSpot, MRPeasy, and Xero are switched to read-only mode
+  - They stay in read-only for 30 days as a safety net
+  - If anything goes wrong, we can still reference the old data
+
+
+================================================================================
+SECTION 7: RISKS AND HOW WE HANDLE THEM
+================================================================================
+
+  RISK                                              HOW WE HANDLE IT
+  ------------------------------------------------  ----------------------------
+  Xero API has a rate limit (60 calls/min)          We pace our requests and run
+                                                    extraction overnight if needed
+
+  Financial data doesn't balance after migration    We block go-live until it
+                                                    balances. This is non-negotiable.
+
+  Same contact exists in all 3 platforms            Email-based dedup with manual
+                                                    review for ambiguous cases
+
+  Multi-currency invoices in Xero cause rounding    We store original currency +
+                                                    exchange rate, reconcile per
+                                                    currency separately
+
+  MRPeasy API doesn't expose all data               We fall back to CSV exports
+                                                    from the client
+
+  HubSpot email threads are incomplete              We document this limitation
+                                                    upfront — some email history
+                                                    may not migrate fully
+
+  Migration takes too long for weekend cutover      We do the bulk migration in
+                                                    advance (Stage 1), so cutover
+                                                    day only handles recent changes
+
+  Staff resist switching to new system              Parallel run period gives
+                                                    everyone time to learn, plus
+                                                    formal training sessions
+
+
+================================================================================
+SECTION 8: TIMELINE OVERVIEW
+================================================================================
+
+  This is a rough sequence, not a calendar timeline:
+
+  1. Collect all credentials from client (Section 1)
+  2. Build migration scripts (extract, transform, load)
+  3. Run Stage 1 — Staging Migration (repeat until clean)
+  4. Run Stage 2 — Parallel Run (1-2 weeks)
+  5. Run Stage 3 — Cutover (1 weekend)
+  6. Post-cutover monitoring (30 days, old systems in read-only)
+  7. Decommission old platforms
+
+
+================================================================================
+END OF DOCUMENT
+================================================================================

@@ -2,7 +2,7 @@
 
 ## 1. Document Purpose
 
-This document provides a low-level technical architecture of the Vaclift AI Dashboard platform. It maps every component that currently exists across both repositories, identifies what is already built, and defines what must be developed to fulfill the **Unified Operations & Smart Inventory Platform** proposal.
+This document provides a low-level technical architecture of the Vaclift AI Dashboard platform. It maps every component that currently exists across both repositories, identifies what is already built, and defines what must be developed to fulfill the **Unified Operations & Smart Inventory Platform** proposal. The platform replaces three third-party services: **HubSpot** (CRM), **MRPeasy** (ERP/MRP), and **Xero** (Accounting).
 
 ---
 
@@ -213,7 +213,7 @@ This document provides a low-level technical architecture of the Vaclift AI Dash
 
 ## 4. Gap Analysis — What Needs to Be Built
 
-The proposal calls for a **Unified Operations & Smart Inventory Platform** that replaces HubSpot (CRM) and MRPeasy (ERP/MRP) while keeping Shopify as the commerce frontend. Below is every capability gap identified.
+The proposal calls for a **Unified Operations & Smart Inventory Platform** that replaces **HubSpot** (CRM), **MRPeasy** (ERP/MRP), and **Xero** (Accounting) while keeping Shopify as the commerce frontend. Below is every capability gap identified.
 
 ### 4.1 Customer & Lead Management (Replace HubSpot)
 
@@ -279,16 +279,37 @@ The proposal calls for a **Unified Operations & Smart Inventory Platform** that 
 | Multi-factor authentication (MFA) | ❌ Not built | TOTP or SMS-based 2FA |
 | Session management | ❌ Not built | Token expiry, refresh tokens, concurrent session limits |
 
-### 4.6 Data Migration
+### 4.8 Accounting & Finance (Replace Xero)
+
+| Requirement | Current State | Gap |
+|-------------|---------------|-----|
+| Chart of Accounts | ❌ Not built | Full chart of accounts management (assets, liabilities, equity, revenue, expenses) |
+| Sales invoices | ❌ Not built | Invoice creation, PDF generation, status tracking (draft → sent → paid → voided) |
+| Purchase bills | ❌ Not built | Supplier bill recording, matching to purchase orders, approval workflow |
+| Payments tracking | ❌ Not built | Record payments against invoices/bills, partial payments, overpayments |
+| Bank transactions | ❌ Not built | Bank feed import, transaction categorization, bank reconciliation |
+| Credit notes | ❌ Not built | Issue/receive credit notes, apply against invoices/bills |
+| Tax management | ❌ Not built | Tax rate configuration (GST/VAT), tax-inclusive/exclusive calculations, BAS/tax return data |
+| General ledger | ❌ Not built | Double-entry journal entries, GL posting from all modules |
+| Financial reports | ❌ Not built | Profit & Loss, Balance Sheet, Cash Flow Statement, Aged Receivables/Payables |
+| Bank reconciliation | ❌ Not built | Match bank transactions to invoices/payments, reconciliation dashboard |
+| Multi-currency support | ❌ Not built | Foreign currency invoices, exchange rate management, currency gains/losses |
+| Expense claims | ❌ Not built | Employee expense submission, approval workflow, reimbursement tracking |
+| Recurring invoices | ❌ Not built | Automated invoice generation on schedule |
+| Payment reminders | ❌ Not built | Automated overdue invoice reminders via email |
+
+### 4.9 Data Migration
 
 | Requirement | Current State | Gap |
 |-------------|---------------|-----|
 | HubSpot data export & import | ❌ Not built | Migration scripts for contacts, deals, activities, emails |
 | MRPeasy data export & import | ❌ Not built | Migration scripts for orders, BOMs, stock, production history |
+| Xero data export & import | ❌ Not built | Migration scripts for chart of accounts, invoices, bills, payments, bank transactions, journal entries |
 | Data cleaning & deduplication pipeline | ❌ Not built | ETL pipeline for pre-migration cleansing |
 | Parallel testing environment | ❌ Not built | Staging environment with production data copy |
+| Financial data reconciliation | ❌ Not built | Verify migrated Xero balances match source (trial balance cross-check) |
 
-### 4.7 Infrastructure & Hosting Upgrades
+### 4.10 Infrastructure & Hosting Upgrades
 
 | Requirement | Current State | Gap |
 |-------------|---------------|-----|
@@ -614,6 +635,177 @@ work_order_steps (
     completed_by BIGINT FK → users
 )
 
+-- ============ ACCOUNTING & FINANCE (Replace Xero) ============
+
+accounts (
+    id BIGINT PK,
+    code VARCHAR(20) UNIQUE,
+    name VARCHAR(255),
+    type ENUM('asset','liability','equity','revenue','expense'),
+    sub_type VARCHAR(50),
+    tax_type VARCHAR(50),
+    description TEXT,
+    is_system BOOLEAN DEFAULT FALSE,
+    is_active BOOLEAN DEFAULT TRUE,
+    xero_account_id VARCHAR(100),
+    created_at TIMESTAMP,
+    updated_at TIMESTAMP
+)
+
+tax_rates (
+    id BIGINT PK,
+    name VARCHAR(100),
+    rate DECIMAL(5,2),
+    tax_type VARCHAR(50),
+    is_active BOOLEAN DEFAULT TRUE,
+    xero_tax_type VARCHAR(50),
+    created_at TIMESTAMP
+)
+
+invoices (
+    id BIGINT PK,
+    invoice_number VARCHAR(50) UNIQUE,
+    type ENUM('sales','purchase'),
+    contact_id BIGINT FK → contacts,
+    status ENUM('draft','submitted','sent','paid','partially_paid','voided','overdue'),
+    issue_date DATE,
+    due_date DATE,
+    subtotal DECIMAL(12,2),
+    tax_total DECIMAL(12,2),
+    total DECIMAL(12,2),
+    amount_paid DECIMAL(12,2) DEFAULT 0,
+    amount_due DECIMAL(12,2) GENERATED,
+    currency VARCHAR(3) DEFAULT 'AUD',
+    exchange_rate DECIMAL(10,6) DEFAULT 1,
+    reference VARCHAR(255),
+    notes TEXT,
+    order_id BIGINT FK → orders,
+    xero_invoice_id VARCHAR(100),
+    created_by BIGINT FK → users,
+    created_at TIMESTAMP,
+    updated_at TIMESTAMP
+)
+
+invoice_lines (
+    id BIGINT PK,
+    invoice_id BIGINT FK → invoices,
+    description VARCHAR(500),
+    quantity DECIMAL(10,4),
+    unit_price DECIMAL(12,2),
+    account_id BIGINT FK → accounts,
+    tax_rate_id BIGINT FK → tax_rates,
+    line_total DECIMAL(12,2),
+    product_id BIGINT FK → products NULL,
+    sort_order INT
+)
+
+payments (
+    id BIGINT PK,
+    payment_number VARCHAR(50) UNIQUE,
+    invoice_id BIGINT FK → invoices,
+    amount DECIMAL(12,2),
+    payment_date DATE,
+    payment_method ENUM('bank_transfer','credit_card','cash','cheque','other'),
+    bank_account_id BIGINT FK → accounts,
+    reference VARCHAR(255),
+    is_reconciled BOOLEAN DEFAULT FALSE,
+    xero_payment_id VARCHAR(100),
+    created_by BIGINT FK → users,
+    created_at TIMESTAMP
+)
+
+credit_notes (
+    id BIGINT PK,
+    credit_note_number VARCHAR(50) UNIQUE,
+    type ENUM('sales','purchase'),
+    contact_id BIGINT FK → contacts,
+    status ENUM('draft','submitted','applied','voided'),
+    date DATE,
+    subtotal DECIMAL(12,2),
+    tax_total DECIMAL(12,2),
+    total DECIMAL(12,2),
+    remaining_credit DECIMAL(12,2),
+    xero_credit_note_id VARCHAR(100),
+    created_at TIMESTAMP
+)
+
+bank_transactions (
+    id BIGINT PK,
+    bank_account_id BIGINT FK → accounts,
+    date DATE,
+    amount DECIMAL(12,2),
+    type ENUM('spend','receive'),
+    description VARCHAR(500),
+    reference VARCHAR(255),
+    contact_id BIGINT FK → contacts NULL,
+    account_id BIGINT FK → accounts NULL,
+    is_reconciled BOOLEAN DEFAULT FALSE,
+    reconciled_to_id BIGINT NULL,
+    reconciled_to_type VARCHAR(50) NULL,
+    xero_transaction_id VARCHAR(100),
+    created_at TIMESTAMP
+)
+
+journal_entries (
+    id BIGINT PK,
+    journal_number VARCHAR(50) UNIQUE,
+    date DATE,
+    narration TEXT,
+    source_type VARCHAR(50),
+    source_id BIGINT,
+    is_system_generated BOOLEAN DEFAULT TRUE,
+    xero_journal_id VARCHAR(100),
+    created_by BIGINT FK → users,
+    created_at TIMESTAMP
+)
+
+journal_lines (
+    id BIGINT PK,
+    journal_entry_id BIGINT FK → journal_entries,
+    account_id BIGINT FK → accounts,
+    debit DECIMAL(12,2) DEFAULT 0,
+    credit DECIMAL(12,2) DEFAULT 0,
+    description VARCHAR(500),
+    contact_id BIGINT FK → contacts NULL,
+    tax_rate_id BIGINT FK → tax_rates NULL
+)
+
+expense_claims (
+    id BIGINT PK,
+    user_id BIGINT FK → users,
+    status ENUM('draft','submitted','approved','paid','rejected'),
+    total DECIMAL(12,2),
+    description TEXT,
+    submitted_at TIMESTAMP,
+    approved_by BIGINT FK → users NULL,
+    approved_at TIMESTAMP,
+    paid_at TIMESTAMP,
+    xero_expense_id VARCHAR(100),
+    created_at TIMESTAMP
+)
+
+expense_claim_lines (
+    id BIGINT PK,
+    expense_claim_id BIGINT FK → expense_claims,
+    date DATE,
+    description VARCHAR(500),
+    amount DECIMAL(12,2),
+    account_id BIGINT FK → accounts,
+    tax_rate_id BIGINT FK → tax_rates NULL,
+    receipt_url VARCHAR(500)
+)
+
+recurring_invoices (
+    id BIGINT PK,
+    template_invoice_id BIGINT FK → invoices,
+    contact_id BIGINT FK → contacts,
+    frequency ENUM('weekly','fortnightly','monthly','quarterly','yearly'),
+    next_date DATE,
+    end_date DATE NULL,
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP
+)
+
 -- ============ SHOPIFY SYNC ============
 
 shopify_sync_logs (
@@ -627,6 +819,37 @@ shopify_sync_logs (
     status ENUM('success','failed','skipped'),
     error_message TEXT,
     created_at TIMESTAMP
+)
+
+-- ============ DATA MIGRATION TRACKING ============
+
+migration_runs (
+    id BIGINT PK,
+    source_platform ENUM('hubspot','mrpeasy','xero','shopify'),
+    entity_type VARCHAR(50),
+    status ENUM('pending','running','completed','failed','rolled_back'),
+    total_records INT,
+    migrated_records INT DEFAULT 0,
+    failed_records INT DEFAULT 0,
+    skipped_records INT DEFAULT 0,
+    error_log LONGTEXT,
+    started_at TIMESTAMP,
+    completed_at TIMESTAMP,
+    created_by BIGINT FK → users
+)
+
+migration_record_map (
+    id BIGINT PK,
+    migration_run_id BIGINT FK → migration_runs,
+    source_platform VARCHAR(20),
+    source_entity_type VARCHAR(50),
+    source_id VARCHAR(255),
+    target_entity_type VARCHAR(50),
+    target_id BIGINT,
+    status ENUM('success','failed','skipped'),
+    error_message TEXT,
+    created_at TIMESTAMP,
+    UNIQUE(source_platform, source_entity_type, source_id)
 )
 ```
 
@@ -692,8 +915,10 @@ Shopify Order → MRPeasy (manual/auto sync) → Zapier Webhook → POST /api/or
 | **AI Provider** | OpenRouter (free models) | Consider paid models for production accuracy |
 | **Forecasting** | In-process linear regression | Python microservice (Prophet / scikit-learn) for advanced models |
 | **Job Scheduling** | node-cron (in-process) | Consider BullMQ + Redis for distributed jobs |
-| **File Storage** | ❌ Not built | S3/GCS for quote PDFs, attachments |
+| **File Storage** | ❌ Not built | S3/GCS for quote PDFs, invoices, receipts, attachments |
 | **Search** | In-memory array filter | Full-text search (DB-level or MeiliSearch) |
+| **PDF Engine** | ❌ Not built | Invoice/quote PDF generation (React-PDF or Puppeteer) |
+| **Accounting** | ❌ Not built (Xero) | Custom double-entry GL, invoicing, bank reconciliation |
 | **Hosting** | Vercel (frontend + backend) | Dedicated cloud (AWS ECS/GCP Cloud Run) for full platform |
 | **Monitoring** | ❌ Not built | Sentry (errors) + UptimeRobot (availability) |
 
