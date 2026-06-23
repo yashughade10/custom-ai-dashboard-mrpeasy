@@ -33,7 +33,7 @@ function AppHeader() {
             <SidebarTrigger className="-ml-1" />
 
             <DropdownMenu>
-                <DropdownMenuTrigger asChild>
+                <DropdownMenuTrigger className="outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 rounded-full">
                     <Avatar className="cursor-pointer">
                         {/* <AvatarImage src={user.image} alt={user.name} /> */}
                         <AvatarFallback>

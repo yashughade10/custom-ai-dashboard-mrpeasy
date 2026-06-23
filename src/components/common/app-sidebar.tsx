@@ -27,6 +27,10 @@ import {
     Package,
     Star,
     Brain,
+    Users2,
+    Contact,
+    Building2,
+    Handshake,
 } from "lucide-react"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
@@ -45,6 +49,17 @@ const navItems = [
             { name: "Top Products", hash: "top-products", icon: Star },
             { name: "Inventory Forecasting", hash: "inventory-forecasting", icon: TrendingUp },
             { name: "AI Recommendations", hash: "ai-recommendations", icon: Brain },
+        ],
+    },
+    {
+        name: "CRM",
+        href: "/dashboard/crm",
+        icon: Users2,
+        children: [
+            { name: "Overview", hash: "", icon: LayoutDashboard },
+            { name: "Contacts", hash: "contacts", href: "/dashboard/crm/contacts", icon: Contact },
+            { name: "Companies", hash: "companies", href: "/dashboard/crm/companies", icon: Building2 },
+            { name: "Deals", hash: "deals", href: "/dashboard/crm/deals", icon: Handshake },
         ],
     },
     { name: "Orders", href: "/dashboard/orders", icon: ListOrdered },
@@ -114,7 +129,11 @@ export function AppSidebar() {
                                                 {item.children.map((child, index) => {
                                                     const defaultHash = item.children?.[0]?.hash ?? "";
                                                     const resolvedActiveHash = activeHash || defaultHash;
-                                                    const isChildActive = isActive && resolvedActiveHash === child.hash;
+                                                    const isChildActive = isActive && (
+                                                        "href" in child 
+                                                            ? pathname === (child as any).href 
+                                                            : resolvedActiveHash === child.hash
+                                                    );
                                                     return (
                                                         <SidebarMenuSubItem key={child.hash}>
                                                             <SidebarMenuSubButton
@@ -126,7 +145,7 @@ export function AppSidebar() {
                                                                 )}
                                                             >
                                                                 <Link
-                                                                    href={`${item.href}#${child.hash}`}
+                                                                    href={"href" in child ? (child as any).href : `${item.href}#${child.hash}`}
                                                                     onClick={() => setActiveHash(child.hash)}
                                                                     className="flex items-center gap-2"
                                                                 >

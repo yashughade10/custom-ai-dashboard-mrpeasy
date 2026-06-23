@@ -10,20 +10,11 @@ interface AuthState {
 }
 
 export function useAuth(): AuthState {
-    const [auth, setAuth] = React.useState<AuthState>(() => {
-        // Lazy initialization - load from localStorage on mount
-        if (typeof window !== 'undefined') {
-            const storedAuth = localStorage.getItem('auth');
-            if (storedAuth) {
-                return JSON.parse(storedAuth);
-            }
-        }
-        return {
-            isLoggedIn: false,
-            token: '',
-            role: undefined as any,
-            user: null
-        };
+    const [auth, setAuth] = React.useState<AuthState>({
+        isLoggedIn: false,
+        token: '',
+        role: undefined as any,
+        user: null
     });
 
     const loadAuth = React.useCallback(() => {

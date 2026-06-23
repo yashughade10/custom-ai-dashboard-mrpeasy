@@ -87,4 +87,91 @@ const loginDashboard = async (email: string, password: string) => {
   return data;
 }
 
-export { fetchOrders, fetchAnalytics, fetchAIReport, askAnalyticsQuestion, loginDashboard };
+// CRM Endpoints
+async function fetchCrmStats() {
+  const response = await fetch(`${API_BASE_URL}/crm/stats`);
+  if (!response.ok) throw new Error("Failed to fetch CRM stats");
+  return (await response.json()).data;
+}
+
+async function fetchContacts(params?: { page?: number; search?: string; lifecycle?: string }) {
+  const q = new URLSearchParams(params as any).toString();
+  const response = await fetch(`${API_BASE_URL}/crm/contacts?${q}`);
+  if (!response.ok) throw new Error("Failed to fetch contacts");
+  return await response.json(); // { data, pagination }
+}
+
+async function fetchContact(id: string) {
+  const response = await fetch(`${API_BASE_URL}/crm/contacts/${id}`);
+  if (!response.ok) throw new Error("Failed to fetch contact");
+  return (await response.json()).data;
+}
+
+async function fetchCompanies(params?: { page?: number; search?: string; industry?: string }) {
+  const q = new URLSearchParams(params as any).toString();
+  const response = await fetch(`${API_BASE_URL}/crm/companies?${q}`);
+  if (!response.ok) throw new Error("Failed to fetch companies");
+  return await response.json(); // { data, pagination }
+}
+
+async function fetchCompany(id: string) {
+  const response = await fetch(`${API_BASE_URL}/crm/companies/${id}`);
+  if (!response.ok) throw new Error("Failed to fetch company");
+  return (await response.json()).data;
+}
+
+async function fetchDeals(params?: { page?: number; search?: string; stage?: string; owner?: string }) {
+  const q = new URLSearchParams(params as any).toString();
+  const response = await fetch(`${API_BASE_URL}/crm/deals?${q}`);
+  if (!response.ok) throw new Error("Failed to fetch deals");
+  return await response.json(); // { data, pagination }
+}
+
+async function fetchDeal(id: string) {
+  const response = await fetch(`${API_BASE_URL}/crm/deals/${id}`);
+  if (!response.ok) throw new Error("Failed to fetch deal");
+  return (await response.json()).data;
+}
+
+async function fetchDealsPipeline() {
+  const response = await fetch(`${API_BASE_URL}/crm/deals/pipeline`);
+  if (!response.ok) throw new Error("Failed to fetch deals pipeline");
+  return (await response.json()).data;
+}
+
+async function fetchIndustries() {
+  const response = await fetch(`${API_BASE_URL}/crm/companies/by-industry`);
+  if (!response.ok) throw new Error("Failed to fetch industries");
+  return (await response.json()).data;
+}
+
+async function fetchLifecycles() {
+  const response = await fetch(`${API_BASE_URL}/crm/contacts/by-lifecycle`);
+  if (!response.ok) throw new Error("Failed to fetch lifecycles");
+  return (await response.json()).data;
+}
+
+async function fetchOwners() {
+  const response = await fetch(`${API_BASE_URL}/crm/owners`);
+  if (!response.ok) throw new Error("Failed to fetch owners");
+  return (await response.json()).data;
+}
+
+export {
+  fetchOrders,
+  fetchAnalytics,
+  fetchAIReport,
+  askAnalyticsQuestion,
+  loginDashboard,
+  fetchCrmStats,
+  fetchContacts,
+  fetchContact,
+  fetchCompanies,
+  fetchCompany,
+  fetchDeals,
+  fetchDeal,
+  fetchDealsPipeline,
+  fetchIndustries,
+  fetchLifecycles,
+  fetchOwners
+};
