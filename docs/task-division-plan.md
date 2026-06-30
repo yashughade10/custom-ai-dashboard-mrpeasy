@@ -9,20 +9,20 @@ This document outlines the allocation of work for Phase 2 of the MRP Easy implem
 ### Ankit
 **Focus: Core Architecture, AI Integration, and Core APIs**
 
-1. **Dashboard (Module 1)**
+1. **Dashboard (Module 1) [✅ Backend APIs COMPLETED]**
    - **APIs:** 
      - `GET /api/dashboard/summary` (Role-aware KPIs)
      - `GET /api/dashboard/widgets`
      - `GET /api/activity-log`
      - Tasks and Calendar CRUD APIs.
 
-2. **Global Search & Auth (Modules 2 & 9)**
+2. **Global Search & Auth (Modules 2 & 9) [✅ Backend APIs COMPLETED]**
    - **APIs:**
      - `GET /api/search?q=term` (Cross-entity SQL union)
    - **Middleware:**
      - Implement `auth.js` (JWT) and `checkPermission.js` (RBAC).
 
-3. **AI Engine Integration (Modules 2 & 8)**
+3. **AI Engine Integration (Modules 2 & 8) [✅ Backend APIs COMPLETED]**
    - **Implementation:** Extend `openrouter.ts` for AI Lead Scoring, Win Probability, and Natural Language generation for Executive Summary reports.
 
 ---
