@@ -13,6 +13,7 @@ import {
 import { removeLocalStorageItem } from '@/lib/local-storage';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/use-auth';
+import GlobalSearch from './GlobalSearch';
 
 function AppHeader() {
     const { user } = useAuth();
@@ -32,36 +33,39 @@ function AppHeader() {
         <div className='flex justify-between items-center p-4 border-b'>
             <SidebarTrigger className="-ml-1" />
 
-            <DropdownMenu>
-                <DropdownMenuTrigger className="outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 rounded-full">
-                    <Avatar className="cursor-pointer">
-                        {/* <AvatarImage src={user.image} alt={user.name} /> */}
-                        <AvatarFallback>
-                            {userInitial}
-                        </AvatarFallback>
-                    </Avatar>
-                </DropdownMenuTrigger>
+            <div className="flex items-center gap-4">
+                <GlobalSearch />
+                <DropdownMenu>
+                    <DropdownMenuTrigger className="outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 rounded-full">
+                        <Avatar className="cursor-pointer">
+                            {/* <AvatarImage src={user.image} alt={user.name} /> */}
+                            <AvatarFallback>
+                                {userInitial}
+                            </AvatarFallback>
+                        </Avatar>
+                    </DropdownMenuTrigger>
 
-                <DropdownMenuContent align="end" className="w-56">
-                    <DropdownMenuLabel>
-                        <div className="flex flex-col">
-                            <span className="font-medium">{userName}</span>
-                            {userEmail ? (
-                                <span className="text-sm text-muted-foreground">{userEmail}</span>
-                            ) : null}
-                        </div>
-                    </DropdownMenuLabel>
+                    <DropdownMenuContent align="end" className="w-56">
+                        <DropdownMenuLabel>
+                            <div className="flex flex-col">
+                                <span className="font-medium">{userName}</span>
+                                {userEmail ? (
+                                    <span className="text-sm text-muted-foreground">{userEmail}</span>
+                                ) : null}
+                            </div>
+                        </DropdownMenuLabel>
 
-                    <DropdownMenuSeparator />
+                        <DropdownMenuSeparator />
 
-                    <DropdownMenuItem
-                        onClick={handleLogout}
-                        className="cursor-pointer text-red-500"
-                    >
-                        Logout
-                    </DropdownMenuItem>
-                </DropdownMenuContent>
-            </DropdownMenu>
+                        <DropdownMenuItem
+                            onClick={handleLogout}
+                            className="cursor-pointer text-red-500"
+                        >
+                            Logout
+                        </DropdownMenuItem>
+                    </DropdownMenuContent>
+                </DropdownMenu>
+            </div>
         </div>
     );
 }

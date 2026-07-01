@@ -157,8 +157,40 @@ async function fetchOwners() {
   return (await response.json()).data;
 }
 
+// Global Search
+async function fetchSearchResults(query: string) {
+  if (!query) return [];
+  const response = await fetch(`${API_BASE_URL}/search?q=${encodeURIComponent(query)}`);
+  if (!response.ok) throw new Error("Failed to fetch search results");
+  return (await response.json()).data;
+}
+
+// Leads
+async function fetchLeads(params?: { page?: number; search?: string; status?: string; assigned_to?: string }) {
+  const q = new URLSearchParams(params as any).toString();
+  const response = await fetch(`${API_BASE_URL}/crm/leads?${q}`);
+  if (!response.ok) throw new Error("Failed to fetch leads");
+  return await response.json();
+}
+
+async function fetchLead(id: string) {
+  const response = await fetch(`${API_BASE_URL}/crm/leads/${id}`);
+  if (!response.ok) throw new Error("Failed to fetch lead");
+  return (await response.json()).data;
+}
+
+async function updateLeadStatus(id: string, status: string) {
+  const response = await fetch(`${API_BASE_URL}/crm/leads/${id}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ status })
+  });
+  if (!response.ok) throw new Error("Failed to update lead status");
+  return (await response.json()).data;
+}
+
 // Opportunities
-async function fetchOpportunities(params?: { page?: number; search?: string; stage?: string }) {
+async function fetchOpportunities(params?: { page?: number; search?: string; stage?: string; assigned_to?: string }) {
   const q = new URLSearchParams(params as any).toString();
   const response = await fetch(`${API_BASE_URL}/crm/opportunities?${q}`);
   if (!response.ok) throw new Error("Failed to fetch opportunities");
@@ -199,6 +231,30 @@ async function deleteOpportunity(id: string) {
   return await response.json();
 }
 
+async function updateOpportunityStage(id: string, stage: string) {
+  const response = await fetch(`${API_BASE_URL}/crm/opportunities/${id}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ stage })
+  });
+  if (!response.ok) throw new Error("Failed to update opportunity stage");
+  return (await response.json()).data;
+}
+
+// Activities
+async function fetchActivities(params?: { page?: number; type?: string; status?: string; assigned_to?: string }) {
+  const q = new URLSearchParams(params as any).toString();
+  const response = await fetch(`${API_BASE_URL}/crm/activities?${q}`);
+  if (!response.ok) throw new Error("Failed to fetch activities");
+  return await response.json();
+}
+
+async function fetchActivity(id: string) {
+  const response = await fetch(`${API_BASE_URL}/crm/activities/${id}`);
+  if (!response.ok) throw new Error("Failed to fetch activity");
+  return (await response.json()).data;
+}
+
 export {
   fetchOrders,
   fetchAnalytics,
@@ -221,5 +277,12 @@ export {
   fetchOpportunity,
   createOpportunity,
   updateOpportunity,
-  deleteOpportunity
+  deleteOpportunity,
+  fetchLeads,
+  fetchLead,
+  updateLeadStatus,
+  updateOpportunityStage,
+  fetchActivities,
+  fetchActivity,
+  fetchSearchResults
 };

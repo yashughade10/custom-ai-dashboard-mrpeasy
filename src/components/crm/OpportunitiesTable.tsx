@@ -2,9 +2,9 @@
 
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { 
+import {
   fetchOpportunities, createOpportunity, updateOpportunity, deleteOpportunity,
-  fetchContacts, fetchCompanies, fetchDeals, fetchOwners 
+  fetchContacts, fetchCompanies, fetchDeals, fetchOwners
 } from "@/services/api";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
