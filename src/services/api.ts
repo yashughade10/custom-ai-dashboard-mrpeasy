@@ -157,6 +157,48 @@ async function fetchOwners() {
   return (await response.json()).data;
 }
 
+// Opportunities
+async function fetchOpportunities(params?: { page?: number; search?: string; stage?: string }) {
+  const q = new URLSearchParams(params as any).toString();
+  const response = await fetch(`${API_BASE_URL}/crm/opportunities?${q}`);
+  if (!response.ok) throw new Error("Failed to fetch opportunities");
+  return await response.json();
+}
+
+async function fetchOpportunity(id: string) {
+  const response = await fetch(`${API_BASE_URL}/crm/opportunities/${id}`);
+  if (!response.ok) throw new Error("Failed to fetch opportunity");
+  return (await response.json()).data;
+}
+
+async function createOpportunity(data: Record<string, any>) {
+  const response = await fetch(`${API_BASE_URL}/crm/opportunities`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+  if (!response.ok) throw new Error("Failed to create opportunity");
+  return (await response.json()).data;
+}
+
+async function updateOpportunity(id: string, data: Record<string, any>) {
+  const response = await fetch(`${API_BASE_URL}/crm/opportunities/${id}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+  if (!response.ok) throw new Error("Failed to update opportunity");
+  return (await response.json()).data;
+}
+
+async function deleteOpportunity(id: string) {
+  const response = await fetch(`${API_BASE_URL}/crm/opportunities/${id}`, {
+    method: "DELETE",
+  });
+  if (!response.ok) throw new Error("Failed to delete opportunity");
+  return await response.json();
+}
+
 export {
   fetchOrders,
   fetchAnalytics,
@@ -173,5 +215,11 @@ export {
   fetchDealsPipeline,
   fetchIndustries,
   fetchLifecycles,
-  fetchOwners
+  fetchOwners,
+  // Opportunities
+  fetchOpportunities,
+  fetchOpportunity,
+  createOpportunity,
+  updateOpportunity,
+  deleteOpportunity
 };
