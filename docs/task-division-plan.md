@@ -73,7 +73,7 @@ This document outlines the allocation of work for Phase 2 of the MRP Easy implem
 ### Gowthami
 **Focus: CRM, Production, Procurement, Reports, and Administration**
 
-1. **CRM Enhancements (Module 2 A-D)**
+1. **CRM Enhancements (Module 2 A-D) [✅ COMPLETED]**
    - **APIs:** 
      - Full CRUD for Leads (`/api/crm/leads`), Opportunities (`/api/crm/opportunities`), and Activities (`/api/crm/activities`).
      - Conversion endpoints (`/api/crm/leads/:id/convert`).
@@ -82,9 +82,9 @@ This document outlines the allocation of work for Phase 2 of the MRP Easy implem
      - Activities vertical timeline and inline entity editing.
      - Global Search command palette interface (`cmdk`).
 
-2. **Production (Module 4)**
+2. **Production (Module 4) [🔄 IN PROGRESS]**
    - **APIs:**
-     - Products (`/api/products`)
+     - Products (`/api/products`) [✅ COMPLETED]
      - Bill of Materials (`/api/bom`)
      - Production Orders (`/api/production/orders`) and Material Consumption.
    - **UI:** 
