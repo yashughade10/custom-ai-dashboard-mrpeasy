@@ -78,9 +78,9 @@ This document outlines the allocation of work for Phase 2 of the MRP Easy implem
      - Full CRUD for Leads (`/api/crm/leads`), Opportunities (`/api/crm/opportunities`), and Activities (`/api/crm/activities`).
      - Conversion endpoints (`/api/crm/leads/:id/convert`).
    - **UI:** 
-     - Interactive Kanban Boards for Leads and Opportunities pipelines (using `@dnd-kit`).
-     - Activities vertical timeline and inline entity editing.
-     - Global Search command palette interface (`cmdk`).
+     - Interactive Kanban Boards for Leads and Opportunities pipelines (using `@dnd-kit`). [✅ COMPLETED]
+     - Activities vertical timeline and inline entity editing. [✅ COMPLETED]
+     - Global Search command palette interface (`cmdk`). [✅ COMPLETED]
 
 2. **Production (Module 4) [🔄 IN PROGRESS]**
    - **APIs:**
