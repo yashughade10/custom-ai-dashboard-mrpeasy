@@ -284,5 +284,6 @@ export {
   updateOpportunityStage,
   fetchActivities,
   fetchActivity,
-  fetchSearchResults
+  fetchSearchResults,
+  API_BASE_URL
 };

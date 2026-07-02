@@ -32,6 +32,7 @@ import {
     Building2,
     Handshake,
     Lightbulb,
+    Mail,
 } from "lucide-react"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
@@ -62,6 +63,7 @@ const navItems = [
             { name: "Companies", hash: "companies", href: "/dashboard/crm/companies", icon: Building2 },
             { name: "Deals", hash: "deals", href: "/dashboard/crm/deals", icon: Handshake },
             { name: "Opportunities", hash: "opportunities", href: "/dashboard/crm/opportunities", icon: Lightbulb },
+            { name: "Emails", hash: "emails", href: "/dashboard/crm/emails", icon: Mail },
         ],
     },
     { name: "Orders", href: "/dashboard/orders", icon: ListOrdered },
