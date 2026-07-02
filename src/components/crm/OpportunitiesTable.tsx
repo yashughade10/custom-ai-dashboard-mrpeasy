@@ -40,7 +40,7 @@ const emptyForm = {
   assigned_to: "",
 };
 
-export default function OpportunitiesTable() {
+export default function OpportunitiesTable({ onOpenCreate }: { onOpenCreate?: (fn: () => void) => void }) {
   const queryClient = useQueryClient();
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
@@ -98,6 +98,8 @@ export default function OpportunitiesTable() {
     setForm(emptyForm);
     setDialogOpen(true);
   };
+
+  if (onOpenCreate) onOpenCreate(openCreateDialog);
 
   const openEditDialog = (opp: any) => {
     setEditingOpp(opp);

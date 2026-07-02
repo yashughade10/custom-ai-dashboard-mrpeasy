@@ -60,7 +60,7 @@ const navItems = [
         href: "/dashboard/crm",
         icon: Users2,
         children: [
-            { name: "Overview", hash: "", icon: LayoutDashboard },
+            { name: "Overview", hash: "", href: "/dashboard/crm", icon: LayoutDashboard },
             { name: "Contacts", hash: "contacts", href: "/dashboard/crm/contacts", icon: Contact },
             { name: "Companies", hash: "companies", href: "/dashboard/crm/companies", icon: Building2 },
             { name: "Leads", hash: "leads", href: "/dashboard/crm/leads", icon: UserPlus },
