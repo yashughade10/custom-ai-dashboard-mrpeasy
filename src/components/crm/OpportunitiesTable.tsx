@@ -57,7 +57,7 @@ export default function OpportunitiesTable() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deletingOppId, setDeletingOppId] = useState<string | null>(null);
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isFetching } = useQuery({
     queryKey: ["crm-opportunities", { page, search, stage: stageFilter }],
     queryFn: () => fetchOpportunities({ page, search, stage: stageFilter }),
     placeholderData: (previousData) => previousData,
@@ -165,12 +165,14 @@ export default function OpportunitiesTable() {
       {/* Toolbar */}
       <div className="flex flex-col sm:flex-row gap-3 justify-between">
         <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
-          <Input
-            placeholder="Search opportunities..."
-            value={search}
-            onChange={(e) => { setSearch(e.target.value); setPage(1); }}
-            className="w-full sm:w-[250px]"
-          />
+          <div className="relative w-full sm:w-[250px]">
+            <Input
+              placeholder="Search opportunities..."
+              value={search}
+              onChange={(e) => { setSearch(e.target.value); setPage(1); }}
+              className="w-full"
+            />
+          </div>
           <select
             className="flex h-9 w-full sm:w-[200px] items-center rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-ring"
             value={stageFilter}
@@ -182,10 +184,6 @@ export default function OpportunitiesTable() {
             ))}
           </select>
         </div>
-        <Button onClick={openCreateDialog} size="sm" className="gap-1.5 shrink-0">
-          <Plus className="h-4 w-4" />
-          New Opportunity
-        </Button>
       </div>
 
       {/* Table */}
@@ -204,7 +202,7 @@ export default function OpportunitiesTable() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {isLoading ? (
+            {isLoading || isFetching ? (
               <TableRow>
                 <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
                   <Loader2 className="h-5 w-5 animate-spin mx-auto mb-2" />
@@ -301,7 +299,7 @@ export default function OpportunitiesTable() {
 
       {/* Create / Edit Dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="sm:max-w-lg">
+        <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{editingOpp ? "Edit Opportunity" : "Create New Opportunity"}</DialogTitle>
             <DialogDescription>

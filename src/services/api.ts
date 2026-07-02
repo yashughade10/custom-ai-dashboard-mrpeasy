@@ -94,7 +94,7 @@ async function fetchCrmStats() {
   return (await response.json()).data;
 }
 
-async function fetchContacts(params?: { page?: number; search?: string; lifecycle?: string }) {
+async function fetchContacts(params?: { page?: number; search?: string; lifecycle?: string; limit?: number }) {
   const q = new URLSearchParams(params as any).toString();
   const response = await fetch(`${API_BASE_URL}/crm/contacts?${q}`);
   if (!response.ok) throw new Error("Failed to fetch contacts");
@@ -107,7 +107,7 @@ async function fetchContact(id: string) {
   return (await response.json()).data;
 }
 
-async function fetchCompanies(params?: { page?: number; search?: string; industry?: string }) {
+async function fetchCompanies(params?: { page?: number; search?: string; industry?: string; limit?: number }) {
   const q = new URLSearchParams(params as any).toString();
   const response = await fetch(`${API_BASE_URL}/crm/companies?${q}`);
   if (!response.ok) throw new Error("Failed to fetch companies");
@@ -120,7 +120,7 @@ async function fetchCompany(id: string) {
   return (await response.json()).data;
 }
 
-async function fetchDeals(params?: { page?: number; search?: string; stage?: string; owner?: string }) {
+async function fetchDeals(params?: { page?: number; search?: string; stage?: string; owner?: string; limit?: number }) {
   const q = new URLSearchParams(params as any).toString();
   const response = await fetch(`${API_BASE_URL}/crm/deals?${q}`);
   if (!response.ok) throw new Error("Failed to fetch deals");
@@ -189,6 +189,42 @@ async function updateLeadStatus(id: string, status: string) {
   return (await response.json()).data;
 }
 
+async function createLead(data: Record<string, any>) {
+  const response = await fetch(`${API_BASE_URL}/crm/leads`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+  if (!response.ok) throw new Error("Failed to create lead");
+  return (await response.json()).data;
+}
+
+async function updateLead(id: string, data: Record<string, any>) {
+  const response = await fetch(`${API_BASE_URL}/crm/leads/${id}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+  if (!response.ok) throw new Error("Failed to update lead");
+  return (await response.json()).data;
+}
+
+async function deleteLead(id: string) {
+  const response = await fetch(`${API_BASE_URL}/crm/leads/${id}`, {
+    method: "DELETE",
+  });
+  if (!response.ok) throw new Error("Failed to delete lead");
+  return await response.json();
+}
+
+async function convertLead(id: string) {
+  const response = await fetch(`${API_BASE_URL}/crm/leads/${id}/convert`, {
+    method: "POST",
+  });
+  if (!response.ok) throw new Error("Failed to convert lead");
+  return await response.json();
+}
+
 // Opportunities
 async function fetchOpportunities(params?: { page?: number; search?: string; stage?: string; assigned_to?: string }) {
   const q = new URLSearchParams(params as any).toString();
@@ -255,6 +291,34 @@ async function fetchActivity(id: string) {
   return (await response.json()).data;
 }
 
+async function createActivity(data: Record<string, any>) {
+  const response = await fetch(`${API_BASE_URL}/crm/activities`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+  if (!response.ok) throw new Error("Failed to create activity");
+  return (await response.json()).data;
+}
+
+async function updateActivity(id: string, data: Record<string, any>) {
+  const response = await fetch(`${API_BASE_URL}/crm/activities/${id}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+  if (!response.ok) throw new Error("Failed to update activity");
+  return (await response.json()).data;
+}
+
+async function deleteActivity(id: string) {
+  const response = await fetch(`${API_BASE_URL}/crm/activities/${id}`, {
+    method: "DELETE",
+  });
+  if (!response.ok) throw new Error("Failed to delete activity");
+  return await response.json();
+}
+
 export {
   fetchOrders,
   fetchAnalytics,
@@ -284,5 +348,12 @@ export {
   updateOpportunityStage,
   fetchActivities,
   fetchActivity,
+  createLead,
+  updateLead,
+  deleteLead,
+  convertLead,
+  createActivity,
+  updateActivity,
+  deleteActivity,
   fetchSearchResults
 };

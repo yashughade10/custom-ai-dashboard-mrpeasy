@@ -25,6 +25,7 @@ import {
 import { CSS } from "@dnd-kit/utilities";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Loader2 } from "lucide-react";
 
 const STATUSES = ['new', 'contacted', 'qualified', 'unqualified', 'converted'];
 
@@ -89,7 +90,7 @@ function KanbanColumn({ status, leads }: { status: string, leads: any[] }) {
   });
 
   return (
-    <div className="flex flex-col bg-muted/30 rounded-lg w-[280px] flex-shrink-0">
+    <div className="flex flex-col bg-muted/30 rounded-lg min-w-[200px] max-w-[280px] flex-1 flex-shrink-0">
       <div className="p-3 font-semibold capitalize border-b flex justify-between items-center">
         {status}
         <Badge variant="secondary" className="rounded-full w-6 h-6 p-0 flex items-center justify-center">
@@ -201,7 +202,12 @@ export default function LeadKanbanBoard() {
   };
 
   if (isLoading) {
-    return <div className="p-8 text-center text-muted-foreground">Loading board...</div>;
+    return (
+      <div className="py-12 text-center text-muted-foreground flex flex-col items-center justify-center min-h-[300px]">
+        <Loader2 className="h-6 w-6 animate-spin mx-auto mb-3 text-muted-foreground/50" />
+        Loading board...
+      </div>
+    );
   }
 
   return (
@@ -212,7 +218,7 @@ export default function LeadKanbanBoard() {
       onDragOver={onDragOver}
       onDragEnd={onDragEnd}
     >
-      <div className="flex gap-4 overflow-x-auto pb-4 pt-2 px-1">
+      <div className="flex gap-3 overflow-x-auto pb-4 pt-2 px-1 w-full">
         {columns.map((col) => (
           <KanbanColumn key={col.status} status={col.status} leads={col.leads} />
         ))}

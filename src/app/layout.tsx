@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/common/app-sidebar";
 import { RQProvider } from "@/lib/provider";
+import { Toaster } from "@/components/ui/sonner";
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-sans' });
 
@@ -42,6 +43,7 @@ export default function RootLayout({
       >
         <RQProvider>
           {children}
+          <Toaster />
         </RQProvider>
       </body>
     </html>

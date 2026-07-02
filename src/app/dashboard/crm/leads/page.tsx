@@ -1,17 +1,18 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import LeadsTable from "@/components/crm/LeadsTable";
 import LeadKanbanBoard from "@/components/crm/LeadKanbanBoard";
 import { Button } from "@/components/ui/button";
-import { List, Kanban } from "lucide-react";
+import { List, Kanban, Plus } from "lucide-react";
 
 export default function LeadsPage() {
   const [view, setView] = useState<"table" | "kanban">("table");
+  const openCreateRef = useRef<(() => void) | null>(null);
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+    <div className="space-y-6 overflow-x-hidden w-full max-w-full">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 flex-wrap">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Leads</h1>
           <p className="text-sm text-muted-foreground">
@@ -19,7 +20,7 @@ export default function LeadsPage() {
           </p>
         </div>
         
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           <div className="bg-muted p-1 rounded-md flex items-center">
             <Button
               variant={view === "table" ? "secondary" : "ghost"}
@@ -40,11 +41,20 @@ export default function LeadsPage() {
               Board
             </Button>
           </div>
-          <Button>Add Lead</Button>
+          {view === "table" && (
+            <Button size="sm" className="gap-1.5" onClick={() => openCreateRef.current?.()}>
+              <Plus className="h-4 w-4" />
+              Add Lead
+            </Button>
+          )}
         </div>
       </div>
 
-      {view === "table" ? <LeadsTable /> : <LeadKanbanBoard />}
+      {view === "table" ? (
+        <LeadsTable onOpenCreate={(fn) => { openCreateRef.current = fn; }} />
+      ) : (
+        <LeadKanbanBoard />
+      )}
     </div>
   );
 }

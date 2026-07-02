@@ -32,6 +32,8 @@ import {
     Building2,
     Handshake,
     Lightbulb,
+    UserPlus,
+    CalendarClock,
 } from "lucide-react"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
@@ -60,8 +62,10 @@ const navItems = [
             { name: "Overview", hash: "", icon: LayoutDashboard },
             { name: "Contacts", hash: "contacts", href: "/dashboard/crm/contacts", icon: Contact },
             { name: "Companies", hash: "companies", href: "/dashboard/crm/companies", icon: Building2 },
+            { name: "Leads", hash: "leads", href: "/dashboard/crm/leads", icon: UserPlus },
             { name: "Deals", hash: "deals", href: "/dashboard/crm/deals", icon: Handshake },
             { name: "Opportunities", hash: "opportunities", href: "/dashboard/crm/opportunities", icon: Lightbulb },
+            { name: "Activities", hash: "activities", href: "/dashboard/crm/activities", icon: CalendarClock },
         ],
     },
     { name: "Orders", href: "/dashboard/orders", icon: ListOrdered },
