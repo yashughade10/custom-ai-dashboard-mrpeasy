@@ -34,6 +34,7 @@ import {
     Lightbulb,
     UserPlus,
     CalendarClock,
+    Mail,
 } from "lucide-react"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
@@ -66,6 +67,7 @@ const navItems = [
             { name: "Deals", hash: "deals", href: "/dashboard/crm/deals", icon: Handshake },
             { name: "Opportunities", hash: "opportunities", href: "/dashboard/crm/opportunities", icon: Lightbulb },
             { name: "Activities", hash: "activities", href: "/dashboard/crm/activities", icon: CalendarClock },
+            { name: "Emails", hash: "emails", href: "/dashboard/crm/emails", icon: Mail },
         ],
     },
     { name: "Orders", href: "/dashboard/orders", icon: ListOrdered },
@@ -136,8 +138,8 @@ export function AppSidebar() {
                                                     const defaultHash = item.children?.[0]?.hash ?? "";
                                                     const resolvedActiveHash = activeHash || defaultHash;
                                                     const isChildActive = isActive && (
-                                                        "href" in child 
-                                                            ? pathname === (child as any).href 
+                                                        "href" in child
+                                                            ? pathname === (child as any).href
                                                             : resolvedActiveHash === child.hash
                                                     );
                                                     return (

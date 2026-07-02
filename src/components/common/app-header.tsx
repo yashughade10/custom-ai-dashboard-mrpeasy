@@ -1,5 +1,7 @@
 'use client';
 
+import * as React from 'react';
+
 import { SidebarTrigger } from '../ui/sidebar';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import {
@@ -24,6 +26,11 @@ function AppHeader() {
     const userEmail = user?.email ?? "";
     const userInitial = typeof userName === "string" && userName.length > 0 ? userName.charAt(0) : "?";
 
+    const [mounted, setMounted] = React.useState(false);
+    React.useEffect(() => {
+        setMounted(true);
+    }, []);
+
     const handleLogout = () => {
         removeLocalStorageItem("auth");
         router.replace("/");
@@ -35,36 +42,42 @@ function AppHeader() {
 
             <div className="flex items-center gap-4">
                 <GlobalSearch />
-                <DropdownMenu>
-                    <DropdownMenuTrigger className="outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 rounded-full">
-                        <Avatar className="cursor-pointer">
-                            {/* <AvatarImage src={user.image} alt={user.name} /> */}
-                            <AvatarFallback>
-                                {userInitial}
-                            </AvatarFallback>
-                        </Avatar>
-                    </DropdownMenuTrigger>
+                {mounted ? (
+                    <DropdownMenu>
+                        <DropdownMenuTrigger className="outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 rounded-full">
+                            <Avatar className="cursor-pointer">
+                                {/* <AvatarImage src={user.image} alt={user.name} /> */}
+                                <AvatarFallback>
+                                    {userInitial}
+                                </AvatarFallback>
+                            </Avatar>
+                        </DropdownMenuTrigger>
 
-                    <DropdownMenuContent align="end" className="w-56">
-                        <DropdownMenuLabel>
-                            <div className="flex flex-col">
-                                <span className="font-medium">{userName}</span>
-                                {userEmail ? (
-                                    <span className="text-sm text-muted-foreground">{userEmail}</span>
-                                ) : null}
-                            </div>
-                        </DropdownMenuLabel>
+                        <DropdownMenuContent align="end" className="w-56">
+                            <DropdownMenuLabel>
+                                <div className="flex flex-col">
+                                    <span className="font-medium">{userName}</span>
+                                    {userEmail ? (
+                                        <span className="text-sm text-muted-foreground">{userEmail}</span>
+                                    ) : null}
+                                </div>
+                            </DropdownMenuLabel>
 
-                        <DropdownMenuSeparator />
+                            <DropdownMenuSeparator />
 
-                        <DropdownMenuItem
-                            onClick={handleLogout}
-                            className="cursor-pointer text-red-500"
-                        >
-                            Logout
-                        </DropdownMenuItem>
-                    </DropdownMenuContent>
-                </DropdownMenu>
+                            <DropdownMenuItem
+                                onClick={handleLogout}
+                                className="cursor-pointer text-red-500"
+                            >
+                                Logout
+                            </DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+                ) : (
+                    <Avatar className="cursor-pointer opacity-50">
+                        <AvatarFallback>{userInitial}</AvatarFallback>
+                    </Avatar>
+                )}
             </div>
         </div>
     );

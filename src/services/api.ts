@@ -355,5 +355,6 @@ export {
   createActivity,
   updateActivity,
   deleteActivity,
-  fetchSearchResults
+  fetchSearchResults,
+  API_BASE_URL
 };
