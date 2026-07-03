@@ -1,7 +1,7 @@
 // app/(dashboard)/sales/quotations/page.tsx
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Plus } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -16,7 +16,7 @@ import { Input } from "@/components/ui/input";
 
 import { QuotationsTable } from "@/components/quotations/quotations-table";
 import { QuotationFormSheet } from "@/components/quotations/quotation-form-sheet";
-import { useQuotations } from "@/hooks/use-quotations";
+import { useQuotations, useQuotation } from "@/hooks/use-quotations";
 import type { Quotation, QuotationStatus } from "@/types/quotation";
 
 const STATUS_FILTERS: { label: string; value: QuotationStatus | "all" }[] = [
@@ -35,7 +35,7 @@ export default function QuotationsPage() {
   const [page, setPage] = useState(1);
 
   const [formOpen, setFormOpen] = useState(false);
-  const [editing, setEditing] = useState<Quotation | undefined>(undefined);
+  const [editingId, setEditingId] = useState<number | null>(null);
 
   const { data, isLoading } = useQuotations({
     status: status === "all" ? undefined : status,
@@ -45,13 +45,23 @@ export default function QuotationsPage() {
     limit: 10,
   });
 
+  // Fetch full quotation details when editing
+  const { data: editingQuotation } = useQuotation(editingId);
+
+  // Clear editing ID when form closes
+  useEffect(() => {
+    if (!formOpen) {
+      setEditingId(null);
+    }
+  }, [formOpen]);
+
   const openCreate = () => {
-    setEditing(undefined);
+    setEditingId(null);
     setFormOpen(true);
   };
 
   const openEdit = (quotation: Quotation) => {
-    setEditing(quotation);
+    setEditingId(quotation.id);
     setFormOpen(true);
   };
 
@@ -156,7 +166,7 @@ export default function QuotationsPage() {
       <QuotationFormSheet
         open={formOpen}
         onOpenChange={setFormOpen}
-        quotation={editing}
+        quotation={editingQuotation}
       />
     </div>
   );

@@ -118,7 +118,7 @@ export function QuotationFormSheet({
     defaultValues: emptyValues,
   });
 
-  const { fields, append, remove } = useFieldArray({ control, name: "items" });
+  const { fields, append, remove, replace } = useFieldArray({ control, name: "items" });
   const watchedItems = watch("items");
 
   // Reset the form whenever a different quotation is opened for editing,
@@ -126,6 +126,21 @@ export function QuotationFormSheet({
   useEffect(() => {
     if (!open) return;
     if (quotation) {
+      const quotationItems = (quotation.items ?? []).map((item, index) => ({
+        id: item.id,
+        product_id: item.product_id,
+        quantity: item.quantity,
+        discount_pct: item.discount_pct,
+        tax_pct: item.tax_pct,
+        sort_order: item.sort_order ?? index + 1,
+      }));
+
+      console.log("Loading quotation for edit:", {
+        id: quotation.id,
+        itemsCount: quotationItems.length,
+        items: quotationItems,
+      });
+
       reset({
         company_id: quotation.company_id,
         contact_id: quotation.contact_id,
@@ -134,19 +149,16 @@ export function QuotationFormSheet({
         valid_until: quotation.valid_until,
         notes: quotation.notes ?? "",
         terms: quotation.terms ?? "",
-        items: (quotation.items ?? []).map((item, index) => ({
-          id: item.id,
-          product_id: item.product_id,
-          quantity: item.quantity,
-          discount_pct: item.discount_pct,
-          tax_pct: item.tax_pct,
-          sort_order: item.sort_order ?? index + 1,
-        })),
+        items: quotationItems,
       });
+      
+      // Replace the fields array to ensure useFieldArray syncs
+      replace(quotationItems);
     } else {
       reset(emptyValues);
+      replace([emptyValues.items[0]]);
     }
-  }, [open, quotation, reset]);
+  }, [open, quotation, reset, replace]);
 
   // Keyed by string to avoid string/number mismatches between what the
   // <Select> stores (coerced to Number) and whatever type product IDs come
@@ -234,8 +246,8 @@ export function QuotationFormSheet({
                   name="company_id"
                   render={({ field }) => (
                     <Select
-                      value={field.value ? String(field.value) : undefined}
-                      onValueChange={(v) => field.onChange(Number(v))}
+                      value={field.value ? String(field.value) : ""}
+                      onValueChange={(v) => field.onChange(v ? Number(v) : null)}
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="Select a company" />
@@ -259,8 +271,8 @@ export function QuotationFormSheet({
                   name="contact_id"
                   render={({ field }) => (
                     <Select
-                      value={field.value ? String(field.value) : undefined}
-                      onValueChange={(v) => field.onChange(Number(v))}
+                      value={field.value ? String(field.value) : ""}
+                      onValueChange={(v) => field.onChange(v ? Number(v) : null)}
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="Select a contact" />
@@ -284,8 +296,8 @@ export function QuotationFormSheet({
                   name="deal_id"
                   render={({ field }) => (
                     <Select
-                      value={field.value ? String(field.value) : undefined}
-                      onValueChange={(v) => field.onChange(Number(v))}
+                      value={field.value ? String(field.value) : ""}
+                      onValueChange={(v) => field.onChange(v ? Number(v) : null)}
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="Link a deal" />
@@ -368,7 +380,15 @@ export function QuotationFormSheet({
                     </TableRow>
                   </TableHeader>
                   <TableBody>
+                    {fields.length === 0 && (
+                      <TableRow>
+                        <TableCell colSpan={6} className="h-12 text-center text-sm text-slate-500">
+                          No items. Click "Add item" to get started.
+                        </TableCell>
+                      </TableRow>
+                    )}
                     {fields.map((field, index) => {
+                      console.log(`Rendering field ${index}:`, field);
                       const item = watchedItems?.[index];
                       const unitPrice = getProductUnitPrice(
                         productMap.get(String(item?.product_id ?? "")),
@@ -387,8 +407,8 @@ export function QuotationFormSheet({
                               name={`items.${index}.product_id`}
                               render={({ field: f }) => (
                                 <Select
-                                  value={f.value ? String(f.value) : undefined}
-                                  onValueChange={(v) => f.onChange(Number(v))}
+                                  value={f.value && f.value > 0 ? String(f.value) : ""}
+                                  onValueChange={(v) => f.onChange(v ? Number(v) : 0)}
                                 >
                                   <SelectTrigger className="h-8">
                                     <SelectValue placeholder="Select product" />
