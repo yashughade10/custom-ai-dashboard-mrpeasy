@@ -35,6 +35,7 @@ import {
     UserPlus,
     CalendarClock,
     Mail,
+    ShoppingCart,
 } from "lucide-react"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
@@ -71,6 +72,16 @@ const navItems = [
         ],
     },
     { name: "Orders", href: "/dashboard/orders", icon: ListOrdered },
+    {
+        name: "Sales",
+        href: "/dashboard/sales",
+        icon: ShoppingCart,
+        children: [
+            { name: "Quotations",hash: "quotations", href: "/dashboard/sales/quotations", icon:Mail },
+            { name: "Sales Orders", hash: "orders", href: "/dashboard/sales/orders", icon:Mail  }
+
+        ],
+    },
     // { name: "Announcements", href: "/dashboard/announcements", icon: Megaphone },
     // { name: "Settings", href: "/dashboard/settings", icon: Settings },
 ]
