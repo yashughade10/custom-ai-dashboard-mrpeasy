@@ -44,8 +44,17 @@ async function handleResponse<T>(res: Response): Promise<T> {
     );
   }
   const data = await res.json();
-  if (!res.ok || !data.success) {
-    throw new Error(data.message || "Request failed");
+  
+  // Accept both explicit success: true and successful HTTP status codes (200-299, including 201)
+  const isSuccess = data.success === true || (res.ok && data.success !== false);
+  
+  if (!isSuccess) {
+    console.error("API Error Response:", {
+      status: res.status,
+      data,
+      message: data.message || "Request failed",
+    });
+    throw new Error(data.message || `Request failed with status ${res.status}`);
   }
   return data;
 }

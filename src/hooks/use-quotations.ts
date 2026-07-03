@@ -50,7 +50,11 @@ export function useCreateQuotation() {
       queryClient.invalidateQueries({ queryKey: quotationKeys.lists() });
       toast.success(`Quotation ${quotation.quote_number} created`);
     },
-    onError: () => toast.error("Couldn't create the quotation. Try again."),
+    onError: (error: Error) => {
+      const message = error.message || "Couldn't create the quotation. Try again.";
+      console.error("Create quotation error:", message);
+      toast.error(message);
+    },
   });
 }
 
@@ -71,7 +75,11 @@ export function useUpdateQuotation() {
       });
       toast.success(`Quotation ${quotation.quote_number} updated`);
     },
-    onError: () => toast.error("Couldn't save changes. Try again."),
+    onError: (error: Error) => {
+      const message = error.message || "Couldn't save changes. Try again.";
+      console.error("Update quotation error:", message);
+      toast.error(message);
+    },
   });
 }
 
@@ -83,7 +91,11 @@ export function useDeleteQuotation() {
       queryClient.invalidateQueries({ queryKey: quotationKeys.lists() });
       toast.success("Quotation deleted");
     },
-    onError: () => toast.error("Only draft quotations can be deleted."),
+    onError: (error: Error) => {
+      const message = error.message || "Only draft quotations can be deleted.";
+      console.error("Delete quotation error:", message);
+      toast.error(message);
+    },
   });
 }
 
@@ -99,7 +111,11 @@ export function useSendQuotation() {
       });
       toast.success(`Quotation ${quotation.quote_number} sent`);
     },
-    onError: () => toast.error("Couldn't send the quotation."),
+    onError: (error: Error) => {
+      const message = error.message || "Couldn't send the quotation.";
+      console.error("Send quotation error:", message);
+      toast.error(message);
+    },
   });
 }
 
@@ -114,7 +130,11 @@ export function useApproveQuotation() {
       });
       toast.success(`Quotation ${quotation.quote_number} approved`);
     },
-    onError: () => toast.error("Couldn't approve the quotation."),
+    onError: (error: Error) => {
+      const message = error.message || "Couldn't approve the quotation.";
+      console.error("Approve quotation error:", message);
+      toast.error(message);
+    },
   });
 }
 
@@ -126,7 +146,11 @@ export function useConvertQuotation() {
       queryClient.invalidateQueries({ queryKey: quotationKeys.lists() });
       toast.success(`Converted to sales order ${result.order_number}`);
     },
-    onError: () => toast.error("Couldn't convert to a sales order."),
+    onError: (error: Error) => {
+      const message = error.message || "Couldn't convert to a sales order.";
+      console.error("Convert quotation error:", message);
+      toast.error(message);
+    },
   });
 }
 
