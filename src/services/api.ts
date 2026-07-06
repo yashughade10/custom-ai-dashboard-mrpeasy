@@ -470,6 +470,99 @@ async function fetchProductionProgress() {
   return (await response.json()).data;
 }
 
+// Procurement - Suppliers
+async function fetchSuppliers() {
+  const response = await fetch(`${API_BASE_URL}/procurement/suppliers`);
+  if (!response.ok) throw new Error("Failed to fetch suppliers");
+  return (await response.json()).data;
+}
+
+async function createSupplier(data: Record<string, any>) {
+  const response = await fetch(`${API_BASE_URL}/procurement/suppliers`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+  if (!response.ok) throw new Error("Failed to create supplier");
+  return (await response.json()).data;
+}
+
+async function updateSupplier(id: string, data: Record<string, any>) {
+  const response = await fetch(`${API_BASE_URL}/procurement/suppliers/${id}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+  if (!response.ok) throw new Error("Failed to update supplier");
+  return (await response.json()).data;
+}
+
+async function deleteSupplier(id: string) {
+  const response = await fetch(`${API_BASE_URL}/procurement/suppliers/${id}`, {
+    method: "DELETE",
+  });
+  if (!response.ok) throw new Error("Failed to delete supplier");
+  return await response.json();
+}
+
+// Procurement - Purchase Orders
+async function fetchPurchaseOrders() {
+  const response = await fetch(`${API_BASE_URL}/procurement/orders`);
+  if (!response.ok) throw new Error("Failed to fetch purchase orders");
+  return (await response.json()).data;
+}
+
+async function fetchPurchaseOrder(id: string) {
+  const response = await fetch(`${API_BASE_URL}/procurement/orders/${id}`);
+  if (!response.ok) throw new Error("Failed to fetch purchase order");
+  return (await response.json()).data;
+}
+
+async function createPurchaseOrder(data: Record<string, any>) {
+  const response = await fetch(`${API_BASE_URL}/procurement/orders`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+  if (!response.ok) throw new Error("Failed to create purchase order");
+  return (await response.json()).data;
+}
+
+async function updatePurchaseOrder(id: string, data: Record<string, any>) {
+  const response = await fetch(`${API_BASE_URL}/procurement/orders/${id}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+  if (!response.ok) throw new Error("Failed to update purchase order");
+  return (await response.json()).data;
+}
+
+async function sendPurchaseOrder(id: string) {
+  const response = await fetch(`${API_BASE_URL}/procurement/orders/${id}/send`, {
+    method: "POST",
+  });
+  if (!response.ok) throw new Error("Failed to send purchase order");
+  return (await response.json()).data;
+}
+
+// Procurement - Goods Receipts
+async function receiveGoods(data: Record<string, any>) {
+  const response = await fetch(`${API_BASE_URL}/procurement/goods-receipt`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+  if (!response.ok) throw new Error("Failed to receive goods");
+  return (await response.json()).data;
+}
+
+async function fetchGoodsReceipts(poId: string) {
+  const response = await fetch(`${API_BASE_URL}/procurement/goods-receipt/${poId}`);
+  if (!response.ok) throw new Error("Failed to fetch goods receipts");
+  return (await response.json()).data;
+}
+
 export {
   fetchOrders,
   fetchAnalytics,
@@ -527,4 +620,16 @@ export {
   completeProductionOrder,
   consumeMaterial,
   fetchProductionProgress,
+  // Procurement
+  fetchSuppliers,
+  createSupplier,
+  updateSupplier,
+  deleteSupplier,
+  fetchPurchaseOrders,
+  fetchPurchaseOrder,
+  createPurchaseOrder,
+  updatePurchaseOrder,
+  sendPurchaseOrder,
+  receiveGoods,
+  fetchGoodsReceipts,
 };

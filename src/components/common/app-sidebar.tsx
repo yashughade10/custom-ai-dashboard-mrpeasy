@@ -39,6 +39,7 @@ import {
     Boxes,
     GitBranch,
     ClipboardList,
+    ShoppingCart,
 } from "lucide-react"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
@@ -82,6 +83,16 @@ const navItems = [
             { name: "Products", hash: "products", href: "/dashboard/production/products", icon: Boxes },
             { name: "Bill of Materials", hash: "bom", href: "/dashboard/production/bom", icon: GitBranch },
             { name: "Orders", hash: "orders", href: "/dashboard/production/orders", icon: ClipboardList },
+        ],
+    },
+    {
+        name: "Procurement",
+        href: "/dashboard/procurement",
+        icon: ShoppingCart,
+        children: [
+            { name: "Overview", hash: "", href: "/dashboard/procurement", icon: LayoutDashboard },
+            { name: "Suppliers", hash: "suppliers", href: "/dashboard/procurement/suppliers", icon: Users2 },
+            { name: "Purchase Orders", hash: "orders", href: "/dashboard/procurement/orders", icon: ClipboardList },
         ],
     },
     { name: "Orders", href: "/dashboard/orders", icon: ListOrdered },
