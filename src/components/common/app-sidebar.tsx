@@ -35,6 +35,10 @@ import {
     UserPlus,
     CalendarClock,
     Mail,
+    Factory,
+    Boxes,
+    GitBranch,
+    ClipboardList,
 } from "lucide-react"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
@@ -68,6 +72,16 @@ const navItems = [
             { name: "Opportunities", hash: "opportunities", href: "/dashboard/crm/opportunities", icon: Lightbulb },
             { name: "Activities", hash: "activities", href: "/dashboard/crm/activities", icon: CalendarClock },
             { name: "Emails", hash: "emails", href: "/dashboard/crm/emails", icon: Mail },
+        ],
+    },
+    {
+        name: "Production",
+        href: "/dashboard/production",
+        icon: Factory,
+        children: [
+            { name: "Products", hash: "products", href: "/dashboard/production/products", icon: Boxes },
+            { name: "Bill of Materials", hash: "bom", href: "/dashboard/production/bom", icon: GitBranch },
+            { name: "Orders", hash: "orders", href: "/dashboard/production/orders", icon: ClipboardList },
         ],
     },
     { name: "Orders", href: "/dashboard/orders", icon: ListOrdered },

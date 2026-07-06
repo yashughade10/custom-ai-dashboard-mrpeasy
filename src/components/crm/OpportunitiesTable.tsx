@@ -13,6 +13,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import OpportunityDetailSheet from "./OpportunityDetailSheet";
 import { Plus, MoreHorizontal, Pencil, Trash2, Loader2 } from "lucide-react";
+import { toast } from "sonner";
 
 const STAGE_OPTIONS = ["prospecting", "qualification", "proposal", "negotiation", "closed_won", "closed_lost"] as const;
 
@@ -52,6 +53,7 @@ export default function OpportunitiesTable({ onOpenCreate }: { onOpenCreate?: (f
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingOpp, setEditingOpp] = useState<any>(null);
   const [form, setForm] = useState(emptyForm);
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
   // Delete confirmation
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -124,22 +126,43 @@ export default function OpportunitiesTable({ onOpenCreate }: { onOpenCreate?: (f
     setDialogOpen(false);
     setEditingOpp(null);
     setForm(emptyForm);
+    setErrors({});
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    setErrors({});
+
+    let newErrors: Record<string, string> = {};
+
+    if (!form.name || form.name.trim().length === 0) {
+      newErrors.name = "Opportunity name is required";
+    }
+    if (form.probability < 0 || form.probability > 100) {
+      newErrors.probability = "Probability must be between 0 and 100";
+    }
+    const parsedValue = form.expected_value ? parseFloat(form.expected_value) : 0;
+    if (parsedValue < 0) {
+      newErrors.expected_value = "Expected value cannot be negative";
+    }
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      return;
+    }
+
     const payload = {
-      name: form.name,
+      name: form.name.trim(),
       contact_id: form.contact_id ? parseInt(form.contact_id) : null,
       company_id: form.company_id ? parseInt(form.company_id) : null,
       deal_id: form.deal_id ? parseInt(form.deal_id) : null,
       stage: form.stage || 'prospecting',
       probability: form.probability,
-      expected_value: form.expected_value ? parseFloat(form.expected_value) : 0,
+      expected_value: parsedValue,
       expected_close_date: form.expected_close_date || null,
       actual_close_date: form.actual_close_date || null,
-      win_reason: form.win_reason || null,
-      loss_reason: form.loss_reason || null,
+      win_reason: form.win_reason?.trim() || null,
+      loss_reason: form.loss_reason?.trim() || null,
       assigned_to: form.assigned_to ? parseInt(form.assigned_to) : null,
     };
     if (editingOpp) {
@@ -317,7 +340,9 @@ export default function OpportunitiesTable({ onOpenCreate }: { onOpenCreate?: (f
                   value={form.name}
                   onChange={(e) => setForm({ ...form, name: e.target.value })}
                   placeholder="Enterprise Deal - Acme Corp"
+                  className={errors.name ? "border-red-500 focus-visible:ring-red-500" : ""}
                 />
+                {errors.name && <p className="text-xs text-red-500">{errors.name}</p>}
               </div>
               <div className="grid grid-cols-3 gap-3">
                 <div className="space-y-1.5">
@@ -390,7 +415,9 @@ export default function OpportunitiesTable({ onOpenCreate }: { onOpenCreate?: (f
                     max={100}
                     value={form.probability}
                     onChange={(e) => setForm({ ...form, probability: parseInt(e.target.value) || 0 })}
+                    className={errors.probability ? "border-red-500 focus-visible:ring-red-500" : ""}
                   />
+                  {errors.probability && <p className="text-xs text-red-500">{errors.probability}</p>}
                 </div>
                 <div className="space-y-1.5">
                   <label className="text-xs font-medium text-muted-foreground">Expected Value ($)</label>
@@ -400,7 +427,9 @@ export default function OpportunitiesTable({ onOpenCreate }: { onOpenCreate?: (f
                     value={form.expected_value}
                     onChange={(e) => setForm({ ...form, expected_value: e.target.value })}
                     placeholder="25000"
+                    className={errors.expected_value ? "border-red-500 focus-visible:ring-red-500" : ""}
                   />
+                  {errors.expected_value && <p className="text-xs text-red-500">{errors.expected_value}</p>}
                 </div>
               </div>
               <div className="grid grid-cols-3 gap-3">
