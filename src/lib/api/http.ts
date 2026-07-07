@@ -1,0 +1,41 @@
+// lib/api/http.ts
+//
+// Shared by every module's API layer (quotations, inventory, email...).
+// `cache: "no-store"` avoids the ETag/304-with-empty-body issue we hit on
+// the quotations list — always use this instead of raw fetch().
+import { API_BASE_URL } from "@/services/api";
+
+export function apiFetch(url: string, init: RequestInit = {}) {
+  return fetch(url, {
+    ...init,
+    cache: "no-store",
+    headers: {
+      ...(init.body ? { "Content-Type": "application/json" } : {}),
+      ...init.headers,
+    },
+  });
+}
+
+export async function handleResponse<T>(res: Response): Promise<T> {
+  if (res.status === 304) {
+    throw new Error(
+      "Got a 304 Not Modified with no body — check API responses aren't being cached/ETag'd.",
+    );
+  }
+  const data = await res.json();
+  if (!res.ok || data.success === false) {
+    throw new Error(data.message || "Request failed");
+  }
+  return data;
+}
+
+export function buildQuery(
+  params: Record<string, string | number | boolean | undefined>,
+) {
+  const search = new URLSearchParams();
+  for (const [key, value] of Object.entries(params)) {
+    if (value !== undefined && value !== "") search.set(key, String(value));
+  }
+  const qs = search.toString();
+  return qs ? `?${qs}` : "";
+}

@@ -40,7 +40,6 @@ import {
     GitBranch,
     ClipboardList,
     ShoppingCart,
-    ShoppingCart,
 } from "lucide-react"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
@@ -104,6 +103,17 @@ const navItems = [
         children: [
             { name: "Quotations",hash: "quotations", href: "/dashboard/sales/quotations", icon:Mail },
             { name: "Sales Orders", hash: "orders", href: "/dashboard/sales/orders", icon:Mail  }
+
+        ],
+    },
+     {
+        name: "Inventory",
+        href: "/dashboard/inventory",
+        icon: ShoppingCart,
+        children: [
+            { name: "Stock",hash: "quotations", href: "/dashboard/inventory", icon:Mail },
+            { name: "Warehouses", hash: "warehouses", href: "/dashboard/inventory/warehouses", icon:Mail  },
+            { name: "History", hash: "history", href: "/dashboard/inventory/history", icon:Mail  }
 
         ],
     },
