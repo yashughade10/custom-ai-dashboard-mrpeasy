@@ -32,7 +32,7 @@ export interface StockItem {
   updated_at: string;
 }
 
-export type MovementType = "in" | "out" | "adjustment";
+export type MovementType = "stock_in" | "stock_out" | "adjustment";
 
 export interface StockMovement {
   id: number;
