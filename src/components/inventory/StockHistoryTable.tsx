@@ -2,6 +2,7 @@
 "use client";
 
 import { useState } from "react";
+import { useSearchParams } from "next/navigation";
 import {
   Table,
   TableBody,
@@ -24,18 +25,22 @@ import { useStockMovements, useWarehouses } from "@/hooks/use-inventory";
 import type { MovementType } from "@/types/inventory";
 
 const TYPE_STYLES: Record<MovementType, string> = {
-  in: "bg-emerald-50 text-emerald-700 border-emerald-200",
-  out: "bg-amber-50 text-amber-700 border-amber-200",
+  stock_in: "bg-emerald-50 text-emerald-700 border-emerald-200",
+  stock_out: "bg-amber-50 text-amber-700 border-amber-200",
   adjustment: "bg-slate-100 text-slate-700 border-slate-200",
 };
 
 const TYPE_LABELS: Record<MovementType, string> = {
-  in: "Stock in",
-  out: "Stock out",
+  stock_in: "Stock in",
+  stock_out: "Stock out",
   adjustment: "Adjustment",
 };
 
 export function StockHistoryTable() {
+  const searchParams = useSearchParams();
+  const productIdParam = searchParams.get("product_id");
+  const productId = productIdParam ? Number(productIdParam) : undefined;
+
   const [warehouseId, setWarehouseId] = useState("all");
   const [type, setType] = useState<MovementType | "all">("all");
   const [dateFrom, setDateFrom] = useState("");
@@ -43,6 +48,7 @@ export function StockHistoryTable() {
 
   const { data: warehouses = [] } = useWarehouses();
   const { data, isLoading } = useStockMovements({
+    product_id: productId,
     warehouse_id: warehouseId === "all" ? undefined : Number(warehouseId),
     movement_type: type === "all" ? undefined : type,
     date_from: dateFrom || undefined,
@@ -80,8 +86,8 @@ export function StockHistoryTable() {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All types</SelectItem>
-              <SelectItem value="in">Stock in</SelectItem>
-              <SelectItem value="out">Stock out</SelectItem>
+              <SelectItem value="stock_in">Stock in</SelectItem>
+              <SelectItem value="stock_out">Stock out</SelectItem>
               <SelectItem value="adjustment">Adjustment</SelectItem>
             </SelectContent>
           </Select>
@@ -137,7 +143,7 @@ export function StockHistoryTable() {
                     </Badge>
                   </TableCell>
                   <TableCell className="text-right tabular-nums">
-                    {m.movement_type === "out" ? "-" : m.movement_type === "in" ? "+" : ""}
+                    {m.movement_type === "stock_out" ? "-" : m.movement_type === "stock_in" ? "+" : ""}
                     {Math.abs(m.quantity)}
                   </TableCell>
                   <TableCell className="text-sm text-slate-500">

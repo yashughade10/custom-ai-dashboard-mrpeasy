@@ -30,7 +30,7 @@ export async function handleResponse<T>(res: Response): Promise<T> {
 }
 
 export function buildQuery(
-  params: Record<string, string | number | boolean | undefined>,
+  params: Record<string, any>,
 ) {
   const search = new URLSearchParams();
   for (const [key, value] of Object.entries(params)) {
