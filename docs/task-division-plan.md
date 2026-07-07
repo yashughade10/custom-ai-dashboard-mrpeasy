@@ -25,6 +25,14 @@ This document outlines the allocation of work for Phase 2 of the MRP Easy implem
 3. **AI Engine Integration (Modules 2 & 8) [✅ Backend APIs COMPLETED]**
    - **Implementation:** Extend `openrouter.ts` for AI Lead Scoring, Win Probability, and Natural Language generation for Executive Summary reports.
 
+4. **Selective Email Sending & Tag-based Selection (New Request) [✅ COMPLETED]**
+   - **APIs:**
+     - `POST /api/email/send-selected` (Accepts an array of user IDs/emails and a template/message to send)
+     - `GET /api/contacts/tags` (Fetch available tags for filtering)
+   - **UI:**
+     - User selection table with checkboxes to selectively send emails.
+     - Tag-based filter dropdown to automatically select groups of users based on tags (similar to HubSpot).
+
 ---
 
 ### Yash
@@ -33,7 +41,7 @@ This document outlines the allocation of work for Phase 2 of the MRP Easy implem
 1. **DevOps & Infrastructure**
    - Manage deployment pipelines and server environments.
 
-2. **Sales Workflow & PDFs (Module 3)**
+2. **Sales Workflow & PDFs (Module 3) [✅ Backend APIs COMPLETED]**
    - **APIs:** 
      - Quotations (`/api/sales/quotations`)
      - Sales Orders (`/api/sales/orders`)
@@ -51,7 +59,7 @@ This document outlines the allocation of work for Phase 2 of the MRP Easy implem
    - **UI:** 
      - Finance dashboard, Invoice generation views, and P&L charts.
 
-4. **Inventory (Module 5)**
+4. **Inventory (Module 5) [✅ Backend APIs COMPLETED]**
    - **APIs:**
      - Warehouses (`/api/inventory/warehouses`)
      - Stock retrieval (`/api/inventory/stock`, `/api/inventory/low-stock`)
@@ -59,7 +67,7 @@ This document outlines the allocation of work for Phase 2 of the MRP Easy implem
    - **UI:** 
      - Stock tables, movement history, and low-stock alert views.
 
-5. **CRM Email Automation & Triggers (Module 2E)**
+5. **CRM Email Automation & Triggers (Module 2E) [✅ Backend APIs COMPLETED]**
    - **APIs:**
      - Email Templates (`/api/email/templates`)
      - Send logic (`/api/email/send`, `send-bulk`)
