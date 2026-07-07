@@ -18,8 +18,8 @@ import { useStockAdjustment, useStockIn, useStockOut } from "@/hooks/use-invento
 import type { MovementType, StockItem } from "@/types/inventory";
 
 const TITLES: Record<MovementType, string> = {
-  in: "Receive stock",
-  out: "Issue stock",
+  stock_in: "Receive stock",
+  stock_out: "Issue stock",
   adjustment: "Adjust stock",
 };
 
@@ -45,9 +45,9 @@ export function StockMovementForm({
   const adjustmentMutation = useStockAdjustment();
 
   const mutation =
-    movementType === "in"
+    movementType === "stock_in"
       ? stockInMutation
-      : movementType === "out"
+      : movementType === "stock_out"
         ? stockOutMutation
         : adjustmentMutation;
 

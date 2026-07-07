@@ -127,7 +127,7 @@ export function StockTable() {
                           size="icon"
                           className="h-8 w-8 text-emerald-600"
                           title="Stock in"
-                          onClick={() => setMovement({ item, type: "in" })}
+                          onClick={() => setMovement({ item, type: "stock_in" })}
                         >
                           <PackagePlus className="h-4 w-4" />
                         </Button>
@@ -136,7 +136,7 @@ export function StockTable() {
                           size="icon"
                           className="h-8 w-8 text-amber-600"
                           title="Stock out"
-                          onClick={() => setMovement({ item, type: "out" })}
+                          onClick={() => setMovement({ item, type: "stock_out" })}
                         >
                           <PackageMinus className="h-4 w-4" />
                         </Button>
@@ -163,7 +163,7 @@ export function StockTable() {
         open={Boolean(movement)}
         onOpenChange={(open) => !open && setMovement(null)}
         stockItem={movement?.item}
-        movementType={movement?.type ?? "in"}
+        movementType={movement?.type ?? "stock_in"}
       />
     </div>
   );
