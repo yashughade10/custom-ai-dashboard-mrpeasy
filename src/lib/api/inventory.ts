@@ -106,11 +106,12 @@ export async function stockAdjustment(
   return data.data;
 }
 
-// Not in the given endpoint list — assumed so StockHistoryTable has a
-// data source. Swap for the real history/movements route if it differs.
+// Uses /api/inventory/history and /api/inventory/history/:productId
 export async function listMovements(
   filters: MovementListFilters = {},
 ): Promise<PaginatedResponse<StockMovement>> {
-  const res = await apiFetch(`${BASE}/movements${buildQuery(filters)}`);
+  const { product_id, ...restFilters } = filters;
+  const endpoint = product_id ? `/history/${product_id}` : `/history`;
+  const res = await apiFetch(`${BASE}${endpoint}${buildQuery(restFilters)}`);
   return handleResponse<PaginatedResponse<StockMovement>>(res);
 }

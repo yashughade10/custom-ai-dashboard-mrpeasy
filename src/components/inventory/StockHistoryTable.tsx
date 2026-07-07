@@ -2,6 +2,7 @@
 "use client";
 
 import { useState } from "react";
+import { useSearchParams } from "next/navigation";
 import {
   Table,
   TableBody,
@@ -36,6 +37,10 @@ const TYPE_LABELS: Record<MovementType, string> = {
 };
 
 export function StockHistoryTable() {
+  const searchParams = useSearchParams();
+  const productIdParam = searchParams.get("product_id");
+  const productId = productIdParam ? Number(productIdParam) : undefined;
+
   const [warehouseId, setWarehouseId] = useState("all");
   const [type, setType] = useState<MovementType | "all">("all");
   const [dateFrom, setDateFrom] = useState("");
@@ -43,6 +48,7 @@ export function StockHistoryTable() {
 
   const { data: warehouses = [] } = useWarehouses();
   const { data, isLoading } = useStockMovements({
+    product_id: productId,
     warehouse_id: warehouseId === "all" ? undefined : Number(warehouseId),
     movement_type: type === "all" ? undefined : type,
     date_from: dateFrom || undefined,
