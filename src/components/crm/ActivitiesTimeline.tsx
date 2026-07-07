@@ -67,6 +67,7 @@ export default function ActivitiesTimeline({ onOpenCreate }: { onOpenCreate?: (f
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingActivity, setEditingActivity] = useState<any>(null);
   const [form, setForm] = useState(emptyForm);
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
   // Delete confirmation
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -138,19 +139,36 @@ export default function ActivitiesTimeline({ onOpenCreate }: { onOpenCreate?: (f
     setDialogOpen(false);
     setEditingActivity(null);
     setForm(emptyForm);
+    setErrors({});
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    setErrors({});
+    const newErrors: Record<string, string> = {};
+
+    if (!form.subject || form.subject.trim().length === 0) {
+      newErrors.subject = "Subject is required";
+    }
+    const duration = form.duration_minutes ? parseInt(form.duration_minutes) : null;
+    if (duration !== null && duration < 0) {
+      newErrors.duration = "Duration cannot be negative";
+    }
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      return;
+    }
+
     const payload = {
       activity_type: form.activity_type,
-      subject: form.subject,
-      description: form.description || null,
+      subject: form.subject.trim(),
+      description: form.description?.trim() || null,
       status: form.status || "scheduled",
       due_date: form.due_date ? new Date(form.due_date).toISOString() : null,
       completed_at: form.completed_at ? new Date(form.completed_at).toISOString() : null,
-      duration_minutes: form.duration_minutes ? parseInt(form.duration_minutes) : null,
-      outcome: form.outcome || null,
+      duration_minutes: duration,
+      outcome: form.outcome?.trim() || null,
       contact_id: form.contact_id ? parseInt(form.contact_id) : null,
       company_id: form.company_id ? parseInt(form.company_id) : null,
       deal_id: form.deal_id ? parseInt(form.deal_id) : null,
@@ -370,7 +388,9 @@ export default function ActivitiesTimeline({ onOpenCreate }: { onOpenCreate?: (f
                   value={form.subject}
                   onChange={(e) => setForm({ ...form, subject: e.target.value })}
                   placeholder="Follow-up call with client"
+                  className={errors.subject ? "border-red-500 focus-visible:ring-red-500" : ""}
                 />
+                {errors.subject && <p className="text-xs text-red-500">{errors.subject}</p>}
               </div>
               <div className="space-y-1.5">
                 <label className="text-xs font-medium text-muted-foreground">Description</label>
@@ -406,7 +426,9 @@ export default function ActivitiesTimeline({ onOpenCreate }: { onOpenCreate?: (f
                     value={form.duration_minutes}
                     onChange={(e) => setForm({ ...form, duration_minutes: e.target.value })}
                     placeholder="30"
+                    className={errors.duration ? "border-red-500 focus-visible:ring-red-500" : ""}
                   />
+                  {errors.duration && <p className="text-xs text-red-500">{errors.duration}</p>}
                 </div>
               </div>
               <div className="space-y-1.5">

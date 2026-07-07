@@ -140,17 +140,31 @@ export default function LeadsTable({ onOpenCreate }: { onOpenCreate?: (fn: () =>
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!form.first_name || form.first_name.trim().length === 0) {
+      toast.error("First name is required");
+      return;
+    }
+    if (form.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) {
+      toast.error("Invalid email address format");
+      return;
+    }
+    if (form.score < 0 || form.score > 100) {
+      toast.error("Score must be between 0 and 100");
+      return;
+    }
+
     const payload = {
-      first_name: form.first_name,
-      last_name: form.last_name || null,
-      email: form.email || null,
-      phone: form.phone || null,
-      company_name: form.company_name || null,
+      first_name: form.first_name.trim(),
+      last_name: form.last_name?.trim() || null,
+      email: form.email?.trim() || null,
+      phone: form.phone?.trim() || null,
+      company_name: form.company_name?.trim() || null,
       source: form.source || "other",
       status: form.status || "new",
       score: form.score,
       assigned_to: form.assigned_to ? parseInt(form.assigned_to) : null,
-      notes: form.notes || null,
+      notes: form.notes?.trim() || null,
     };
     if (editingLead) {
       updateMutation.mutate({ id: editingLead.id.toString(), data: payload });

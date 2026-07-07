@@ -3,10 +3,11 @@
 import { useState } from "react";
 import HotLeadsEmailSender from "@/components/crm/emails/HotLeadsEmailSender";
 import NewsletterEmailSender from "@/components/crm/emails/NewsletterEmailSender";
+import SelectiveEmailSender from "@/components/crm/emails/SelectiveEmailSender";
 import { Button } from "@/components/ui/button";
 
 export default function CrmEmailsPage() {
-  const [activeTab, setActiveTab] = useState<"hotLeads" | "newsletter">("hotLeads");
+  const [activeTab, setActiveTab] = useState<"hotLeads" | "newsletter" | "selective">("selective");
 
   return (
     <div className="p-6 w-full space-y-6">
@@ -32,9 +33,16 @@ export default function CrmEmailsPage() {
         >
           Newsletter (All Contacts)
         </Button>
+        <Button 
+          variant={activeTab === "selective" ? "default" : "outline"} 
+          onClick={() => setActiveTab("selective")}
+        >
+          Selective Send (Tags)
+        </Button>
       </div>
 
       <div className="mt-6">
+        {activeTab === "selective" && <SelectiveEmailSender />}
         {activeTab === "hotLeads" && <HotLeadsEmailSender />}
         {activeTab === "newsletter" && <NewsletterEmailSender />}
       </div>
