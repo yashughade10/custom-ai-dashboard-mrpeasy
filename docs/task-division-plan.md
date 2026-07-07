@@ -47,7 +47,7 @@ This document outlines the allocation of work for Phase 2 of the MRP Easy implem
      - Sales Orders (`/api/sales/orders`)
      - PDF Generation endpoints (using `pdfkit` / `puppeteer`).
    - **UI:** 
-     - Quotation and Sales Order lists/forms with line-item calculations.
+     - Quotation and Sales Order lists/forms with line-item calculations - completed
      - Sales workflow progress tracking.
 
 3. **Finance (Module 7)**
