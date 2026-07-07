@@ -114,7 +114,7 @@ export function QuotationFormSheet({
     watch,
     formState: { errors },
   } = useForm<FormValues>({
-    resolver: zodResolver(formSchema),
+    resolver: zodResolver(formSchema) as any,
     defaultValues: emptyValues,
   });
 

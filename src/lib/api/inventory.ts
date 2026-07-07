@@ -65,7 +65,7 @@ export async function deleteWarehouse(id: number): Promise<void> {
 export async function listStock(
   filters: StockListFilters = {},
 ): Promise<PaginatedResponse<StockItem>> {
-  const res = await apiFetch(`${BASE}/stock${buildQuery(filters)}`);
+  const res = await apiFetch(`${BASE}/stock${buildQuery(filters as Record<string, any>)}`);
   return handleResponse<PaginatedResponse<StockItem>>(res);
 }
 
@@ -112,6 +112,6 @@ export async function listMovements(
 ): Promise<PaginatedResponse<StockMovement>> {
   const { product_id, ...restFilters } = filters;
   const endpoint = product_id ? `/history/${product_id}` : `/history`;
-  const res = await apiFetch(`${BASE}${endpoint}${buildQuery(restFilters)}`);
+  const res = await apiFetch(`${BASE}${endpoint}${buildQuery(restFilters as Record<string, any>)}`);
   return handleResponse<PaginatedResponse<StockMovement>>(res);
 }
