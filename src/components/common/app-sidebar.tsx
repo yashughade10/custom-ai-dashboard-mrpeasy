@@ -79,40 +79,40 @@ const navItems = [
             { name: "Emails", hash: "emails", href: "/dashboard/crm/emails", icon: Mail },
         ],
     },
-    {
-        name: "Production",
-        href: "/dashboard/production",
-        icon: Factory,
-        children: [
-            { name: "Overview", hash: "", href: "/dashboard/production", icon: LayoutDashboard },
-            { name: "Products", hash: "products", href: "/dashboard/production/products", icon: Boxes },
-            { name: "Bill of Materials", hash: "bom", href: "/dashboard/production/bom", icon: GitBranch },
-            { name: "Orders", hash: "orders", href: "/dashboard/production/orders", icon: ClipboardList },
-        ],
-    },
-    {
-        name: "Procurement",
-        href: "/dashboard/procurement",
-        icon: ShoppingCart,
-        children: [
-            { name: "Overview", hash: "", href: "/dashboard/procurement", icon: LayoutDashboard },
-            { name: "Suppliers", hash: "suppliers", href: "/dashboard/procurement/suppliers", icon: Users2 },
-            { name: "Purchase Orders", hash: "orders", href: "/dashboard/procurement/orders", icon: ClipboardList },
-        ],
-    },
+    // {
+    //     name: "Production",
+    //     href: "/dashboard/production",
+    //     icon: Factory,
+    //     children: [
+    //         { name: "Overview", hash: "", href: "/dashboard/production", icon: LayoutDashboard },
+    //         { name: "Products", hash: "products", href: "/dashboard/production/products", icon: Boxes },
+    //         { name: "Bill of Materials", hash: "bom", href: "/dashboard/production/bom", icon: GitBranch },
+    //         { name: "Orders", hash: "orders", href: "/dashboard/production/orders", icon: ClipboardList },
+    //     ],
+    // },
+    // {
+    //     name: "Procurement",
+    //     href: "/dashboard/procurement",
+    //     icon: ShoppingCart,
+    //     children: [
+    //         { name: "Overview", hash: "", href: "/dashboard/procurement", icon: LayoutDashboard },
+    //         { name: "Suppliers", hash: "suppliers", href: "/dashboard/procurement/suppliers", icon: Users2 },
+    //         { name: "Purchase Orders", hash: "orders", href: "/dashboard/procurement/orders", icon: ClipboardList },
+    //     ],
+    // },
     { name: "Orders", href: "/dashboard/orders", icon: ListOrdered },
-    {
-        name: "Reports",
-        href: "/dashboard/reports",
-        icon: PieChart,
-        children: [
-            { name: "Overview", hash: "", href: "/dashboard/reports", icon: LayoutDashboard },
-            // { name: "Sales", hash: "sales", href: "/dashboard/reports/sales", icon: TrendingUp },
-            // { name: "Inventory", hash: "inventory", href: "/dashboard/reports/inventory", icon: Package },
-            // { name: "Production", hash: "production", href: "/dashboard/reports/production", icon: Factory },
-            // { name: "Finance", hash: "finance", href: "/dashboard/reports/finance", icon: FileText },
-        ],
-    },
+    // {
+    //     name: "Reports",
+    //     href: "/dashboard/reports",
+    //     icon: PieChart,
+    //     children: [
+    //         { name: "Overview", hash: "", href: "/dashboard/reports", icon: LayoutDashboard },
+    //         { name: "Sales", hash: "sales", href: "/dashboard/reports/sales", icon: TrendingUp },
+    //         { name: "Inventory", hash: "inventory", href: "/dashboard/reports/inventory", icon: Package },
+    //         { name: "Production", hash: "production", href: "/dashboard/reports/production", icon: Factory },
+    //         { name: "Finance", hash: "finance", href: "/dashboard/reports/finance", icon: FileText },
+    //     ],
+    // },
     // {
     //     name: "Administration",
     //     href: "/dashboard/admin",
@@ -125,6 +125,30 @@ const navItems = [
     //         { name: "Settings", hash: "settings", href: "/dashboard/admin/settings", icon: Settings },
     //     ],
     // },
+    { name: "Orders", href: "/dashboard/orders", icon: ListOrdered },
+    {
+        name: "Sales",
+        href: "/dashboard/sales",
+        icon: ShoppingCart,
+        children: [
+            { name: "Quotations", hash: "quotations", href: "/dashboard/sales/quotations", icon: Mail },
+            { name: "Sales Orders", hash: "orders", href: "/dashboard/sales/orders", icon: Mail }
+
+        ],
+    },
+    {
+        name: "Inventory",
+        href: "/dashboard/inventory",
+        icon: ShoppingCart,
+        children: [
+            { name: "Stock", hash: "quotations", href: "/dashboard/inventory", icon: Mail },
+            { name: "Warehouses", hash: "warehouses", href: "/dashboard/inventory/warehouses", icon: Mail },
+            { name: "History", hash: "history", href: "/dashboard/inventory/history", icon: Mail }
+
+        ],
+    },
+    // { name: "Announcements", href: "/dashboard/announcements", icon: Megaphone },
+    // { name: "Settings", href: "/dashboard/settings", icon: Settings },
 ]
 
 export function AppSidebar() {

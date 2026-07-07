@@ -64,10 +64,10 @@ export function InventoryReport() {
           </CardHeader>
           <CardContent className="h-80">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={data.stockLevels} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+              <BarChart data={data.stockLevels} margin={{ top: 20, right: 20, left: 0, bottom: 40 }}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
-                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#888888' }} interval={0} angle={-45} textAnchor="end" height={60} />
-                <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#888888' }} />
+                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#888888' }} interval={0} angle={-45} textAnchor="end" height={80} tickFormatter={(val) => val.length > 20 ? val.substring(0, 20) + '...' : val} />
+                <YAxis width={45} axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#888888' }} allowDecimals={false} domain={[0, 'auto']} tickFormatter={(val) => val >= 1000 ? `${(val / 1000).toFixed(0)}k` : val} tickMargin={8} />
                 <Tooltip 
                   cursor={{ fill: 'rgba(0,0,0,0.05)' }}
                   contentStyle={{ backgroundColor: 'white', borderColor: '#e2e8f0', borderRadius: '8px', color: '#0f172a', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
@@ -86,7 +86,7 @@ export function InventoryReport() {
           </CardHeader>
           <CardContent className="h-80 flex flex-col justify-center">
             <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
+              <PieChart margin={{ top: 0, right: 0, left: 0, bottom: 20 }}>
                 <Pie
                   data={data.valuation.breakdown}
                   cx="50%"
@@ -106,7 +106,7 @@ export function InventoryReport() {
                   itemStyle={{ color: '#0f172a' }}
                   formatter={(val) => [`$${val}`, 'Value']}
                 />
-                <Legend iconType="circle" wrapperStyle={{ fontSize: '12px' }} />
+                <Legend iconType="circle" wrapperStyle={{ fontSize: '12px', bottom: -10 }} />
               </PieChart>
             </ResponsiveContainer>
           </CardContent>
@@ -118,10 +118,10 @@ export function InventoryReport() {
           </CardHeader>
           <CardContent className="h-80">
             <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={data.turnover} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+              <LineChart data={data.turnover} margin={{ top: 20, right: 20, left: 0, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
-                <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#888888' }} />
-                <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#888888' }} />
+                <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#888888' }} tickMargin={12} />
+                <YAxis width={45} axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#888888' }} allowDecimals={false} tickMargin={8} />
                 <Tooltip 
                   contentStyle={{ backgroundColor: 'white', borderColor: '#e2e8f0', borderRadius: '8px', color: '#0f172a', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
                   itemStyle={{ color: '#0f172a' }}
