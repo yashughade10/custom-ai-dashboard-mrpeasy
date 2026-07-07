@@ -125,7 +125,7 @@ const navItems = [
     //         { name: "Settings", hash: "settings", href: "/dashboard/admin/settings", icon: Settings },
     //     ],
     // },
-    { name: "Orders", href: "/dashboard/orders", icon: ListOrdered },
+    // { name: "Orders", href: "/dashboard/orders", icon: ListOrdered },
     {
         name: "Sales",
         href: "/dashboard/sales",
