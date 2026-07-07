@@ -2,17 +2,20 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Loader2 } from "lucide-react";
 
 export default function SupplierForm({
   isOpen,
   onClose,
   initialData,
   onSubmit,
+  isSubmitting,
 }: {
   isOpen: boolean;
   onClose: () => void;
   initialData?: any;
   onSubmit: (data: any) => void;
+  isSubmitting?: boolean;
 }) {
   const [form, setForm] = useState({
     name: initialData?.name || "",
@@ -159,7 +162,10 @@ export default function SupplierForm({
           
           <div className="flex justify-end pt-2 gap-2">
             <Button type="button" variant="outline" onClick={onClose}>Cancel</Button>
-            <Button type="submit">Save Supplier</Button>
+            <Button type="submit" disabled={isSubmitting}>
+              {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Save Supplier
+            </Button>
           </div>
         </form>
       </DialogContent>

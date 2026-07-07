@@ -164,6 +164,7 @@ export default function PurchaseOrderTable({ onOpenCreate }: { onOpenCreate?: (f
           onClose={() => setReceivingPO(null)}
           purchaseOrder={receivingPO}
           onSubmit={(data) => receiveMutation.mutate(data)}
+          isSubmitting={receiveMutation.isPending}
         />
       )}
     </div>

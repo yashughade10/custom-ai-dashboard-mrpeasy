@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Trash2, Plus } from "lucide-react";
+import { Trash2, Plus, Loader2 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { fetchSuppliers, fetchProducts } from "@/services/api";
 
@@ -12,27 +12,37 @@ export default function PurchaseOrderForm({
   onClose,
   initialData,
   onSubmit,
+  isSubmitting = false,
 }: {
   isOpen: boolean;
   onClose: () => void;
   initialData?: any;
   onSubmit: (data: any) => void;
+  isSubmitting?: boolean;
 }) {
   const [form, setForm] = useState({
     supplier_id: initialData?.supplier_id?.toString() || "",
-    expected_delivery: initialData?.expected_delivery ? new Date(initialData.expected_delivery).toISOString().split('T')[0] : "",
+    expected_delivery: initialData?.expected_delivery ? new Date(initialData.expected_delivery).toLocaleDateString('en-CA') : "",
     notes: initialData?.notes || "",
     currency: initialData?.currency || "AUD",
   });
 
-  const [items, setItems] = useState<any[]>(initialData?.items || [{ product_id: "", quantity_ordered: "", unit_price: "" }]);
+  const [items, setItems] = useState<any[]>(
+    initialData?.items
+      ? initialData.items.map((item: any) => ({
+          ...item,
+          product_id: item.product_id?.toString() || "",
+        }))
+      : [{ product_id: "", quantity_ordered: "", unit_price: "" }]
+  );
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  const { data: suppliersData } = useQuery({ queryKey: ["procurement-suppliers"], queryFn: fetchSuppliers });
-  const { data: productsData } = useQuery({ queryKey: ["products-all"], queryFn: () => fetchProducts({ page: 1 }) });
-
-  const suppliers = suppliersData || [];
-  const products = productsData?.data || [];
+  const { data: suppliersData } = useQuery({ queryKey: ["procurement-suppliers"], queryFn: () => fetchSuppliers() });
+  const { data: productsData } = useQuery({ queryKey: ["procurement-products"], queryFn: () => fetchProducts() });
+  const suppliers = Array.isArray(suppliersData) ? suppliersData : (suppliersData?.data || []);
+  const products = Array.isArray(productsData) ? productsData : (productsData?.data || []);
+  
+  const isReadOnly = !!initialData;
   // For procurement we typically order raw materials, but could be anything
   const rawMaterials = products.filter((p: any) => p.is_raw_material);
 
@@ -98,14 +108,14 @@ export default function PurchaseOrderForm({
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>{initialData ? "Edit Purchase Order" : "New Purchase Order"}</DialogTitle>
+          <DialogTitle>{initialData ? "View / Edit Purchase Order" : "New Purchase Order"}</DialogTitle>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-6 mt-4">
-          
+        <form onSubmit={handleSubmit} className="space-y-6 mt-4 min-w-0 w-full">
+
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1.5">
               <label className="text-xs font-medium text-muted-foreground">Supplier *</label>
-              <Select value={form.supplier_id} onValueChange={(val) => setForm({ ...form, supplier_id: val })}>
+              <Select disabled={isReadOnly} value={form.supplier_id} onValueChange={(val) => setForm({ ...form, supplier_id: val })}>
                 <SelectTrigger className={errors.supplier_id ? "border-red-500" : ""}>
                   <SelectValue placeholder="Select Supplier" />
                 </SelectTrigger>
@@ -122,6 +132,7 @@ export default function PurchaseOrderForm({
               <label className="text-xs font-medium text-muted-foreground">Expected Delivery</label>
               <Input
                 type="date"
+                disabled={isReadOnly}
                 value={form.expected_delivery}
                 onChange={(e) => setForm({ ...form, expected_delivery: e.target.value })}
               />
@@ -131,19 +142,21 @@ export default function PurchaseOrderForm({
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <h3 className="text-sm font-semibold">Order Items</h3>
-              <Button type="button" variant="outline" size="sm" onClick={addItem} className="h-8 text-xs gap-1">
-                <Plus className="h-3 w-3" /> Add Item
-              </Button>
+              {!isReadOnly && (
+                <Button type="button" variant="outline" size="sm" onClick={addItem} className="h-8 text-xs gap-1">
+                  <Plus className="h-3 w-3" /> Add Item
+                </Button>
+              )}
             </div>
-            
+
             {errors.general && <p className="text-xs text-red-500">{errors.general}</p>}
 
             <div className="space-y-2">
               {items.map((item, index) => (
                 <div key={index} className="flex items-start gap-2 items-center bg-muted/30 p-2 rounded-md">
-                  <div className="flex-1 min-w-0 space-y-1">
-                    <Select value={item.product_id} onValueChange={(val) => handleProductSelect(index, val)}>
-                      <SelectTrigger className={`h-8 ${errors[`item_${index}_product`] ? "border-red-500" : ""}`}>
+                  <div className="flex-1 min-w-0 overflow-hidden space-y-1">
+                    <Select disabled={isReadOnly} value={item.product_id} onValueChange={(val) => handleProductSelect(index, val)}>
+                      <SelectTrigger className={`h-8 w-full ${errors[`item_${index}_product`] ? "border-red-500" : ""}`}>
                         <SelectValue placeholder="Select Product" />
                       </SelectTrigger>
                       <SelectContent>
@@ -156,6 +169,7 @@ export default function PurchaseOrderForm({
                   <div className="w-24 space-y-1">
                     <Input
                       type="number"
+                      disabled={isReadOnly}
                       placeholder="Qty"
                       className={`h-8 ${errors[`item_${index}_qty`] ? "border-red-500" : ""}`}
                       value={item.quantity_ordered}
@@ -167,6 +181,7 @@ export default function PurchaseOrderForm({
                       <span className="absolute left-2.5 top-1.5 text-xs text-muted-foreground">$</span>
                       <Input
                         type="number"
+                        disabled={isReadOnly}
                         placeholder="Price"
                         className={`h-8 pl-6 ${errors[`item_${index}_price`] ? "border-red-500" : ""}`}
                         value={item.unit_price}
@@ -177,9 +192,11 @@ export default function PurchaseOrderForm({
                   <div className="w-24 text-right text-sm font-medium">
                     ${((parseFloat(item.quantity_ordered) || 0) * (parseFloat(item.unit_price) || 0)).toFixed(2)}
                   </div>
-                  <Button type="button" variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => removeItem(index)}>
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
+                  {!isReadOnly && (
+                    <Button type="button" variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => removeItem(index)}>
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  )}
                 </div>
               ))}
             </div>
@@ -198,10 +215,13 @@ export default function PurchaseOrderForm({
               onChange={(e) => setForm({ ...form, notes: e.target.value })}
             />
           </div>
-          
+
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={onClose}>Cancel</Button>
-            <Button type="submit">Save Order</Button>
+            <Button type="button" variant="outline" onClick={onClose} disabled={isSubmitting}>Cancel</Button>
+            <Button type="submit" disabled={isSubmitting}>
+              {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Save Order
+            </Button>
           </DialogFooter>
         </form>
       </DialogContent>

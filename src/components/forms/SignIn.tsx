@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils"
 import { Button } from "../ui/button"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
-import { CircleAlert, Eye, EyeOff } from "lucide-react"
+import { CircleAlert, Eye, EyeOff, Loader2 } from "lucide-react"
 import { useMutation } from "@tanstack/react-query"
 import { loginDashboard } from "@/services/api"
 import { setLocalStorageItem } from "@/lib/local-storage"
@@ -155,6 +155,7 @@ export const SignIn = () => {
                 </Field>
                 <Field>
                     <Button type="submit" className="w-full" size="lg" disabled={isPending}>
+                        {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                         {isPending ? "Logging in..." : "Login"}
                     </Button>
                 </Field>

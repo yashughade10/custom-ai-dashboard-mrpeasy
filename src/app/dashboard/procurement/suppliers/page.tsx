@@ -41,6 +41,7 @@ export default function SuppliersPage() {
           isOpen={isCreateOpen}
           onClose={() => setIsCreateOpen(false)}
           onSubmit={(data) => createMutation.mutate(data)}
+          isSubmitting={createMutation.isPending}
         />
       )}
     </div>
