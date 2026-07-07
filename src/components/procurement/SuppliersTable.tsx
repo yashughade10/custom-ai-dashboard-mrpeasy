@@ -123,6 +123,7 @@ export default function SuppliersTable({ onOpenCreate }: { onOpenCreate?: (fn: (
           onClose={() => setEditingSupplier(null)}
           initialData={editingSupplier}
           onSubmit={(data) => updateMutation.mutate({ id: editingSupplier.id, data })}
+          isSubmitting={updateMutation.isPending}
         />
       )}
 

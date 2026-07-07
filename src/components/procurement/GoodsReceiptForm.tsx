@@ -2,17 +2,20 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Loader2 } from "lucide-react";
 
 export default function GoodsReceiptForm({
   isOpen,
   onClose,
   purchaseOrder,
   onSubmit,
+  isSubmitting,
 }: {
   isOpen: boolean;
   onClose: () => void;
   purchaseOrder: any;
   onSubmit: (data: any) => void;
+  isSubmitting?: boolean;
 }) {
   const [form, setForm] = useState({
     notes: "",
@@ -85,7 +88,7 @@ export default function GoodsReceiptForm({
         <DialogHeader>
           <DialogTitle>Receive Goods: {purchaseOrder.po_number}</DialogTitle>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-6 mt-4">
+        <form onSubmit={handleSubmit} className="space-y-6 mt-4 min-w-0 w-full">
           
           <div className="space-y-3">
             <h3 className="text-sm font-semibold">Items to Receive</h3>
@@ -137,7 +140,10 @@ export default function GoodsReceiptForm({
           
           <DialogFooter>
             <Button type="button" variant="outline" onClick={onClose}>Cancel</Button>
-            <Button type="submit">Log Receipt</Button>
+            <Button type="submit" disabled={isSubmitting}>
+              {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Log Receipt
+            </Button>
           </DialogFooter>
         </form>
       </DialogContent>

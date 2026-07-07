@@ -40,6 +40,10 @@ import {
     GitBranch,
     ClipboardList,
     ShoppingCart,
+    PieChart,
+    Settings,
+    ShieldCheck,
+    History
 } from "lucide-react"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
@@ -80,6 +84,7 @@ const navItems = [
     //     href: "/dashboard/production",
     //     icon: Factory,
     //     children: [
+    //         { name: "Overview", hash: "", href: "/dashboard/production", icon: LayoutDashboard },
     //         { name: "Products", hash: "products", href: "/dashboard/production/products", icon: Boxes },
     //         { name: "Bill of Materials", hash: "bom", href: "/dashboard/production/bom", icon: GitBranch },
     //         { name: "Orders", hash: "orders", href: "/dashboard/production/orders", icon: ClipboardList },
@@ -96,24 +101,49 @@ const navItems = [
     //     ],
     // },
     { name: "Orders", href: "/dashboard/orders", icon: ListOrdered },
+    // {
+    //     name: "Reports",
+    //     href: "/dashboard/reports",
+    //     icon: PieChart,
+    //     children: [
+    //         { name: "Overview", hash: "", href: "/dashboard/reports", icon: LayoutDashboard },
+    //         { name: "Sales", hash: "sales", href: "/dashboard/reports/sales", icon: TrendingUp },
+    //         { name: "Inventory", hash: "inventory", href: "/dashboard/reports/inventory", icon: Package },
+    //         { name: "Production", hash: "production", href: "/dashboard/reports/production", icon: Factory },
+    //         { name: "Finance", hash: "finance", href: "/dashboard/reports/finance", icon: FileText },
+    //     ],
+    // },
+    // {
+    //     name: "Administration",
+    //     href: "/dashboard/admin",
+    //     icon: Settings,
+    //     children: [
+    //         { name: "Overview", hash: "", href: "/dashboard/admin", icon: LayoutDashboard },
+    //         { name: "Users", hash: "users", href: "/dashboard/admin/users", icon: Users2 },
+    //         { name: "Roles & Permissions", hash: "roles", href: "/dashboard/admin/roles", icon: ShieldCheck },
+    //         { name: "Audit Log", hash: "audit-log", href: "/dashboard/admin/audit-log", icon: History },
+    //         { name: "Settings", hash: "settings", href: "/dashboard/admin/settings", icon: Settings },
+    //     ],
+    // },
+    // { name: "Orders", href: "/dashboard/orders", icon: ListOrdered },
     {
         name: "Sales",
         href: "/dashboard/sales",
         icon: ShoppingCart,
         children: [
-            { name: "Quotations",hash: "quotations", href: "/dashboard/sales/quotations", icon:Mail },
-            { name: "Sales Orders", hash: "orders", href: "/dashboard/sales/orders", icon:Mail  }
+            { name: "Quotations", hash: "quotations", href: "/dashboard/sales/quotations", icon: Mail },
+            { name: "Sales Orders", hash: "orders", href: "/dashboard/sales/orders", icon: Mail }
 
         ],
     },
-     {
+    {
         name: "Inventory",
         href: "/dashboard/inventory",
         icon: ShoppingCart,
         children: [
-            { name: "Stock",hash: "quotations", href: "/dashboard/inventory", icon:Mail },
-            { name: "Warehouses", hash: "warehouses", href: "/dashboard/inventory/warehouses", icon:Mail  },
-            { name: "History", hash: "history", href: "/dashboard/inventory/history", icon:Mail  }
+            { name: "Stock", hash: "quotations", href: "/dashboard/inventory", icon: Mail },
+            { name: "Warehouses", hash: "warehouses", href: "/dashboard/inventory/warehouses", icon: Mail },
+            { name: "History", hash: "history", href: "/dashboard/inventory/history", icon: Mail }
 
         ],
     },
