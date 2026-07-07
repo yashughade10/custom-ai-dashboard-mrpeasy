@@ -4,6 +4,7 @@
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { StockHistoryTable } from "@/components/inventory/StockHistoryTable";
+import { Suspense } from "react";
 
 export default function StockHistoryPage() {
   return (
@@ -21,7 +22,9 @@ export default function StockHistoryPage() {
         </p>
       </div>
 
-      <StockHistoryTable />
+      <Suspense fallback={<div className="py-8 text-center text-slate-500">Loading history…</div>}>
+        <StockHistoryTable />
+      </Suspense>
     </div>
   );
 }
