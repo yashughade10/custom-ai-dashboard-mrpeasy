@@ -101,7 +101,7 @@ const navItems = [
         href: "/dashboard/sales",
         icon: ShoppingCart,
         children: [
-            { name: "Quotations",hash: "quotations", href: "/dashboard/sales/quotations", icon:Mail },
+            { name: "Quotations",hash: "quotations", href: "/dashboard/sales", icon:Mail },
             { name: "Sales Orders", hash: "orders", href: "/dashboard/sales/orders", icon:Mail  }
 
         ],

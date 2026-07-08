@@ -69,6 +69,14 @@ export async function listStock(
   return handleResponse<PaginatedResponse<StockItem>>(res);
 }
 
+export async function getStockByProduct(
+  productId: number,
+): Promise<StockItem> {
+  const res = await apiFetch(`${BASE}/stock/${productId}`);
+  const data = await handleResponse<ApiResponse<StockItem>>(res);
+  return data.data;
+}
+
 export async function listLowStock(): Promise<StockItem[]> {
   const res = await apiFetch(`${BASE}/low-stock`);
   const data = await handleResponse<ApiResponse<StockItem[]>>(res);
