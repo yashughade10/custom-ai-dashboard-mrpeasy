@@ -7,6 +7,7 @@ import { Loader2, ChevronDown, ChevronRight, FileText } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { apiFetch } from "@/lib/api/http";
 
 export function AuditLogTable() {
   const [logs, setLogs] = useState<any[]>([]);
@@ -19,7 +20,7 @@ export function AuditLogTable() {
 
   const fetchLogs = async () => {
     try {
-      const res = await fetch("http://localhost:4000/api/admin/audit-log");
+      const res = await apiFetch("/admin/audit-log");
       if (!res.ok) throw new Error("Failed to fetch audit logs");
       const data = await res.json();
       setLogs(data);

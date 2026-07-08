@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
+import { apiFetch } from "@/lib/api/http";
 
 interface UserFormProps {
   open: boolean;
@@ -41,7 +42,7 @@ export function UserForm({ open, onOpenChange, user, onSuccess }: UserFormProps)
 
   const fetchRoles = async () => {
     try {
-      const res = await fetch("http://localhost:4000/api/admin/roles");
+      const res = await apiFetch("http://localhost:4000/api/admin/roles");
       if (res.ok) {
         const data = await res.json();
         setRoles(data);
@@ -55,26 +56,25 @@ export function UserForm({ open, onOpenChange, user, onSuccess }: UserFormProps)
     e.preventDefault();
     setLoading(true);
     try {
-      const url = isEditing 
-        ? `http://localhost:4000/api/admin/users/${user.id}`
-        : "http://localhost:4000/api/admin/users";
-      
+      const url = isEditing
+        ? `/admin/users/${user.id}`
+        : "/admin/users";
+
       const method = isEditing ? "PUT" : "POST";
-      
+
       const payload = { ...formData };
       if (isEditing) {
         delete (payload as any).password; // Don't send empty password on edit
         delete (payload as any).email; // Prevent email update for simplicity
       }
 
-      const res = await fetch(url, {
+      const res = await apiFetch(url, {
         method,
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload)
       });
 
       if (!res.ok) throw new Error("Failed to save user");
-      
+
       toast.success(isEditing ? "User updated" : "User created");
       onSuccess();
       onOpenChange(false);
@@ -94,39 +94,39 @@ export function UserForm({ open, onOpenChange, user, onSuccess }: UserFormProps)
         <form onSubmit={handleSubmit} className="space-y-4 pt-4">
           <div className="space-y-2">
             <Label>Name</Label>
-            <Input 
-              required 
-              value={formData.name} 
-              onChange={e => setFormData({...formData, name: e.target.value})} 
+            <Input
+              required
+              value={formData.name}
+              onChange={e => setFormData({ ...formData, name: e.target.value })}
             />
           </div>
-          
+
           <div className="space-y-2">
             <Label>Email</Label>
-            <Input 
-              type="email" 
-              required 
+            <Input
+              type="email"
+              required
               disabled={isEditing}
-              value={formData.email} 
-              onChange={e => setFormData({...formData, email: e.target.value})} 
+              value={formData.email}
+              onChange={e => setFormData({ ...formData, email: e.target.value })}
             />
           </div>
 
           {!isEditing && (
             <div className="space-y-2">
               <Label>Password</Label>
-              <Input 
-                type="password" 
-                required 
-                value={formData.password} 
-                onChange={e => setFormData({...formData, password: e.target.value})} 
+              <Input
+                type="password"
+                required
+                value={formData.password}
+                onChange={e => setFormData({ ...formData, password: e.target.value })}
               />
             </div>
           )}
 
           <div className="space-y-2">
             <Label>Role</Label>
-            <Select value={formData.role} onValueChange={v => setFormData({...formData, role: v})}>
+            <Select value={formData.role} onValueChange={v => setFormData({ ...formData, role: v })}>
               <SelectTrigger>
                 <SelectValue placeholder="Select a role" />
               </SelectTrigger>

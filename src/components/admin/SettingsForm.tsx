@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { toast } from "sonner";
 import { Loader2, Save } from "lucide-react";
+import { apiFetch } from "@/lib/api/http";
 
 export function SettingsForm() {
   const [settings, setSettings] = useState<Record<string, string>>({});
@@ -19,10 +20,10 @@ export function SettingsForm() {
 
   const fetchSettings = async () => {
     try {
-      const res = await fetch("http://localhost:4000/api/admin/settings");
+      const res = await apiFetch("/admin/settings");
       if (!res.ok) throw new Error("Failed to fetch settings");
       const data = await res.json();
-      
+
       const formatted: Record<string, string> = {};
       data.forEach((item: any) => {
         try {
@@ -31,7 +32,7 @@ export function SettingsForm() {
           formatted[item.setting_key] = item.setting_value;
         }
       });
-      
+
       // Default settings if empty
       if (Object.keys(formatted).length === 0) {
         formatted["company_name"] = "MRPEasy Inc.";
@@ -54,7 +55,7 @@ export function SettingsForm() {
   const handleSave = async (key: string) => {
     setSaving(true);
     try {
-      const res = await fetch(`http://localhost:4000/api/admin/settings/${key}`, {
+      const res = await apiFetch(`/admin/settings/${key}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ value: settings[key] })
@@ -72,7 +73,7 @@ export function SettingsForm() {
     setSaving(true);
     try {
       for (const key of Object.keys(settings)) {
-        await fetch(`http://localhost:4000/api/admin/settings/${key}`, {
+        await apiFetch(`/admin/settings/${key}`, {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ value: settings[key] })
@@ -99,23 +100,23 @@ export function SettingsForm() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-2">
               <Label>Company Name</Label>
-              <Input 
-                value={settings["company_name"] || ""} 
-                onChange={(e) => handleChange("company_name", e.target.value)} 
+              <Input
+                value={settings["company_name"] || ""}
+                onChange={(e) => handleChange("company_name", e.target.value)}
               />
             </div>
             <div className="space-y-2">
               <Label>Default Currency</Label>
-              <Input 
-                value={settings["currency"] || ""} 
-                onChange={(e) => handleChange("currency", e.target.value)} 
+              <Input
+                value={settings["currency"] || ""}
+                onChange={(e) => handleChange("currency", e.target.value)}
               />
             </div>
             <div className="space-y-2">
               <Label>Timezone</Label>
-              <Input 
-                value={settings["timezone"] || ""} 
-                onChange={(e) => handleChange("timezone", e.target.value)} 
+              <Input
+                value={settings["timezone"] || ""}
+                onChange={(e) => handleChange("timezone", e.target.value)}
               />
             </div>
           </div>

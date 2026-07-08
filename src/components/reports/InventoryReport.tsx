@@ -2,12 +2,13 @@
 
 import { useEffect, useState } from "react";
 import { ReportFilters } from "./ReportFilters";
-import { 
+import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell, Legend
 } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { apiFetch } from "@/lib/api/http";
 
 const COLORS = ['#10b981', '#3b82f6', '#f59e0b', '#ec4899', '#8b5cf6'];
 
@@ -18,7 +19,7 @@ export function InventoryReport() {
   const fetchReportData = async (filters = {}) => {
     setLoading(true);
     try {
-      const res = await fetch("http://localhost:4000/api/reports/inventory");
+      const res = await apiFetch("/reports/inventory");
       if (!res.ok) throw new Error("Failed to fetch report data");
       const json = await res.json();
       setData(json);
@@ -35,7 +36,7 @@ export function InventoryReport() {
 
   const handleExport = async (type: 'csv' | 'excel') => {
     try {
-      const res = await fetch(`http://localhost:4000/api/reports/export/${type}`);
+      const res = await apiFetch(`/reports/export/${type}`);
       const json = await res.json();
       toast.success(`Exported as ${json.type} successfully!`);
     } catch (error) {
@@ -56,7 +57,7 @@ export function InventoryReport() {
   return (
     <div className="space-y-6">
       <ReportFilters onExport={handleExport} onFilterChange={fetchReportData} />
-      
+
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card className="border-border/50 shadow-sm">
           <CardHeader>
@@ -68,7 +69,7 @@ export function InventoryReport() {
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
                 <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#888888' }} interval={0} angle={-45} textAnchor="end" height={80} tickFormatter={(val) => val.length > 20 ? val.substring(0, 20) + '...' : val} />
                 <YAxis width={45} axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#888888' }} allowDecimals={false} domain={[0, 'auto']} tickFormatter={(val) => val >= 1000 ? `${(val / 1000).toFixed(0)}k` : val} tickMargin={8} />
-                <Tooltip 
+                <Tooltip
                   cursor={{ fill: 'rgba(0,0,0,0.05)' }}
                   contentStyle={{ backgroundColor: 'white', borderColor: '#e2e8f0', borderRadius: '8px', color: '#0f172a', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
                   itemStyle={{ color: '#0f172a' }}
@@ -101,7 +102,7 @@ export function InventoryReport() {
                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                   ))}
                 </Pie>
-                <Tooltip 
+                <Tooltip
                   contentStyle={{ backgroundColor: 'white', borderColor: '#e2e8f0', borderRadius: '8px', color: '#0f172a', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
                   itemStyle={{ color: '#0f172a' }}
                   formatter={(val) => [`$${val}`, 'Value']}
@@ -122,7 +123,7 @@ export function InventoryReport() {
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
                 <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#888888' }} tickMargin={12} />
                 <YAxis width={45} axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#888888' }} allowDecimals={false} tickMargin={8} />
-                <Tooltip 
+                <Tooltip
                   contentStyle={{ backgroundColor: 'white', borderColor: '#e2e8f0', borderRadius: '8px', color: '#0f172a', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
                   itemStyle={{ color: '#0f172a' }}
                   labelStyle={{ color: '#64748b', fontWeight: 500, marginBottom: '4px' }}

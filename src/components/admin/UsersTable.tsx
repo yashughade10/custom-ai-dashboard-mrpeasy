@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { UserForm } from "./UserForm";
+import { apiFetch } from "@/lib/api/http";
 
 export function UsersTable() {
   const [users, setUsers] = useState<any[]>([]);
@@ -21,7 +22,7 @@ export function UsersTable() {
   const fetchUsers = async () => {
     setLoading(true);
     try {
-      const res = await fetch("http://localhost:4000/api/admin/users");
+      const res = await apiFetch("/admin/users");
       if (!res.ok) throw new Error("Failed to fetch users");
       const data = await res.json();
       setUsers(data);
@@ -40,7 +41,7 @@ export function UsersTable() {
     if (!userToDelete) return;
     setIsDeleting(true);
     try {
-      const res = await fetch(`http://localhost:4000/api/admin/users/${userToDelete}`, { method: "DELETE" });
+      const res = await apiFetch(`/admin/users/${userToDelete}`, { method: "DELETE" });
       if (!res.ok) throw new Error("Failed to delete user");
       toast.success("User deleted successfully");
       fetchUsers();
@@ -121,11 +122,11 @@ export function UsersTable() {
           </Table>
         </div>
 
-        <UserForm 
-          open={isFormOpen} 
-          onOpenChange={setIsFormOpen} 
-          user={editingUser} 
-          onSuccess={fetchUsers} 
+        <UserForm
+          open={isFormOpen}
+          onOpenChange={setIsFormOpen}
+          user={editingUser}
+          onSuccess={fetchUsers}
         />
 
         <Dialog open={userToDelete !== null} onOpenChange={(open) => !open && setUserToDelete(null)}>

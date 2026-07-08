@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { API_BASE_URL } from "@/services/api";
 import RichTextEditor from "@/components/ui/RichTextEditor";
 import { Eye, EyeOff } from "lucide-react";
+import { apiFetch } from "@/lib/api/http";
 
 // Helper to detect if user pasted raw HTML code into the WYSIWYG
 const getFinalHtml = (rawBody: string) => {
@@ -15,11 +16,11 @@ const getFinalHtml = (rawBody: string) => {
   const temp = document.createElement("div");
   temp.innerHTML = rawBody;
   let text = (temp.innerText || temp.textContent || "").trim();
-  
+
   // Quill converts spaces to non-breaking spaces (&nbsp;).
   // This breaks HTML parsers if we try to render it as raw HTML, so we must convert them back to regular spaces.
   text = text.replace(/\u00A0/g, " ");
-  
+
   if (text.startsWith("<!DOCTYPE") || text.startsWith("<html") || text.startsWith("<body") || text.startsWith("<table")) {
     return text; // They pasted raw HTML!
   }
@@ -33,14 +34,14 @@ export default function NewsletterEmailSender() {
   const [selectedTemplate, setSelectedTemplate] = useState<string>("");
   const [message, setMessage] = useState("");
   const [showPreview, setShowPreview] = useState(false);
-  
+
   // Template creator state
   const [newTemplateName, setNewTemplateName] = useState("");
   const [newTemplateSubject, setNewTemplateSubject] = useState("");
   const [newTemplateBody, setNewTemplateBody] = useState("");
 
   const fetchSegments = () => {
-    fetch(`${API_BASE_URL}/email/segments`)
+    apiFetch(`/email/segments`)
       .then((res) => res.json())
       .then((data) => {
         if (data.success) {
@@ -51,7 +52,7 @@ export default function NewsletterEmailSender() {
   };
 
   const fetchTemplates = () => {
-    fetch(`${API_BASE_URL}/email/templates`)
+    apiFetch(`/email/templates`)
       .then((res) => res.json())
       .then((data) => {
         if (data.success) {
@@ -69,9 +70,8 @@ export default function NewsletterEmailSender() {
   const handleCreateTemplate = async () => {
     try {
       const finalHtml = getFinalHtml(newTemplateBody);
-      const res = await fetch(`${API_BASE_URL}/email/templates`, {
+      const res = await apiFetch(`/email/templates`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           name: newTemplateName,
           subject: newTemplateSubject,
@@ -99,10 +99,9 @@ export default function NewsletterEmailSender() {
     setMessage("");
     try {
       const finalHtml = getFinalHtml(newTemplateBody);
-      const res = await fetch(`${API_BASE_URL}/email/send-newsletter`, {
+      const res = await apiFetch(`/email/send-newsletter`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ 
+        body: JSON.stringify({
           template_id: selectedTemplate || undefined,
           subject: newTemplateSubject,
           html_body: finalHtml
@@ -132,10 +131,10 @@ export default function NewsletterEmailSender() {
           <div className="text-sm text-gray-500 mb-4">
             Targeting {contactsCount} total contacts.
           </div>
-          
+
           <div className="space-y-2">
             <Label>Start from a Template (Optional)</Label>
-            <select 
+            <select
               className="w-full p-2 border rounded-md text-sm"
               value={selectedTemplate}
               onChange={(e) => {
@@ -166,19 +165,19 @@ export default function NewsletterEmailSender() {
 
           <div className="space-y-2 pt-2 border-t mt-4">
             <Label>Subject</Label>
-            <Input 
-              placeholder="Email Subject" 
-              value={newTemplateSubject} 
-              onChange={(e) => setNewTemplateSubject(e.target.value)} 
+            <Input
+              placeholder="Email Subject"
+              value={newTemplateSubject}
+              onChange={(e) => setNewTemplateSubject(e.target.value)}
             />
           </div>
 
           <div className="space-y-2">
             <div className="flex justify-between items-center bg-muted/30 p-2 rounded-md border">
               <Label className="ml-2">Email Body</Label>
-              <Button 
-                variant={showPreview ? "default" : "outline"} 
-                size="sm" 
+              <Button
+                variant={showPreview ? "default" : "outline"}
+                size="sm"
                 onClick={() => setShowPreview(!showPreview)}
                 className="h-8 gap-2"
               >
@@ -186,24 +185,24 @@ export default function NewsletterEmailSender() {
                 {showPreview ? "Hide Preview" : "Show Preview"}
               </Button>
             </div>
-            
+
             <div className={showPreview ? "grid grid-cols-1 md:grid-cols-2 gap-4 items-stretch" : "block"}>
               <div className="border rounded-md overflow-hidden bg-white shadow-sm flex flex-col h-full min-h-[500px]">
-                <RichTextEditor 
+                <RichTextEditor
                   value={newTemplateBody}
                   onChange={setNewTemplateBody}
                   placeholder="Write your template content here, or paste raw developer code..."
                   className="flex-grow"
                 />
               </div>
-              
+
               {showPreview && (
                 <div className="border rounded-md bg-white shadow-inner flex flex-col h-full min-h-[500px]">
                   <div className="p-3 border-b bg-muted/50 flex items-center justify-center">
                     <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Client Preview</span>
                   </div>
                   <div className="flex-grow bg-white p-2">
-                    <iframe 
+                    <iframe
                       title="Email Preview"
                       srcDoc={getFinalHtml(newTemplateBody) || "<p style='color: #888; text-align: center; margin-top: 20px;'>Live preview will appear here...</p>"}
                       className="w-full h-full border-none"
@@ -214,34 +213,34 @@ export default function NewsletterEmailSender() {
               )}
             </div>
           </div>
-          
+
           <div className="pt-4 border-t mt-6 space-y-4">
-             <div className="flex items-center gap-4">
-                <Button onClick={handleSend} disabled={loading || !newTemplateSubject || !newTemplateBody} className="w-48">
-                  {loading ? "Sending..." : "Send Newsletter"}
-                </Button>
-                <div className="text-sm text-gray-500">
-                  Sends exactly what you see in the editor to {contactsCount} contacts.
-                </div>
-             </div>
-             
-             <div className="flex items-center gap-4 pt-4 border-t">
-                <Input 
-                  placeholder="Save as: e.g. My New Template" 
-                  value={newTemplateName} 
-                  onChange={(e) => setNewTemplateName(e.target.value)} 
-                  className="w-64"
-                />
-                <Button 
-                  onClick={handleCreateTemplate} 
-                  disabled={!newTemplateName || !newTemplateSubject || !newTemplateBody}
-                  variant="outline"
-                >
-                  Save as Template
-                </Button>
-             </div>
-             
-             {message && <div className="text-sm font-medium text-green-600 mt-2">{message}</div>}
+            <div className="flex items-center gap-4">
+              <Button onClick={handleSend} disabled={loading || !newTemplateSubject || !newTemplateBody} className="w-48">
+                {loading ? "Sending..." : "Send Newsletter"}
+              </Button>
+              <div className="text-sm text-gray-500">
+                Sends exactly what you see in the editor to {contactsCount} contacts.
+              </div>
+            </div>
+
+            <div className="flex items-center gap-4 pt-4 border-t">
+              <Input
+                placeholder="Save as: e.g. My New Template"
+                value={newTemplateName}
+                onChange={(e) => setNewTemplateName(e.target.value)}
+                className="w-64"
+              />
+              <Button
+                onClick={handleCreateTemplate}
+                disabled={!newTemplateName || !newTemplateSubject || !newTemplateBody}
+                variant="outline"
+              >
+                Save as Template
+              </Button>
+            </div>
+
+            {message && <div className="text-sm font-medium text-green-600 mt-2">{message}</div>}
           </div>
         </CardContent>
       </Card>

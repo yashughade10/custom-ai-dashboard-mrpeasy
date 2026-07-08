@@ -9,6 +9,7 @@ import { Loader2, Plus, Save, Trash2 } from "lucide-react";
 import { RoleForm } from "@/components/admin/RoleForm";
 import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { apiFetch } from "@/lib/api/http";
 
 const MODULES = ["CRM", "Sales", "Production", "Procurement", "Inventory", "Reports", "Admin"];
 const ACTIONS = ["read", "create", "update", "delete"];
@@ -26,7 +27,7 @@ export function PermissionMatrix() {
   const fetchRoles = async () => {
     setLoading(true);
     try {
-      const res = await fetch("http://localhost:4000/api/admin/roles");
+      const res = await apiFetch("/admin/roles");
       if (!res.ok) throw new Error("Failed to fetch roles");
       const data = await res.json();
       setRoles(data);
@@ -58,9 +59,9 @@ export function PermissionMatrix() {
     setPermissions(prev => {
       const existing = prev.find(p => p.module === moduleName && p.action === actionName);
       if (existing) {
-        return prev.map(p => 
-          p.module === moduleName && p.action === actionName 
-            ? { ...p, is_allowed: p.is_allowed ? 0 : 1 } 
+        return prev.map(p =>
+          p.module === moduleName && p.action === actionName
+            ? { ...p, is_allowed: p.is_allowed ? 0 : 1 }
             : p
         );
       } else {
@@ -78,7 +79,7 @@ export function PermissionMatrix() {
     if (!activeRoleId) return;
     setSaving(true);
     try {
-      const res = await fetch(`http://localhost:4000/api/admin/roles/${activeRoleId}/permissions`, {
+      const res = await apiFetch(`/admin/roles/${activeRoleId}/permissions`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ permissions })
@@ -97,7 +98,7 @@ export function PermissionMatrix() {
     if (!roleToDelete) return;
     setIsDeleting(true);
     try {
-      const res = await fetch(`http://localhost:4000/api/admin/roles/${roleToDelete}`, { method: "DELETE" });
+      const res = await apiFetch(`/admin/roles/${roleToDelete}`, { method: "DELETE" });
       if (!res.ok) {
         const error = await res.json();
         throw new Error(error.error || "Failed to delete");
@@ -130,8 +131,8 @@ export function PermissionMatrix() {
           </div>
           <div className="flex flex-col gap-2">
             {roles.map(role => (
-              <div 
-                key={role.id} 
+              <div
+                key={role.id}
                 className={`flex items-center justify-between p-3 rounded-xl cursor-pointer transition-all border ${activeRoleId === role.id ? 'bg-primary/5 border-primary/20 shadow-sm' : 'hover:bg-muted/50 border-transparent hover:border-border/50'}`}
                 onClick={() => handleRoleSelect(role.id)}
               >
@@ -166,7 +167,7 @@ export function PermissionMatrix() {
                   Save Changes
                 </Button>
               </div>
-              
+
               <div className="border rounded-xl bg-card overflow-hidden shadow-sm">
                 <Table>
                   <TableHeader className="bg-muted/50">
@@ -183,8 +184,8 @@ export function PermissionMatrix() {
                         <TableCell className="font-medium py-3">{moduleName}</TableCell>
                         {ACTIONS.map(action => (
                           <TableCell key={action} className="text-center py-3">
-                            <Checkbox 
-                              checked={isAllowed(moduleName, action)} 
+                            <Checkbox
+                              checked={isAllowed(moduleName, action)}
                               onCheckedChange={() => togglePermission(moduleName, action)}
                               disabled={activeRole.name === 'Admin'} // Admin has implicit full access
                             />

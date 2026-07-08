@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { apiFetch } from "@/lib/api/http";
 
 export default function ReportsDashboard() {
   const [data, setData] = useState<any>(null);
@@ -15,9 +16,7 @@ export default function ReportsDashboard() {
   useEffect(() => {
     const fetchDashboard = async () => {
       try {
-        const res = await fetch("http://localhost:4000/api/reports/dashboard");
-        if (!res.ok) throw new Error("Failed to fetch dashboard data");
-        const json = await res.json();
+        const json = await apiFetch("/reports/dashboard");
         setData(json);
       } catch (error: any) {
         toast.error(error.message || "Something went wrong");
@@ -80,7 +79,7 @@ export default function ReportsDashboard() {
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
                 <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#888888' }} />
                 <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#888888' }} tickFormatter={(val) => `$${val}`} />
-                <Tooltip 
+                <Tooltip
                   cursor={{ fill: 'rgba(0,0,0,0.05)' }}
                   contentStyle={{ backgroundColor: 'white', borderColor: '#e2e8f0', borderRadius: '8px', color: '#0f172a', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
                   itemStyle={{ color: '#0f172a' }}

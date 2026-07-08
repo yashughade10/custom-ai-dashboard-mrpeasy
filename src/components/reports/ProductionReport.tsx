@@ -2,12 +2,13 @@
 
 import { useEffect, useState } from "react";
 import { ReportFilters } from "./ReportFilters";
-import { 
+import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell, Legend
 } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { apiFetch } from "@/lib/api/http";
 
 const COLORS = ['#f59e0b', '#3b82f6', '#10b981', '#ef4444', '#8b5cf6'];
 
@@ -18,7 +19,7 @@ export function ProductionReport() {
   const fetchReportData = async (filters = {}) => {
     setLoading(true);
     try {
-      const res = await fetch("http://localhost:4000/api/reports/production");
+      const res = await apiFetch("/reports/production");
       if (!res.ok) throw new Error("Failed to fetch report data");
       const json = await res.json();
       setData(json);
@@ -35,7 +36,7 @@ export function ProductionReport() {
 
   const handleExport = async (type: 'csv' | 'excel') => {
     try {
-      const res = await fetch(`http://localhost:4000/api/reports/export/${type}`);
+      const res = await apiFetch(`/reports/export/${type}`);
       const json = await res.json();
       toast.success(`Exported as ${json.type} successfully!`);
     } catch (error) {
@@ -56,7 +57,7 @@ export function ProductionReport() {
   return (
     <div className="space-y-6">
       <ReportFilters onExport={handleExport} onFilterChange={fetchReportData} />
-      
+
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card className="border-border/50 shadow-sm">
           <CardHeader>
@@ -78,7 +79,7 @@ export function ProductionReport() {
                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                   ))}
                 </Pie>
-                <Tooltip 
+                <Tooltip
                   contentStyle={{ backgroundColor: 'white', borderColor: '#e2e8f0', borderRadius: '8px', color: '#0f172a', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
                   itemStyle={{ color: '#0f172a' }}
                 />
@@ -98,7 +99,7 @@ export function ProductionReport() {
                 <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} stroke="hsl(var(--border))" />
                 <XAxis type="number" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#888888' }} />
                 <YAxis dataKey="product" type="category" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#888888' }} />
-                <Tooltip 
+                <Tooltip
                   cursor={{ fill: 'rgba(0,0,0,0.05)' }}
                   contentStyle={{ backgroundColor: 'white', borderColor: '#e2e8f0', borderRadius: '8px', color: '#0f172a', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
                   itemStyle={{ color: '#0f172a' }}
@@ -120,7 +121,7 @@ export function ProductionReport() {
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
                 <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#888888' }} />
                 <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#888888' }} />
-                <Tooltip 
+                <Tooltip
                   contentStyle={{ backgroundColor: 'white', borderColor: '#e2e8f0', borderRadius: '8px', color: '#0f172a', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
                   itemStyle={{ color: '#0f172a' }}
                   labelStyle={{ color: '#64748b', fontWeight: 500, marginBottom: '4px' }}

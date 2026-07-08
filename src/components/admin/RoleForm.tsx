@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
+import { apiFetch } from "@/lib/api/http";
 
 interface RoleFormProps {
   open: boolean;
@@ -26,13 +27,12 @@ export function RoleForm({ open, onOpenChange, onSuccess }: RoleFormProps) {
     e.preventDefault();
     setLoading(true);
     try {
-      const res = await fetch("http://localhost:4000/api/admin/roles", {
+      const res = await apiFetch("/admin/roles", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData)
       });
       if (!res.ok) throw new Error("Failed to create role");
-      
+
       toast.success("Role created successfully");
       onSuccess();
       onOpenChange(false);
@@ -53,19 +53,19 @@ export function RoleForm({ open, onOpenChange, onSuccess }: RoleFormProps) {
         <form onSubmit={handleSubmit} className="space-y-4 pt-4">
           <div className="space-y-2">
             <Label>Role Name</Label>
-            <Input 
-              required 
-              value={formData.name} 
-              onChange={e => setFormData({...formData, name: e.target.value})} 
+            <Input
+              required
+              value={formData.name}
+              onChange={e => setFormData({ ...formData, name: e.target.value })}
               placeholder="e.g., Sales Manager"
             />
           </div>
-          
+
           <div className="space-y-2">
             <Label>Description</Label>
-            <Textarea 
-              value={formData.description} 
-              onChange={e => setFormData({...formData, description: e.target.value})} 
+            <Textarea
+              value={formData.description}
+              onChange={e => setFormData({ ...formData, description: e.target.value })}
               placeholder="Brief description of this role's responsibilities"
             />
           </div>

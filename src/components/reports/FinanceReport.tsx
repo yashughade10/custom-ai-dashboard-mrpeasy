@@ -2,12 +2,13 @@
 
 import { useEffect, useState } from "react";
 import { ReportFilters } from "./ReportFilters";
-import { 
+import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend
 } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { apiFetch } from "@/lib/api/http";
 
 export function FinanceReport() {
   const [receivables, setReceivables] = useState<any>(null);
@@ -18,15 +19,15 @@ export function FinanceReport() {
     setLoading(true);
     try {
       const [resRec, resPay] = await Promise.all([
-        fetch("http://localhost:4000/api/reports/receivables"),
-        fetch("http://localhost:4000/api/reports/payables")
+        apiFetch("/reports/receivables"),
+        apiFetch("/reports/payables")
       ]);
-      
+
       if (!resRec.ok || !resPay.ok) throw new Error("Failed to fetch finance data");
-      
+
       const jsonRec = await resRec.json();
       const jsonPay = await resPay.json();
-      
+
       setReceivables(jsonRec);
       setPayables(jsonPay);
     } catch (error: any) {
@@ -43,7 +44,7 @@ export function FinanceReport() {
   const handleExport = async (type: 'csv' | 'excel') => {
     try {
       // Could pass a specific report type to export
-      const res = await fetch(`http://localhost:4000/api/reports/export/${type}`);
+      const res = await apiFetch(`/reports/export/${type}`);
       const json = await res.json();
       toast.success(`Exported as ${json.type} successfully!`);
     } catch (error) {
@@ -64,7 +65,7 @@ export function FinanceReport() {
   return (
     <div className="space-y-6">
       <ReportFilters onExport={handleExport} onFilterChange={fetchReportData} />
-      
+
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card className="border-border/50 shadow-sm">
           <CardHeader>
@@ -76,7 +77,7 @@ export function FinanceReport() {
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
                 <XAxis dataKey="period" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#888888' }} interval={0} angle={-45} textAnchor="end" height={60} />
                 <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#888888' }} tickFormatter={(val) => `$${val}`} />
-                <Tooltip 
+                <Tooltip
                   cursor={{ fill: 'rgba(0,0,0,0.05)' }}
                   contentStyle={{ backgroundColor: 'white', borderColor: '#e2e8f0', borderRadius: '8px', color: '#0f172a', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
                   itemStyle={{ color: '#0f172a' }}
@@ -99,7 +100,7 @@ export function FinanceReport() {
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
                 <XAxis dataKey="period" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#888888' }} interval={0} angle={-45} textAnchor="end" height={60} />
                 <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#888888' }} tickFormatter={(val) => `$${val}`} />
-                <Tooltip 
+                <Tooltip
                   cursor={{ fill: 'rgba(0,0,0,0.05)' }}
                   contentStyle={{ backgroundColor: 'white', borderColor: '#e2e8f0', borderRadius: '8px', color: '#0f172a', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
                   itemStyle={{ color: '#0f172a' }}

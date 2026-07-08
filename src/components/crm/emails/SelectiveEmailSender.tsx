@@ -8,6 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { API_BASE_URL } from "@/services/api";
 import RichTextEditor from "@/components/ui/RichTextEditor";
 import { Eye, EyeOff } from "lucide-react";
+import { apiFetch } from "@/lib/api/http";
 
 const getFinalHtml = (rawBody: string) => {
   if (typeof document === 'undefined') return rawBody;
@@ -33,7 +34,7 @@ export default function SelectiveEmailSender() {
   const [selectedTemplate, setSelectedTemplate] = useState<string>("");
   const [message, setMessage] = useState("");
   const [showPreview, setShowPreview] = useState(false);
-  
+
   const [newTemplateSubject, setNewTemplateSubject] = useState("");
   const [newTemplateBody, setNewTemplateBody] = useState("");
 
@@ -44,7 +45,7 @@ export default function SelectiveEmailSender() {
   }, []);
 
   const fetchTags = () => {
-    fetch(`${API_BASE_URL}/contacts/tags`)
+    apiFetch(`/contacts/tags`)
       .then((res) => res.json())
       .then((data) => {
         if (data.success) {
@@ -55,11 +56,11 @@ export default function SelectiveEmailSender() {
   };
 
   const fetchContacts = (tagId: string) => {
-    const url = tagId 
-      ? `${API_BASE_URL}/crm/contacts?tagId=${tagId}&limit=all` 
-      : `${API_BASE_URL}/crm/contacts?limit=all`;
-    
-    fetch(url)
+    const url = tagId
+      ? `/crm/contacts?tagId=${tagId}&limit=all`
+      : `/crm/contacts?limit=all`;
+
+    apiFetch(url)
       .then((res) => res.json())
       .then((data) => {
         if (data.success) {
@@ -72,7 +73,7 @@ export default function SelectiveEmailSender() {
   };
 
   const fetchTemplates = () => {
-    fetch(`${API_BASE_URL}/email/templates`)
+    apiFetch(`/email/templates`)
       .then((res) => res.json())
       .then((data) => {
         if (data.success) {
@@ -119,10 +120,10 @@ export default function SelectiveEmailSender() {
     setMessage("");
     try {
       const finalHtml = getFinalHtml(newTemplateBody);
-      const res = await fetch(`${API_BASE_URL}/email/send-selected`, {
+      const res = await apiFetch(`/${API_BASE_URL}/email/send-selected`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ 
+        body: JSON.stringify({
           contact_ids: Array.from(selectedContactIds),
           template_id: selectedTemplate || undefined,
           subject: newTemplateSubject,
@@ -153,7 +154,7 @@ export default function SelectiveEmailSender() {
           <div className="flex flex-col md:flex-row items-center gap-4 border-b pb-4">
             <div className="w-full md:w-64 space-y-2">
               <Label>Filter by Tag</Label>
-              <select 
+              <select
                 className="w-full p-2 border rounded-md text-sm"
                 value={selectedTag}
                 onChange={handleTagChange}
@@ -164,11 +165,11 @@ export default function SelectiveEmailSender() {
                 ))}
               </select>
             </div>
-            
+
             <div className="w-full md:w-64 space-y-2">
               <Label>Search</Label>
-              <Input 
-                placeholder="Search by name or email..." 
+              <Input
+                placeholder="Search by name or email..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
@@ -184,8 +185,8 @@ export default function SelectiveEmailSender() {
               <TableHeader>
                 <TableRow>
                   <TableHead className="w-[50px] text-center">
-                    <input 
-                      type="checkbox" 
+                    <input
+                      type="checkbox"
                       className="cursor-pointer"
                       checked={selectedContactIds.size === filteredContacts.length && filteredContacts.length > 0}
                       onChange={toggleAllContacts}
@@ -198,14 +199,14 @@ export default function SelectiveEmailSender() {
               </TableHeader>
               <TableBody>
                 {filteredContacts.map((c) => (
-                  <TableRow 
-                    key={c.id} 
+                  <TableRow
+                    key={c.id}
                     className="cursor-pointer hover:bg-muted/50 transition-colors"
                     onClick={() => toggleContactSelection(c.id)}
                   >
                     <TableCell className="text-center">
-                      <input 
-                        type="checkbox" 
+                      <input
+                        type="checkbox"
                         className="pointer-events-none"
                         checked={selectedContactIds.has(c.id)}
                         readOnly
@@ -214,8 +215,8 @@ export default function SelectiveEmailSender() {
                     <TableCell className="font-medium">{c.firstname} {c.lastname}</TableCell>
                     <TableCell>{c.email}</TableCell>
                     <TableCell>
-                      {c.tags && c.tags.length > 0 
-                        ? c.tags.map((t: any) => t.name).join(", ") 
+                      {c.tags && c.tags.length > 0
+                        ? c.tags.map((t: any) => t.name).join(", ")
                         : <span className="text-muted-foreground italic">None</span>}
                     </TableCell>
                   </TableRow>
@@ -234,7 +235,7 @@ export default function SelectiveEmailSender() {
           <div className="space-y-4 pt-4 border-t">
             <div className="space-y-2">
               <Label>Template (Optional)</Label>
-              <select 
+              <select
                 className="w-full p-2 border rounded-md text-sm"
                 value={selectedTemplate}
                 onChange={(e) => {
@@ -263,19 +264,19 @@ export default function SelectiveEmailSender() {
 
             <div className="space-y-2">
               <Label>Subject</Label>
-              <Input 
-                placeholder="Email Subject" 
-                value={newTemplateSubject} 
-                onChange={(e) => setNewTemplateSubject(e.target.value)} 
+              <Input
+                placeholder="Email Subject"
+                value={newTemplateSubject}
+                onChange={(e) => setNewTemplateSubject(e.target.value)}
               />
             </div>
 
             <div className="space-y-2">
               <div className="flex justify-between items-center bg-muted/30 p-2 rounded-md border">
                 <Label className="ml-2">Email Body</Label>
-                <Button 
-                  variant={showPreview ? "default" : "outline"} 
-                  size="sm" 
+                <Button
+                  variant={showPreview ? "default" : "outline"}
+                  size="sm"
                   onClick={() => setShowPreview(!showPreview)}
                   className="h-8 gap-2"
                 >
@@ -283,24 +284,24 @@ export default function SelectiveEmailSender() {
                   {showPreview ? "Hide Preview" : "Show Preview"}
                 </Button>
               </div>
-              
+
               <div className={showPreview ? "grid grid-cols-1 md:grid-cols-2 gap-4 items-stretch" : "block"}>
                 <div className="border rounded-md overflow-hidden bg-white shadow-sm flex flex-col h-full min-h-[400px]">
-                  <RichTextEditor 
+                  <RichTextEditor
                     value={newTemplateBody}
                     onChange={setNewTemplateBody}
                     placeholder="Write your email content here..."
                     className="flex-grow"
                   />
                 </div>
-                
+
                 {showPreview && (
                   <div className="border rounded-md bg-white shadow-inner flex flex-col h-full min-h-[400px]">
                     <div className="p-3 border-b bg-muted/50 flex items-center justify-center">
                       <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Client Preview</span>
                     </div>
                     <div className="flex-grow bg-white p-2">
-                      <iframe 
+                      <iframe
                         title="Email Preview"
                         srcDoc={getFinalHtml(newTemplateBody) || "<p style='color: #888; text-align: center; margin-top: 20px;'>Live preview will appear here...</p>"}
                         className="w-full h-full border-none"
@@ -311,18 +312,18 @@ export default function SelectiveEmailSender() {
                 )}
               </div>
             </div>
-            
+
             <div className="pt-4 border-t mt-6 space-y-4">
-               <div className="flex items-center gap-4">
-                  <Button 
-                    onClick={handleSend} 
-                    disabled={loading || selectedContactIds.size === 0 || !newTemplateSubject || !newTemplateBody} 
-                    className="w-48"
-                  >
-                    {loading ? "Sending..." : `Send to ${selectedContactIds.size} Selected`}
-                  </Button>
-               </div>
-               {message && <div className={`text-sm font-medium mt-2 ${message.includes("Error") ? "text-red-600" : "text-green-600"}`}>{message}</div>}
+              <div className="flex items-center gap-4">
+                <Button
+                  onClick={handleSend}
+                  disabled={loading || selectedContactIds.size === 0 || !newTemplateSubject || !newTemplateBody}
+                  className="w-48"
+                >
+                  {loading ? "Sending..." : `Send to ${selectedContactIds.size} Selected`}
+                </Button>
+              </div>
+              {message && <div className={`text-sm font-medium mt-2 ${message.includes("Error") ? "text-red-600" : "text-green-600"}`}>{message}</div>}
             </div>
           </div>
         </CardContent>
