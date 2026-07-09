@@ -281,21 +281,22 @@ export function SalesOrderFormSheet({
                 <p className="text-sm text-red-600">{errors.items.message}</p>
               )}
 
-              <div className="overflow-hidden rounded-md border">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="w-[26%]">Product</TableHead>
-                      <TableHead className="w-[20%]">Description</TableHead>
-                      <TableHead className="w-[10%]">Qty</TableHead>
-                      <TableHead className="w-[12%]">Unit price</TableHead>
-                      <TableHead className="w-[10%]">Disc %</TableHead>
-                      <TableHead className="w-[10%]">Tax %</TableHead>
-                      <TableHead className="text-right">Total</TableHead>
-                      <TableHead className="w-8" />
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
+              <div className="overflow-x-auto rounded-md border">
+                <div className="min-w-max">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="min-w-[200px]">Product</TableHead>
+                        <TableHead className="min-w-[150px]">Description</TableHead>
+                        <TableHead className="min-w-[80px]">Qty</TableHead>
+                        <TableHead className="min-w-[100px]">Unit price</TableHead>
+                        <TableHead className="min-w-[80px]">Disc %</TableHead>
+                        <TableHead className="min-w-[80px]">Tax %</TableHead>
+                        <TableHead className="min-w-[100px] text-right">Total</TableHead>
+                        <TableHead className="w-8 min-w-[32px]" />
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
                     {fields.map((field, index) => {
                       const item = watchedItems?.[index];
                       const base = (item?.quantity || 0) * (item?.unit_price || 0);
@@ -403,7 +404,8 @@ export function SalesOrderFormSheet({
                       );
                     })}
                   </TableBody>
-                </Table>
+                  </Table>
+                </div>
               </div>
 
               <div className="ml-auto w-64 space-y-1 pt-2 text-sm">
