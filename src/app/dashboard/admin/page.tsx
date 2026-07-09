@@ -41,7 +41,7 @@ export default function AdminDashboard() {
   ];
 
   return (
-    <div className="p-6 max-w-[1200px] mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+    <div className="w-full p-6 space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div className="flex flex-col gap-2">
         <h1 className="text-3xl font-bold tracking-tight">Administration</h1>
         <p className="text-muted-foreground">Manage users, security, and global system settings.</p>

@@ -97,10 +97,10 @@ module.exports = { requireRole };
 ```
 
 ### Acceptance Criteria
-- [ ] File exists at `src/middleware/requireRole.js`
-- [ ] Exports `{ requireRole }`
-- [ ] Returns 403 with clear error message when role doesn't match
-- [ ] Passes through when role matches
+- [x] File exists at `src/middleware/requireRole.js`
+- [x] Exports `{ requireRole }`
+- [x] Returns 403 with clear error message when role doesn't match
+- [x] Passes through when role matches
 
 ---
 
@@ -155,10 +155,10 @@ module.exports = { checkModuleAccess };
 ```
 
 ### Acceptance Criteria
-- [ ] File exists at `src/middleware/checkModuleAccess.js`
-- [ ] `super_admin` role always gets through without a DB query
-- [ ] Regular users are checked against `user_permissions` table
-- [ ] Returns 403 when user has no permission row or `is_allowed = false`
+- [x] File exists at `src/middleware/checkModuleAccess.js`
+- [x] `super_admin` role always gets through without a DB query
+- [x] Regular users are checked against `user_permissions` table
+- [x] Returns 403 when user has no permission row or `is_allowed = false`
 
 ---
 
@@ -269,13 +269,13 @@ exports.login = async (req, res) => {
 ```
 
 ### What to Verify
-- [ ] `const jwt = require("jsonwebtoken")` is **removed**
-- [ ] `const JWT_SECRET = ...` line is **removed**
-- [ ] `const verifyScryptHash = ...` function is **removed** (replaced by `passwordHash.js`)
-- [ ] Token is signed with `signAuthToken` from `src/utils/authToken.js`
-- [ ] Login response includes `permissions` array
-- [ ] `is_active = TRUE` check is in the SQL query
-- [ ] `last_login` is updated on successful login
+- [x] `const jwt = require("jsonwebtoken")` is **removed**
+- [x] `const JWT_SECRET = ...` line is **removed**
+- [x] `const verifyScryptHash = ...` function is **removed** (replaced by `passwordHash.js`)
+- [x] Token is signed with `signAuthToken` from `src/utils/authToken.js`
+- [x] Login response includes `permissions` array
+- [x] `is_active = TRUE` check is in the SQL query
+- [x] `last_login` is updated on successful login
 
 ### Test
 ```bash
@@ -323,10 +323,10 @@ const hash = await hashPassword(password);
 ```
 
 ### Acceptance Criteria
-- [ ] `bcryptjs` is no longer imported
-- [ ] `hashPassword` from `src/utils/passwordHash.js` is used instead
-- [ ] Password validation (minimum 8 characters) is enforced
-- [ ] No default password fallback (`'password123'` is removed)
+- [x] `bcryptjs` is no longer imported
+- [x] `hashPassword` from `src/utils/passwordHash.js` is used instead
+- [x] Password validation (minimum 8 characters) is enforced
+- [x] No default password fallback (`'password123'` is removed)
 
 ---
 
@@ -389,11 +389,11 @@ module.exports = { seedSuperAdmin };
 ```
 
 ### Acceptance Criteria
-- [ ] File exists at `src/config/seedSuperAdmin.js`
-- [ ] If env vars are not set → logs a message and exits cleanly (no crash)
-- [ ] If user doesn't exist → creates with `role = 'super_admin'`
-- [ ] If user exists but isn't super_admin → upgrades the role
-- [ ] If user exists and is super_admin → no-op, just logs
+- [x] File exists at `src/config/seedSuperAdmin.js`
+- [x] If env vars are not set → logs a message and exits cleanly (no crash)
+- [x] If user doesn't exist → creates with `role = 'super_admin'`
+- [x] If user exists but isn't super_admin → upgrades the role
+- [x] If user exists and is super_admin → no-op, just logs
 
 ---
 
@@ -590,12 +590,12 @@ In `adminController.js`, update all occurrences of `req.user ? req.user.id : 1` 
 ```
 
 ### Acceptance Criteria
-- [ ] `GET /api/admin/users` returns users with `permissions` array
-- [ ] `POST /api/admin/users` accepts `permissions` array in body
-- [ ] `GET /api/admin/users/:id/permissions` returns user's module permissions
-- [ ] `PUT /api/admin/users/:id/permissions` updates module permissions
-- [ ] `POST /api/admin/users/:id/reset-password` resets password
-- [ ] All audit logging uses `req.auth?.id` instead of `req.user?.id`
+- [x] `GET /api/admin/users` returns users with `permissions` array
+- [x] `POST /api/admin/users` accepts `permissions` array in body
+- [x] `GET /api/admin/users/:id/permissions` returns user's module permissions
+- [x] `PUT /api/admin/users/:id/permissions` updates module permissions
+- [x] `POST /api/admin/users/:id/reset-password` resets password
+- [x] All audit logging uses `req.auth?.id` instead of `req.user?.id`
 
 ---
 
@@ -651,10 +651,10 @@ module.exports = router;
 - Added 3 new permission endpoints for users
 
 ### Acceptance Criteria
-- [ ] Unauthenticated request to `/api/admin/users` returns 401
-- [ ] Authenticated non-super_admin request returns 403
-- [ ] Authenticated super_admin request works correctly
-- [ ] New permission endpoints are routed correctly
+- [x] Unauthenticated request to `/api/admin/users` returns 401
+- [x] Authenticated non-super_admin request returns 403
+- [x] Authenticated super_admin request works correctly
+- [x] New permission endpoints are routed correctly
 
 ---
 
@@ -1185,11 +1185,11 @@ Login must remain unprotected. Changes for `GET /auth/me` are covered in Task B1
 ---
 
 ### Acceptance Criteria for B8
-- [ ] All 24 previously-unprotected route files now have `requireAuth` + `checkModuleAccess`
-- [ ] `authRoutes.js` remains unprotected (login endpoint)
-- [ ] Server starts without errors after all changes
-- [ ] Unauthenticated requests to any protected route return `401`
-- [ ] Authenticated user without module access gets `403`
+- [x] All 24 previously-unprotected route files now have `requireAuth` + `checkModuleAccess`
+- [x] `authRoutes.js` remains unprotected (login endpoint)
+- [x] Server starts without errors after all changes
+- [x] Unauthenticated requests to any protected route return `401`
+- [x] Authenticated user without module access gets `403`
 
 ---
 
@@ -1225,10 +1225,10 @@ const { seedSuperAdmin } = require("./config/seedSuperAdmin");
 ```
 
 ### Acceptance Criteria
-- [ ] `seedSuperAdmin` is imported at the top
-- [ ] `seedSuperAdmin()` is called after `initDb()` and before `app.listen()`
-- [ ] Server logs `[Seed] Super admin created: ...` on first boot
-- [ ] Server logs `[Seed] Super admin already exists: ...` on subsequent boots
+- [x] `seedSuperAdmin` is imported at the top
+- [x] `seedSuperAdmin()` is called after `initDb()` and before `app.listen()`
+- [x] Server logs `[Seed] Super admin created: ...` on first boot
+- [x] Server logs `[Seed] Super admin already exists: ...` on subsequent boots
 
 ---
 
@@ -1327,10 +1327,10 @@ module.exports = router;
 ```
 
 ### Acceptance Criteria
-- [ ] `GET /api/auth/me` with valid token returns user + permissions
-- [ ] `GET /api/auth/me` with invalid/expired token returns 401
-- [ ] `POST /api/auth/change-password` validates current password before allowing change
-- [ ] Password minimum 8 characters enforced
+- [x] `GET /api/auth/me` with valid token returns user + permissions
+- [x] `GET /api/auth/me` with invalid/expired token returns 401
+- [x] `POST /api/auth/change-password` validates current password before allowing change
+- [x] Password minimum 8 characters enforced
 
 ---
 
