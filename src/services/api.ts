@@ -1,10 +1,11 @@
 import type { AIAnalyticsReport, AIChatResponse } from "@/lib/ai-report-types";
+import { apiFetch } from "@/lib/api/http";
 
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_BASE_URL ?? "https://apimrpeasy-vaclift-backend.vercel.app/api";
 
 async function fetchOrders() {
-  const response = await fetch(`${API_BASE_URL}/orders`);
+  const response = await apiFetch(`/orders`);
 
   if (!response.ok) {
     throw new Error("Failed to fetch orders");
@@ -16,7 +17,7 @@ async function fetchOrders() {
 }
 
 async function fetchAnalytics() {
-  const response = await fetch(`${API_BASE_URL}/analytics`);
+  const response = await apiFetch(`/analytics`);
 
   if (!response.ok) {
     throw new Error("Failed to fetch analytics");
@@ -28,7 +29,7 @@ async function fetchAnalytics() {
 }
 
 async function fetchAIReport(refresh = false): Promise<AIAnalyticsReport> {
-  const response = await fetch(`${API_BASE_URL}/ai-report${refresh ? "?refresh=1" : ""}`);
+  const response = await apiFetch(`/ai-report${refresh ? "?refresh=1" : ""}`);
 
   if (!response.ok) {
     throw new Error("Failed to fetch AI analytics report");
@@ -44,7 +45,7 @@ async function fetchAIReport(refresh = false): Promise<AIAnalyticsReport> {
 }
 
 async function askAnalyticsQuestion(question: string): Promise<AIChatResponse> {
-  const response = await fetch(`${API_BASE_URL}/ai-chat`, {
+  const response = await apiFetch(`/ai-chat`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -66,7 +67,7 @@ async function askAnalyticsQuestion(question: string): Promise<AIChatResponse> {
 }
 
 const loginDashboard = async (email: string, password: string) => {
-  const response = await fetch(`${API_BASE_URL}/auth/login`, {
+  const response = await apiFetch(`/auth/login`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -89,70 +90,70 @@ const loginDashboard = async (email: string, password: string) => {
 
 // CRM Endpoints
 async function fetchCrmStats() {
-  const response = await fetch(`${API_BASE_URL}/crm/stats`);
+  const response = await apiFetch(`/crm/stats`);
   if (!response.ok) throw new Error("Failed to fetch CRM stats");
   return (await response.json()).data;
 }
 
 async function fetchContacts(params?: { page?: number; search?: string; lifecycle?: string; limit?: number }) {
   const q = new URLSearchParams(params as any).toString();
-  const response = await fetch(`${API_BASE_URL}/crm/contacts?${q}`);
+  const response = await apiFetch(`/crm/contacts?${q}`);
   if (!response.ok) throw new Error("Failed to fetch contacts");
   return await response.json(); // { data, pagination }
 }
 
 async function fetchContact(id: string) {
-  const response = await fetch(`${API_BASE_URL}/crm/contacts/${id}`);
+  const response = await apiFetch(`/crm/contacts/${id}`);
   if (!response.ok) throw new Error("Failed to fetch contact");
   return (await response.json()).data;
 }
 
 async function fetchCompanies(params?: { page?: number; search?: string; industry?: string; limit?: number }) {
   const q = new URLSearchParams(params as any).toString();
-  const response = await fetch(`${API_BASE_URL}/crm/companies?${q}`);
+  const response = await apiFetch(`/crm/companies?${q}`);
   if (!response.ok) throw new Error("Failed to fetch companies");
   return await response.json(); // { data, pagination }
 }
 
 async function fetchCompany(id: string) {
-  const response = await fetch(`${API_BASE_URL}/crm/companies/${id}`);
+  const response = await apiFetch(`/crm/companies/${id}`);
   if (!response.ok) throw new Error("Failed to fetch company");
   return (await response.json()).data;
 }
 
 async function fetchDeals(params?: { page?: number; search?: string; stage?: string; owner?: string; limit?: number }) {
   const q = new URLSearchParams(params as any).toString();
-  const response = await fetch(`${API_BASE_URL}/crm/deals?${q}`);
+  const response = await apiFetch(`/crm/deals?${q}`);
   if (!response.ok) throw new Error("Failed to fetch deals");
   return await response.json(); // { data, pagination }
 }
 
 async function fetchDeal(id: string) {
-  const response = await fetch(`${API_BASE_URL}/crm/deals/${id}`);
+  const response = await apiFetch(`/crm/deals/${id}`);
   if (!response.ok) throw new Error("Failed to fetch deal");
   return (await response.json()).data;
 }
 
 async function fetchDealsPipeline() {
-  const response = await fetch(`${API_BASE_URL}/crm/deals/pipeline`);
+  const response = await apiFetch(`/crm/deals/pipeline`);
   if (!response.ok) throw new Error("Failed to fetch deals pipeline");
   return (await response.json()).data;
 }
 
 async function fetchIndustries() {
-  const response = await fetch(`${API_BASE_URL}/crm/companies/by-industry`);
+  const response = await apiFetch(`/crm/companies/by-industry`);
   if (!response.ok) throw new Error("Failed to fetch industries");
   return (await response.json()).data;
 }
 
 async function fetchLifecycles() {
-  const response = await fetch(`${API_BASE_URL}/crm/contacts/by-lifecycle`);
+  const response = await apiFetch(`/crm/contacts/by-lifecycle`);
   if (!response.ok) throw new Error("Failed to fetch lifecycles");
   return (await response.json()).data;
 }
 
 async function fetchOwners() {
-  const response = await fetch(`${API_BASE_URL}/crm/owners`);
+  const response = await apiFetch(`/crm/owners`);
   if (!response.ok) throw new Error("Failed to fetch owners");
   return (await response.json()).data;
 }
@@ -160,7 +161,7 @@ async function fetchOwners() {
 // Global Search
 async function fetchSearchResults(query: string) {
   if (!query) return [];
-  const response = await fetch(`${API_BASE_URL}/search?q=${encodeURIComponent(query)}`);
+  const response = await apiFetch(`/search?q=${encodeURIComponent(query)}`);
   if (!response.ok) throw new Error("Failed to fetch search results");
   return (await response.json()).data;
 }
@@ -168,19 +169,19 @@ async function fetchSearchResults(query: string) {
 // Leads
 async function fetchLeads(params?: { page?: number; search?: string; status?: string; assigned_to?: string }) {
   const q = new URLSearchParams(params as any).toString();
-  const response = await fetch(`${API_BASE_URL}/crm/leads?${q}`);
+  const response = await apiFetch(`/crm/leads?${q}`);
   if (!response.ok) throw new Error("Failed to fetch leads");
   return await response.json();
 }
 
 async function fetchLead(id: string) {
-  const response = await fetch(`${API_BASE_URL}/crm/leads/${id}`);
+  const response = await apiFetch(`/crm/leads/${id}`);
   if (!response.ok) throw new Error("Failed to fetch lead");
   return (await response.json()).data;
 }
 
 async function updateLeadStatus(id: string, status: string) {
-  const response = await fetch(`${API_BASE_URL}/crm/leads/${id}`, {
+  const response = await apiFetch(`/crm/leads/${id}`, {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ status })
@@ -190,7 +191,7 @@ async function updateLeadStatus(id: string, status: string) {
 }
 
 async function createLead(data: Record<string, any>) {
-  const response = await fetch(`${API_BASE_URL}/crm/leads`, {
+  const response = await apiFetch(`/crm/leads`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data),
@@ -200,7 +201,7 @@ async function createLead(data: Record<string, any>) {
 }
 
 async function updateLead(id: string, data: Record<string, any>) {
-  const response = await fetch(`${API_BASE_URL}/crm/leads/${id}`, {
+  const response = await apiFetch(`/crm/leads/${id}`, {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data),
@@ -210,7 +211,7 @@ async function updateLead(id: string, data: Record<string, any>) {
 }
 
 async function deleteLead(id: string) {
-  const response = await fetch(`${API_BASE_URL}/crm/leads/${id}`, {
+  const response = await apiFetch(`/crm/leads/${id}`, {
     method: "DELETE",
   });
   if (!response.ok) throw new Error("Failed to delete lead");
@@ -218,7 +219,7 @@ async function deleteLead(id: string) {
 }
 
 async function convertLead(id: string) {
-  const response = await fetch(`${API_BASE_URL}/crm/leads/${id}/convert`, {
+  const response = await apiFetch(`/crm/leads/${id}/convert`, {
     method: "POST",
   });
   if (!response.ok) throw new Error("Failed to convert lead");
@@ -228,19 +229,19 @@ async function convertLead(id: string) {
 // Opportunities
 async function fetchOpportunities(params?: { page?: number; search?: string; stage?: string; assigned_to?: string }) {
   const q = new URLSearchParams(params as any).toString();
-  const response = await fetch(`${API_BASE_URL}/crm/opportunities?${q}`);
+  const response = await apiFetch(`/crm/opportunities?${q}`);
   if (!response.ok) throw new Error("Failed to fetch opportunities");
   return await response.json();
 }
 
 async function fetchOpportunity(id: string) {
-  const response = await fetch(`${API_BASE_URL}/crm/opportunities/${id}`);
+  const response = await apiFetch(`/crm/opportunities/${id}`);
   if (!response.ok) throw new Error("Failed to fetch opportunity");
   return (await response.json()).data;
 }
 
 async function createOpportunity(data: Record<string, any>) {
-  const response = await fetch(`${API_BASE_URL}/crm/opportunities`, {
+  const response = await apiFetch(`/crm/opportunities`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data),
@@ -250,7 +251,7 @@ async function createOpportunity(data: Record<string, any>) {
 }
 
 async function updateOpportunity(id: string, data: Record<string, any>) {
-  const response = await fetch(`${API_BASE_URL}/crm/opportunities/${id}`, {
+  const response = await apiFetch(`/crm/opportunities/${id}`, {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data),
@@ -260,7 +261,7 @@ async function updateOpportunity(id: string, data: Record<string, any>) {
 }
 
 async function deleteOpportunity(id: string) {
-  const response = await fetch(`${API_BASE_URL}/crm/opportunities/${id}`, {
+  const response = await apiFetch(`/crm/opportunities/${id}`, {
     method: "DELETE",
   });
   if (!response.ok) throw new Error("Failed to delete opportunity");
@@ -268,7 +269,7 @@ async function deleteOpportunity(id: string) {
 }
 
 async function updateOpportunityStage(id: string, stage: string) {
-  const response = await fetch(`${API_BASE_URL}/crm/opportunities/${id}`, {
+  const response = await apiFetch(`/crm/opportunities/${id}`, {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ stage })
@@ -280,19 +281,19 @@ async function updateOpportunityStage(id: string, stage: string) {
 // Activities
 async function fetchActivities(params?: { page?: number; type?: string; status?: string; assigned_to?: string }) {
   const q = new URLSearchParams(params as any).toString();
-  const response = await fetch(`${API_BASE_URL}/crm/activities?${q}`);
+  const response = await apiFetch(`/crm/activities?${q}`);
   if (!response.ok) throw new Error("Failed to fetch activities");
   return await response.json();
 }
 
 async function fetchActivity(id: string) {
-  const response = await fetch(`${API_BASE_URL}/crm/activities/${id}`);
+  const response = await apiFetch(`/crm/activities/${id}`);
   if (!response.ok) throw new Error("Failed to fetch activity");
   return (await response.json()).data;
 }
 
 async function createActivity(data: Record<string, any>) {
-  const response = await fetch(`${API_BASE_URL}/crm/activities`, {
+  const response = await apiFetch(`/crm/activities`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data),
@@ -302,7 +303,7 @@ async function createActivity(data: Record<string, any>) {
 }
 
 async function updateActivity(id: string, data: Record<string, any>) {
-  const response = await fetch(`${API_BASE_URL}/crm/activities/${id}`, {
+  const response = await apiFetch(`/crm/activities/${id}`, {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data),
@@ -312,7 +313,7 @@ async function updateActivity(id: string, data: Record<string, any>) {
 }
 
 async function deleteActivity(id: string) {
-  const response = await fetch(`${API_BASE_URL}/crm/activities/${id}`, {
+  const response = await apiFetch(`/crm/activities/${id}`, {
     method: "DELETE",
   });
   if (!response.ok) throw new Error("Failed to delete activity");
@@ -324,13 +325,13 @@ async function deleteActivity(id: string) {
 // Products
 async function fetchProducts(params?: { page?: number; search?: string; category?: string; is_raw_material?: string; is_finished_good?: string }) {
   const q = new URLSearchParams(params as any).toString();
-  const response = await fetch(`${API_BASE_URL}/products?${q}`);
+  const response = await apiFetch(`/products?${q}`);
   if (!response.ok) throw new Error("Failed to fetch products");
   return await response.json();
 }
 
 async function createProduct(data: Record<string, any>) {
-  const response = await fetch(`${API_BASE_URL}/products`, {
+  const response = await apiFetch(`/products`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data),
@@ -340,7 +341,7 @@ async function createProduct(data: Record<string, any>) {
 }
 
 async function updateProduct(id: string, data: Record<string, any>) {
-  const response = await fetch(`${API_BASE_URL}/products/${id}`, {
+  const response = await apiFetch(`/products/${id}`, {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data),
@@ -350,7 +351,7 @@ async function updateProduct(id: string, data: Record<string, any>) {
 }
 
 async function deleteProduct(id: string) {
-  const response = await fetch(`${API_BASE_URL}/products/${id}`, {
+  const response = await apiFetch(`/products/${id}`, {
     method: "DELETE",
   });
   if (!response.ok) throw new Error("Failed to delete product");
@@ -359,25 +360,25 @@ async function deleteProduct(id: string) {
 
 // Bill of Materials
 async function fetchBoms() {
-  const response = await fetch(`${API_BASE_URL}/bom`);
+  const response = await apiFetch(`/bom`);
   if (!response.ok) throw new Error("Failed to fetch BOMs");
   return await response.json();
 }
 
 async function fetchBom(id: string) {
-  const response = await fetch(`${API_BASE_URL}/bom/${id}`);
+  const response = await apiFetch(`/bom/${id}`);
   if (!response.ok) throw new Error("Failed to fetch BOM");
   return (await response.json()).data;
 }
 
 async function fetchBomByProduct(productId: string) {
-  const response = await fetch(`${API_BASE_URL}/bom/by-product/${productId}`);
+  const response = await apiFetch(`/bom/by-product/${productId}`);
   if (!response.ok) throw new Error("Failed to fetch BOM for product");
   return (await response.json()).data;
 }
 
 async function createBom(data: Record<string, any>) {
-  const response = await fetch(`${API_BASE_URL}/bom`, {
+  const response = await apiFetch(`/bom`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data),
@@ -387,7 +388,7 @@ async function createBom(data: Record<string, any>) {
 }
 
 async function updateBom(id: string, data: Record<string, any>) {
-  const response = await fetch(`${API_BASE_URL}/bom/${id}`, {
+  const response = await apiFetch(`/bom/${id}`, {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data),
@@ -397,7 +398,7 @@ async function updateBom(id: string, data: Record<string, any>) {
 }
 
 async function deleteBom(id: string) {
-  const response = await fetch(`${API_BASE_URL}/bom/${id}`, {
+  const response = await apiFetch(`/bom/${id}`, {
     method: "DELETE",
   });
   if (!response.ok) throw new Error("Failed to delete BOM");
@@ -406,19 +407,19 @@ async function deleteBom(id: string) {
 
 // Production Orders
 async function fetchProductionOrders() {
-  const response = await fetch(`${API_BASE_URL}/production/orders`);
+  const response = await apiFetch(`/production/orders`);
   if (!response.ok) throw new Error("Failed to fetch production orders");
   return await response.json();
 }
 
 async function fetchProductionOrder(id: string) {
-  const response = await fetch(`${API_BASE_URL}/production/orders/${id}`);
+  const response = await apiFetch(`/production/orders/${id}`);
   if (!response.ok) throw new Error("Failed to fetch production order");
   return (await response.json()).data;
 }
 
 async function createProductionOrder(data: Record<string, any>) {
-  const response = await fetch(`${API_BASE_URL}/production/orders`, {
+  const response = await apiFetch(`/production/orders`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data),
@@ -428,7 +429,7 @@ async function createProductionOrder(data: Record<string, any>) {
 }
 
 async function updateProductionOrder(id: string, data: Record<string, any>) {
-  const response = await fetch(`${API_BASE_URL}/production/orders/${id}`, {
+  const response = await apiFetch(`/production/orders/${id}`, {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data),
@@ -438,7 +439,7 @@ async function updateProductionOrder(id: string, data: Record<string, any>) {
 }
 
 async function startProductionOrder(id: string) {
-  const response = await fetch(`${API_BASE_URL}/production/orders/${id}/start`, {
+  const response = await apiFetch(`/production/orders/${id}/start`, {
     method: "POST",
   });
   if (!response.ok) throw new Error("Failed to start production order");
@@ -446,7 +447,7 @@ async function startProductionOrder(id: string) {
 }
 
 async function completeProductionOrder(id: string) {
-  const response = await fetch(`${API_BASE_URL}/production/orders/${id}/complete`, {
+  const response = await apiFetch(`/production/orders/${id}/complete`, {
     method: "POST",
   });
   if (!response.ok) throw new Error("Failed to complete production order");
@@ -454,7 +455,7 @@ async function completeProductionOrder(id: string) {
 }
 
 async function consumeMaterial(orderId: string, data: Record<string, any>) {
-  const response = await fetch(`${API_BASE_URL}/production/orders/${orderId}/consume`, {
+  const response = await apiFetch(`/production/orders/${orderId}/consume`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data),
@@ -465,20 +466,20 @@ async function consumeMaterial(orderId: string, data: Record<string, any>) {
 
 // Production Progress
 async function fetchProductionProgress() {
-  const response = await fetch(`${API_BASE_URL}/production/progress`);
+  const response = await apiFetch(`/production/progress`);
   if (!response.ok) throw new Error("Failed to fetch production progress");
   return (await response.json()).data;
 }
 
 // Procurement - Suppliers
 async function fetchSuppliers() {
-  const response = await fetch(`${API_BASE_URL}/procurement/suppliers`);
+  const response = await apiFetch(`/procurement/suppliers`);
   if (!response.ok) throw new Error("Failed to fetch suppliers");
   return (await response.json()).data;
 }
 
 async function createSupplier(data: Record<string, any>) {
-  const response = await fetch(`${API_BASE_URL}/procurement/suppliers`, {
+  const response = await apiFetch(`/procurement/suppliers`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data),
@@ -488,7 +489,7 @@ async function createSupplier(data: Record<string, any>) {
 }
 
 async function updateSupplier(id: string, data: Record<string, any>) {
-  const response = await fetch(`${API_BASE_URL}/procurement/suppliers/${id}`, {
+  const response = await apiFetch(`/procurement/suppliers/${id}`, {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data),
@@ -498,7 +499,7 @@ async function updateSupplier(id: string, data: Record<string, any>) {
 }
 
 async function deleteSupplier(id: string) {
-  const response = await fetch(`${API_BASE_URL}/procurement/suppliers/${id}`, {
+  const response = await apiFetch(`/procurement/suppliers/${id}`, {
     method: "DELETE",
   });
   if (!response.ok) throw new Error("Failed to delete supplier");
@@ -507,19 +508,19 @@ async function deleteSupplier(id: string) {
 
 // Procurement - Purchase Orders
 async function fetchPurchaseOrders() {
-  const response = await fetch(`${API_BASE_URL}/procurement/orders`);
+  const response = await apiFetch(`/procurement/orders`);
   if (!response.ok) throw new Error("Failed to fetch purchase orders");
   return (await response.json()).data;
 }
 
 async function fetchPurchaseOrder(id: string) {
-  const response = await fetch(`${API_BASE_URL}/procurement/orders/${id}`);
+  const response = await apiFetch(`/procurement/orders/${id}`);
   if (!response.ok) throw new Error("Failed to fetch purchase order");
   return (await response.json()).data;
 }
 
 async function createPurchaseOrder(data: Record<string, any>) {
-  const response = await fetch(`${API_BASE_URL}/procurement/orders`, {
+  const response = await apiFetch(`/procurement/orders`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data),
@@ -529,7 +530,7 @@ async function createPurchaseOrder(data: Record<string, any>) {
 }
 
 async function updatePurchaseOrder(id: string, data: Record<string, any>) {
-  const response = await fetch(`${API_BASE_URL}/procurement/orders/${id}`, {
+  const response = await apiFetch(`/procurement/orders/${id}`, {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data),
@@ -539,7 +540,7 @@ async function updatePurchaseOrder(id: string, data: Record<string, any>) {
 }
 
 async function sendPurchaseOrder(id: string) {
-  const response = await fetch(`${API_BASE_URL}/procurement/orders/${id}/send`, {
+  const response = await apiFetch(`/procurement/orders/${id}/send`, {
     method: "POST",
   });
   if (!response.ok) throw new Error("Failed to send purchase order");
@@ -548,7 +549,7 @@ async function sendPurchaseOrder(id: string) {
 
 // Procurement - Goods Receipts
 async function receiveGoods(data: Record<string, any>) {
-  const response = await fetch(`${API_BASE_URL}/procurement/goods-receipt`, {
+  const response = await apiFetch(`/procurement/goods-receipt`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data),
@@ -558,7 +559,7 @@ async function receiveGoods(data: Record<string, any>) {
 }
 
 async function fetchGoodsReceipts(poId: string) {
-  const response = await fetch(`${API_BASE_URL}/procurement/goods-receipt/${poId}`);
+  const response = await apiFetch(`/procurement/goods-receipt/${poId}`);
   if (!response.ok) throw new Error("Failed to fetch goods receipts");
   return (await response.json()).data;
 }
