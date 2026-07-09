@@ -18,6 +18,7 @@ import { QuotationsTable } from "@/components/quotations/quotations-table";
 import { QuotationFormSheet } from "@/components/quotations/quotation-form-sheet";
 import { useQuotations, useQuotation } from "@/hooks/use-quotations";
 import type { Quotation, QuotationStatus } from "@/types/quotation";
+import { RouteGuard } from "@/components/auth/RouteGuard";
 
 const STATUS_FILTERS: { label: string; value: QuotationStatus | "all" }[] = [
   { label: "All statuses", value: "all" },
@@ -28,7 +29,7 @@ const STATUS_FILTERS: { label: string; value: QuotationStatus | "all" }[] = [
   { label: "Expired", value: "expired" },
 ];
 
-export default function QuotationsPage() {
+function QuotationsPage() {
   const [status, setStatus] = useState<QuotationStatus | "all">("all");
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
@@ -169,5 +170,13 @@ export default function QuotationsPage() {
         quotation={editingQuotation}
       />
     </div>
+  );
+}
+
+export default function QuotationsPageGuarded() {
+  return (
+    <RouteGuard module="sales">
+      <QuotationsPage />
+    </RouteGuard>
   );
 }

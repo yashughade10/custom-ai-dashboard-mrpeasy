@@ -1,6 +1,9 @@
-import CompaniesTable from "@/components/crm/CompaniesTable";
+"use client";
 
-export default function CompaniesPage() {
+import CompaniesTable from "@/components/crm/CompaniesTable";
+import { RouteGuard } from "@/components/auth/RouteGuard";
+
+function CompaniesPage() {
   return (
     <div className="space-y-6">
       <div>
@@ -11,5 +14,13 @@ export default function CompaniesPage() {
       </div>
       <CompaniesTable />
     </div>
+  );
+}
+
+export default function CompaniesPageGuarded() {
+  return (
+    <RouteGuard module="crm">
+      <CompaniesPage />
+    </RouteGuard>
   );
 }

@@ -1,6 +1,9 @@
-import { SalesReport } from "@/components/reports/SalesReport";
+"use client";
 
-export default function SalesReportsPage() {
+import { SalesReport } from "@/components/reports/SalesReport";
+import { RouteGuard } from "@/components/auth/RouteGuard";
+
+function SalesReportsPage() {
   return (
     <div className="p-6 w-full max-w-full space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div className="flex flex-col gap-2">
@@ -9,5 +12,13 @@ export default function SalesReportsPage() {
       </div>
       <SalesReport />
     </div>
+  );
+}
+
+export default function SalesReportsPageGuarded() {
+  return (
+    <RouteGuard module="reports">
+      <SalesReportsPage />
+    </RouteGuard>
   );
 }

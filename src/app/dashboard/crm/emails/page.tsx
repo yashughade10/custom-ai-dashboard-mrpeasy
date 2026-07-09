@@ -5,8 +5,9 @@ import HotLeadsEmailSender from "@/components/crm/emails/HotLeadsEmailSender";
 import NewsletterEmailSender from "@/components/crm/emails/NewsletterEmailSender";
 import SelectiveEmailSender from "@/components/crm/emails/SelectiveEmailSender";
 import { Button } from "@/components/ui/button";
+import { RouteGuard } from "@/components/auth/RouteGuard";
 
-export default function CrmEmailsPage() {
+function CrmEmailsPage() {
   const [activeTab, setActiveTab] = useState<"hotLeads" | "newsletter" | "selective">("selective");
 
   return (
@@ -47,5 +48,13 @@ export default function CrmEmailsPage() {
         {activeTab === "newsletter" && <NewsletterEmailSender />}
       </div>
     </div>
+  );
+}
+
+export default function CrmEmailsPageGuarded() {
+  return (
+    <RouteGuard module="crm">
+      <CrmEmailsPage />
+    </RouteGuard>
   );
 }

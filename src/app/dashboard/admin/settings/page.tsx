@@ -1,8 +1,9 @@
 "use client";
 
 import { SettingsForm } from "@/components/admin/SettingsForm";
+import { RouteGuard } from "@/components/auth/RouteGuard";
 
-export default function SettingsPage() {
+function SettingsPage() {
   return (
     <div className="w-full p-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div className="mb-6">
@@ -11,5 +12,13 @@ export default function SettingsPage() {
       </div>
       <SettingsForm />
     </div>
+  );
+}
+
+export default function SettingsPageGuarded() {
+  return (
+    <RouteGuard module="admin">
+      <SettingsPage />
+    </RouteGuard>
   );
 }

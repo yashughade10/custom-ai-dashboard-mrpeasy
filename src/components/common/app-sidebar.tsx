@@ -48,6 +48,7 @@ import {
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 import React from "react"
+import { useAuth, hasModuleAccess } from "@/hooks/use-auth"
 
 const navItems = [
     { name: "Overview", href: "/dashboard", icon: LayoutDashboard },
@@ -151,10 +152,30 @@ const navItems = [
     // { name: "Settings", href: "/dashboard/settings", icon: Settings },
 ]
 
+const navItemModuleMap: Record<string, string> = {
+    "Overview": "dashboard",
+    "AI Analytics": "ai_analytics",
+    "CRM": "crm",
+    "Orders": "orders",
+    "Sales": "sales",
+    "Inventory": "inventory",
+    "Production": "production",
+    "Procurement": "procurement",
+    "Reports": "reports",
+    "Administration": "admin",
+}
+
 export function AppSidebar() {
     const pathname = usePathname();
     const router = useRouter();
     const [activeHash, setActiveHash] = React.useState("");
+    const auth = useAuth();
+
+    const filteredNavItems = navItems.filter(item => {
+        const moduleKey = navItemModuleMap[item.name];
+        if (!moduleKey) return true; // No mapping = always show
+        return hasModuleAccess(auth, moduleKey);
+    });
 
     React.useEffect(() => {
         const handleHashChange = () => {
@@ -186,7 +207,7 @@ export function AppSidebar() {
                 <SidebarGroup className="py-1">
                     <SidebarGroupContent>
                         <SidebarMenu>
-                            {navItems.map((item) => {
+                            {filteredNavItems.map((item) => {
                                 const isOverview = item.href === '/dashboard';
                                 const isActive = isOverview ?
                                     pathname === '/dashboard' :

@@ -1,6 +1,9 @@
-import ContactsTable from "@/components/crm/ContactsTable";
+"use client";
 
-export default function ContactsPage() {
+import ContactsTable from "@/components/crm/ContactsTable";
+import { RouteGuard } from "@/components/auth/RouteGuard";
+
+function ContactsPage() {
   return (
     <div className="space-y-6">
       <div>
@@ -11,5 +14,13 @@ export default function ContactsPage() {
       </div>
       <ContactsTable />
     </div>
+  );
+}
+
+export default function ContactsPageGuarded() {
+  return (
+    <RouteGuard module="crm">
+      <ContactsPage />
+    </RouteGuard>
   );
 }

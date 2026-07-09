@@ -5,8 +5,9 @@ import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { StockHistoryTable } from "@/components/inventory/StockHistoryTable";
 import { Suspense } from "react";
+import { RouteGuard } from "@/components/auth/RouteGuard";
 
-export default function StockHistoryPage() {
+function StockHistoryPage() {
   return (
     <div className="space-y-6 p-6">
       <div>
@@ -26,5 +27,13 @@ export default function StockHistoryPage() {
         <StockHistoryTable />
       </Suspense>
     </div>
+  );
+}
+
+export default function StockHistoryPageGuarded() {
+  return (
+    <RouteGuard module="inventory">
+      <StockHistoryPage />
+    </RouteGuard>
   );
 }

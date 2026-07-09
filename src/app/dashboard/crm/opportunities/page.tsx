@@ -5,8 +5,9 @@ import OpportunitiesTable from "@/components/crm/OpportunitiesTable";
 import OpportunityPipeline from "@/components/crm/OpportunityPipeline";
 import { Button } from "@/components/ui/button";
 import { List, Kanban, Plus } from "lucide-react";
+import { RouteGuard } from "@/components/auth/RouteGuard";
 
-export default function OpportunitiesPage() {
+function OpportunitiesPage() {
   const [view, setView] = useState<"table" | "kanban">("table");
   const openCreateRef = useRef<(() => void) | null>(null);
 
@@ -56,5 +57,13 @@ export default function OpportunitiesPage() {
         <OpportunityPipeline />
       )}
     </div>
+  );
+}
+
+export default function OpportunitiesPageGuarded() {
+  return (
+    <RouteGuard module="crm">
+      <OpportunitiesPage />
+    </RouteGuard>
   );
 }

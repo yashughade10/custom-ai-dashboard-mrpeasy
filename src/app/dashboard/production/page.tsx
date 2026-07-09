@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Loader2, ArrowRight, Factory, Package, ClipboardList } from "lucide-react";
 import Link from "next/link";
+import { RouteGuard } from "@/components/auth/RouteGuard";
 
 const statusConfig: Record<string, { label: string; color: string }> = {
   pending: { label: "Pending", color: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400" },
@@ -22,7 +23,7 @@ const priorityConfig: Record<string, string> = {
   urgent: "bg-red-100 text-red-700",
 };
 
-export default function ProductionOverviewPage() {
+function ProductionOverviewPage() {
   const { data: ordersData, isLoading: isLoadingOrders } = useQuery({
     queryKey: ["production-orders"],
     queryFn: fetchProductionOrders,
@@ -129,5 +130,13 @@ export default function ProductionOverviewPage() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function ProductionOverviewPageGuarded() {
+  return (
+    <RouteGuard module="production">
+      <ProductionOverviewPage />
+    </RouteGuard>
   );
 }

@@ -3,8 +3,9 @@
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Users, Shield, History, Settings, ArrowRight } from "lucide-react";
 import Link from "next/link";
+import { RouteGuard } from "@/components/auth/RouteGuard";
 
-export default function AdminDashboard() {
+function AdminDashboard() {
   const modules = [
     { 
       title: "User Management", 
@@ -71,5 +72,13 @@ export default function AdminDashboard() {
         })}
       </div>
     </div>
+  );
+}
+
+export default function AdminDashboardGuarded() {
+  return (
+    <RouteGuard module="admin">
+      <AdminDashboard />
+    </RouteGuard>
   );
 }

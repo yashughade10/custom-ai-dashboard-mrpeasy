@@ -1,6 +1,9 @@
-import DealsList from "@/components/crm/DealsList";
+"use client";
 
-export default function DealsPage() {
+import DealsList from "@/components/crm/DealsList";
+import { RouteGuard } from "@/components/auth/RouteGuard";
+
+function DealsPage() {
   return (
     <div className="space-y-6">
       <div>
@@ -11,5 +14,13 @@ export default function DealsPage() {
       </div>
       <DealsList />
     </div>
+  );
+}
+
+export default function DealsPageGuarded() {
+  return (
+    <RouteGuard module="crm">
+      <DealsPage />
+    </RouteGuard>
   );
 }

@@ -4,8 +4,9 @@ import { useState, useRef } from "react";
 import ProductsTable from "@/components/production/ProductsTable";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
+import { RouteGuard } from "@/components/auth/RouteGuard";
 
-export default function ProductsPage() {
+function ProductsPage() {
   const openCreateRef = useRef<(() => void) | null>(null);
 
   return (
@@ -24,5 +25,13 @@ export default function ProductsPage() {
       </div>
       <ProductsTable onOpenCreate={(fn) => { openCreateRef.current = fn; }} />
     </div>
+  );
+}
+
+export default function ProductsPageGuarded() {
+  return (
+    <RouteGuard module="production">
+      <ProductsPage />
+    </RouteGuard>
   );
 }

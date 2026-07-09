@@ -7,8 +7,9 @@ import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { createSupplier } from "@/services/api";
+import { RouteGuard } from "@/components/auth/RouteGuard";
 
-export default function SuppliersPage() {
+function SuppliersPage() {
   const queryClient = useQueryClient();
   const [isCreateOpen, setIsCreateOpen] = useState(false);
 
@@ -45,5 +46,13 @@ export default function SuppliersPage() {
         />
       )}
     </div>
+  );
+}
+
+export default function SuppliersPageGuarded() {
+  return (
+    <RouteGuard module="procurement">
+      <SuppliersPage />
+    </RouteGuard>
   );
 }

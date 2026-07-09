@@ -7,8 +7,9 @@ import { Button } from "@/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
 import { fetchSuppliers, fetchPurchaseOrders } from "@/services/api";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { RouteGuard } from "@/components/auth/RouteGuard";
 
-export default function ProcurementDashboard() {
+function ProcurementDashboard() {
   const { data: suppliersData } = useQuery({ queryKey: ["procurement-suppliers"], queryFn: fetchSuppliers });
   const { data: ordersData } = useQuery({ queryKey: ["procurement-orders"], queryFn: fetchPurchaseOrders });
 
@@ -149,5 +150,13 @@ export default function ProcurementDashboard() {
         </Card>
       </div>
     </div>
+  );
+}
+
+export default function ProcurementDashboardGuarded() {
+  return (
+    <RouteGuard module="procurement">
+      <ProcurementDashboard />
+    </RouteGuard>
   );
 }
