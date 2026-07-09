@@ -1,4 +1,5 @@
 "use client";
+import { apiFetch } from "@/lib/api/http";
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -35,7 +36,7 @@ export default function HotLeadsEmailSender() {
   const [showPreview, setShowPreview] = useState(false);
 
   useEffect(() => {
-    fetch(`${API_BASE_URL}/email/segments`)
+    apiFetch(`${API_BASE_URL}/email/segments`)
       .then((res) => res.json())
       .then((data) => {
         if (data.success) {
@@ -50,7 +51,7 @@ export default function HotLeadsEmailSender() {
     setMessage("");
     try {
       const finalHtml = getFinalHtml(body);
-      const res = await fetch(`${API_BASE_URL}/email/send-hot-leads`, {
+      const res = await apiFetch(`${API_BASE_URL}/email/send-hot-leads`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ subject, html_body: finalHtml }),

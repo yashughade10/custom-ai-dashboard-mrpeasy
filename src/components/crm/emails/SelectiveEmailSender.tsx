@@ -1,4 +1,5 @@
 "use client";
+import { apiFetch } from "@/lib/api/http";
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -44,7 +45,7 @@ export default function SelectiveEmailSender() {
   }, []);
 
   const fetchTags = () => {
-    fetch(`${API_BASE_URL}/contacts/tags`)
+    apiFetch(`${API_BASE_URL}/contacts/tags`)
       .then((res) => res.json())
       .then((data) => {
         if (data.success) {
@@ -59,7 +60,7 @@ export default function SelectiveEmailSender() {
       ? `${API_BASE_URL}/crm/contacts?tagId=${tagId}&limit=all` 
       : `${API_BASE_URL}/crm/contacts?limit=all`;
     
-    fetch(url)
+    apiFetch(url)
       .then((res) => res.json())
       .then((data) => {
         if (data.success) {
@@ -72,7 +73,7 @@ export default function SelectiveEmailSender() {
   };
 
   const fetchTemplates = () => {
-    fetch(`${API_BASE_URL}/email/templates`)
+    apiFetch(`${API_BASE_URL}/email/templates`)
       .then((res) => res.json())
       .then((data) => {
         if (data.success) {
@@ -119,7 +120,7 @@ export default function SelectiveEmailSender() {
     setMessage("");
     try {
       const finalHtml = getFinalHtml(newTemplateBody);
-      const res = await fetch(`${API_BASE_URL}/email/send-selected`, {
+      const res = await apiFetch(`${API_BASE_URL}/email/send-selected`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ 

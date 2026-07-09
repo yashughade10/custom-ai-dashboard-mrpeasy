@@ -131,19 +131,19 @@ const navItems = [
         href: "/dashboard/sales",
         icon: ShoppingCart,
         children: [
-            { name: "Quotations", hash: "quotations", href: "/dashboard/sales/quotations", icon: Mail },
-            { name: "Sales Orders", hash: "orders", href: "/dashboard/sales/orders", icon: Mail }
+            { name: "Quotations", hash: "quotations", href: "/dashboard/sales", icon: FileText },
+            { name: "Sales Orders", hash: "orders", href: "/dashboard/sales/orders", icon: ClipboardList }
 
         ],
     },
     {
         name: "Inventory",
         href: "/dashboard/inventory",
-        icon: ShoppingCart,
+        icon: Boxes,
         children: [
-            { name: "Stock", hash: "quotations", href: "/dashboard/inventory", icon: Mail },
-            { name: "Warehouses", hash: "warehouses", href: "/dashboard/inventory/warehouses", icon: Mail },
-            { name: "History", hash: "history", href: "/dashboard/inventory/history", icon: Mail }
+            { name: "Stock", hash: "quotations", href: "/dashboard/inventory", icon: Package },
+            { name: "Warehouses", hash: "warehouses", href: "/dashboard/inventory/warehouses", icon: Building2 },
+            { name: "History", hash: "history", href: "/dashboard/inventory/history", icon: History }
 
         ],
     },

@@ -3,17 +3,17 @@
 export interface Warehouse {
   id: number;
   name: string;
-  code?: string | null;
-  address?: string | null;
+  location?: string | null;
+  is_default: boolean;
   is_active: boolean;
-  created_at: string;
-  updated_at: string;
+  created_at?: string;
+  updated_at?: string;
 }
 
 export interface CreateWarehouseInput {
   name: string;
-  code?: string;
-  address?: string;
+  location?: string;
+  is_default?: boolean;
   is_active?: boolean;
 }
 
@@ -52,8 +52,9 @@ export interface StockMovementInput {
   product_id: number;
   warehouse_id: number;
   quantity: number;
-  reference?: string;
-  reason?: string;
+  reference_type?: string;
+  reference_id?: number;
+  notes?: string;
 }
 
 export interface StockListFilters {

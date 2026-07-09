@@ -1,5 +1,6 @@
 "use client";
 
+import { apiFetch } from "@/lib/api/http";
 import React, { useEffect, useState } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
@@ -19,7 +20,7 @@ export function AuditLogTable() {
 
   const fetchLogs = async () => {
     try {
-      const res = await fetch("http://localhost:4000/api/admin/audit-log");
+      const res = await apiFetch("http://localhost:4000/api/admin/audit-log");
       if (!res.ok) throw new Error("Failed to fetch audit logs");
       const data = await res.json();
       setLogs(data);
