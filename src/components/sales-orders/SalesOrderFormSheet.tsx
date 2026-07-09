@@ -334,7 +334,7 @@ export function SalesOrderFormSheet({
                                       const price =
                                         product.selling_price ?? product.unit_price ?? product.price ?? product.sale_price;
                                       
-                                      const parsedPrice = parseFloat(price);
+                                      const parsedPrice = parseFloat(String(price));
                                       if (!isNaN(parsedPrice)) {
                                         setValue(`items.${index}.unit_price`, parsedPrice);
                                       }

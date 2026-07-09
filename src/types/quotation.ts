@@ -129,12 +129,14 @@ export interface ProductOption {
   id: number;
   name: string;
   sku?: string;
+  description?: string;
   // Different backends name this differently — support the common variants
   // and resolve the actual value with `getProductUnitPrice()` below.
   unit_price?: number;
   price?: number;
   sale_price?: number;
   unitPrice?: number;
+  selling_price?: string | number;
 }
 
 /** Resolves whichever price field the products API actually returns. */
