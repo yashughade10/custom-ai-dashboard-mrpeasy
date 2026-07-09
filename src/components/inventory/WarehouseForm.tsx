@@ -26,8 +26,8 @@ interface WarehouseFormProps {
 export function WarehouseForm({ open, onOpenChange, warehouse }: WarehouseFormProps) {
   const isEdit = Boolean(warehouse);
   const [name, setName] = useState("");
-  const [code, setCode] = useState("");
-  const [address, setAddress] = useState("");
+  const [location, setLocation] = useState("");
+  const [isDefault, setIsDefault] = useState(false);
   const [isActive, setIsActive] = useState(true);
 
   const createMutation = useCreateWarehouse();
@@ -37,13 +37,13 @@ export function WarehouseForm({ open, onOpenChange, warehouse }: WarehouseFormPr
   useEffect(() => {
     if (!open) return;
     setName(warehouse?.name ?? "");
-    setCode(warehouse?.code ?? "");
-    setAddress(warehouse?.address ?? "");
+    setLocation(warehouse?.location ?? "");
+    setIsDefault(warehouse?.is_default ?? false);
     setIsActive(warehouse?.is_active ?? true);
   }, [open, warehouse]);
 
   const handleSubmit = () => {
-    const payload = { name, code: code || undefined, address: address || undefined, is_active: isActive };
+    const payload = { name, location: location || undefined, is_default: isDefault, is_active: isActive };
     if (isEdit && warehouse) {
       updateMutation.mutate({ id: warehouse.id, payload }, { onSuccess: () => onOpenChange(false) });
     } else {
@@ -64,12 +64,12 @@ export function WarehouseForm({ open, onOpenChange, warehouse }: WarehouseFormPr
             <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Main warehouse" />
           </div>
           <div className="space-y-1.5">
-            <Label>Code (optional)</Label>
-            <Input value={code} onChange={(e) => setCode(e.target.value)} placeholder="WH-01" />
+            <Label>Location (optional)</Label>
+            <Input value={location} onChange={(e) => setLocation(e.target.value)} placeholder="e.g. New York, Zone A" />
           </div>
-          <div className="space-y-1.5">
-            <Label>Address (optional)</Label>
-            <Input value={address} onChange={(e) => setAddress(e.target.value)} />
+          <div className="flex items-center justify-between rounded-md border px-3 py-2">
+            <Label className="mb-0">Default Warehouse</Label>
+            <Switch checked={isDefault} onCheckedChange={setIsDefault} />
           </div>
           <div className="flex items-center justify-between rounded-md border px-3 py-2">
             <Label className="mb-0">Active</Label>

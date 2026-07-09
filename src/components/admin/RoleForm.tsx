@@ -1,5 +1,6 @@
 "use client";
 
+import { apiFetch } from "@/lib/api/http";
 import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -26,7 +27,7 @@ export function RoleForm({ open, onOpenChange, onSuccess }: RoleFormProps) {
     e.preventDefault();
     setLoading(true);
     try {
-      const res = await fetch("http://localhost:4000/api/admin/roles", {
+      const res = await apiFetch("http://localhost:4000/api/admin/roles", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData)

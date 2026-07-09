@@ -1,5 +1,6 @@
 "use client";
 
+import { apiFetch } from "@/lib/api/http";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,7 +20,7 @@ export function SettingsForm() {
 
   const fetchSettings = async () => {
     try {
-      const res = await fetch("http://localhost:4000/api/admin/settings");
+      const res = await apiFetch("http://localhost:4000/api/admin/settings");
       if (!res.ok) throw new Error("Failed to fetch settings");
       const data = await res.json();
       
@@ -54,7 +55,7 @@ export function SettingsForm() {
   const handleSave = async (key: string) => {
     setSaving(true);
     try {
-      const res = await fetch(`http://localhost:4000/api/admin/settings/${key}`, {
+      const res = await apiFetch(`http://localhost:4000/api/admin/settings/${key}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ value: settings[key] })
@@ -72,7 +73,7 @@ export function SettingsForm() {
     setSaving(true);
     try {
       for (const key of Object.keys(settings)) {
-        await fetch(`http://localhost:4000/api/admin/settings/${key}`, {
+        await apiFetch(`http://localhost:4000/api/admin/settings/${key}`, {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ value: settings[key] })

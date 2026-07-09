@@ -66,8 +66,8 @@ export default function WarehousesPage() {
           <TableHeader>
             <TableRow>
               <TableHead>Name</TableHead>
-              <TableHead>Code</TableHead>
-              <TableHead>Address</TableHead>
+              <TableHead>Location</TableHead>
+              <TableHead>Default</TableHead>
               <TableHead>Status</TableHead>
               <TableHead className="w-20" />
             </TableRow>
@@ -89,8 +89,14 @@ export default function WarehousesPage() {
               warehouses.map((w) => (
                 <TableRow key={w.id}>
                   <TableCell className="font-medium">{w.name}</TableCell>
-                  <TableCell className="font-mono text-sm">{w.code ?? "—"}</TableCell>
-                  <TableCell className="text-slate-500">{w.address ?? "—"}</TableCell>
+                  <TableCell className="text-slate-500">{w.location ?? "—"}</TableCell>
+                  <TableCell>
+                    {w.is_default && (
+                      <Badge variant="secondary" className="bg-blue-50 text-blue-700">
+                        Default
+                      </Badge>
+                    )}
+                  </TableCell>
                   <TableCell>
                     <Badge
                       variant="outline"

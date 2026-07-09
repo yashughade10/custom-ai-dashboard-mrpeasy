@@ -1,5 +1,6 @@
 "use client";
 
+import { apiFetch } from "@/lib/api/http";
 import { useEffect, useState } from "react";
 import { ReportFilters } from "./ReportFilters";
 import { 
@@ -18,7 +19,7 @@ export function ProductionReport() {
   const fetchReportData = async (filters = {}) => {
     setLoading(true);
     try {
-      const res = await fetch("http://localhost:4000/api/reports/production");
+      const res = await apiFetch("http://localhost:4000/api/reports/production");
       if (!res.ok) throw new Error("Failed to fetch report data");
       const json = await res.json();
       setData(json);
@@ -35,7 +36,7 @@ export function ProductionReport() {
 
   const handleExport = async (type: 'csv' | 'excel') => {
     try {
-      const res = await fetch(`http://localhost:4000/api/reports/export/${type}`);
+      const res = await apiFetch(`http://localhost:4000/api/reports/export/${type}`);
       const json = await res.json();
       toast.success(`Exported as ${json.type} successfully!`);
     } catch (error) {

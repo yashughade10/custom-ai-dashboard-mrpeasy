@@ -1,4 +1,5 @@
 "use client";
+import { apiFetch } from "@/lib/api/http";
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -40,7 +41,7 @@ export default function NewsletterEmailSender() {
   const [newTemplateBody, setNewTemplateBody] = useState("");
 
   const fetchSegments = () => {
-    fetch(`${API_BASE_URL}/email/segments`)
+    apiFetch(`${API_BASE_URL}/email/segments`)
       .then((res) => res.json())
       .then((data) => {
         if (data.success) {
@@ -51,7 +52,7 @@ export default function NewsletterEmailSender() {
   };
 
   const fetchTemplates = () => {
-    fetch(`${API_BASE_URL}/email/templates`)
+    apiFetch(`${API_BASE_URL}/email/templates`)
       .then((res) => res.json())
       .then((data) => {
         if (data.success) {
@@ -69,7 +70,7 @@ export default function NewsletterEmailSender() {
   const handleCreateTemplate = async () => {
     try {
       const finalHtml = getFinalHtml(newTemplateBody);
-      const res = await fetch(`${API_BASE_URL}/email/templates`, {
+      const res = await apiFetch(`${API_BASE_URL}/email/templates`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -99,7 +100,7 @@ export default function NewsletterEmailSender() {
     setMessage("");
     try {
       const finalHtml = getFinalHtml(newTemplateBody);
-      const res = await fetch(`${API_BASE_URL}/email/send-newsletter`, {
+      const res = await apiFetch(`${API_BASE_URL}/email/send-newsletter`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ 

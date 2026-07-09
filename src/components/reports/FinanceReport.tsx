@@ -1,5 +1,6 @@
 "use client";
 
+import { apiFetch } from "@/lib/api/http";
 import { useEffect, useState } from "react";
 import { ReportFilters } from "./ReportFilters";
 import { 
@@ -18,8 +19,8 @@ export function FinanceReport() {
     setLoading(true);
     try {
       const [resRec, resPay] = await Promise.all([
-        fetch("http://localhost:4000/api/reports/receivables"),
-        fetch("http://localhost:4000/api/reports/payables")
+        apiFetch("http://localhost:4000/api/reports/receivables"),
+        apiFetch("http://localhost:4000/api/reports/payables")
       ]);
       
       if (!resRec.ok || !resPay.ok) throw new Error("Failed to fetch finance data");
@@ -43,7 +44,7 @@ export function FinanceReport() {
   const handleExport = async (type: 'csv' | 'excel') => {
     try {
       // Could pass a specific report type to export
-      const res = await fetch(`http://localhost:4000/api/reports/export/${type}`);
+      const res = await apiFetch(`http://localhost:4000/api/reports/export/${type}`);
       const json = await res.json();
       toast.success(`Exported as ${json.type} successfully!`);
     } catch (error) {

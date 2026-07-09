@@ -3,6 +3,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Loader2 } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useWarehouses } from "@/hooks/use-inventory";
 
 export default function GoodsReceiptForm({
   isOpen,
@@ -20,6 +22,8 @@ export default function GoodsReceiptForm({
   const [form, setForm] = useState({
     notes: "",
   });
+  const [warehouseId, setWarehouseId] = useState<string>("");
+  const { data: warehouses = [] } = useWarehouses();
 
   // Initialize items from PO
   const [items, setItems] = useState<any[]>(
@@ -67,6 +71,7 @@ export default function GoodsReceiptForm({
     });
 
     if (!hasReceivedAnything) newErrors.general = "Must receive at least 1 item to create a receipt.";
+    if (!warehouseId) newErrors.warehouse_id = "Please select a warehouse.";
 
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
@@ -75,6 +80,7 @@ export default function GoodsReceiptForm({
 
     onSubmit({
       purchase_order_id: purchaseOrder.id,
+      warehouse_id: parseInt(warehouseId, 10),
       notes: form.notes,
       items: formattedItems
     });
@@ -127,6 +133,23 @@ export default function GoodsReceiptForm({
                 </div>
               ))}
             </div>
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="text-xs font-medium text-muted-foreground">Receive to Warehouse <span className="text-red-500">*</span></label>
+            <Select value={warehouseId} onValueChange={setWarehouseId}>
+              <SelectTrigger className={errors.warehouse_id ? "border-red-500" : ""}>
+                <SelectValue placeholder="Select a warehouse..." />
+              </SelectTrigger>
+              <SelectContent>
+                {warehouses.map((w: any) => (
+                  <SelectItem key={w.id} value={w.id.toString()}>
+                    {w.name} {w.is_default ? "(Default)" : ""}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {errors.warehouse_id && <p className="text-xs text-red-500">{errors.warehouse_id}</p>}
           </div>
 
           <div className="space-y-1.5">
