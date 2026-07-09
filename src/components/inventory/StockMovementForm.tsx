@@ -67,8 +67,8 @@ export function StockMovementForm({
         warehouse_id: stockItem.warehouse_id,
         quantity:
           movementType === "adjustment" ? Number(quantity) : Math.abs(Number(quantity)),
-        reference: reference || undefined,
-        reason: reason || undefined,
+        reference_type: reference ? "manual" : undefined,
+        notes: [reference && `Ref: ${reference}`, reason].filter(Boolean).join(" | ") || undefined,
       },
       { onSuccess: () => onOpenChange(false) },
     );

@@ -20,53 +20,7 @@ import type {
 
 const BASE = `${API_BASE_URL}/sales/quotations`;
 
-// Express/NestJS auto-generates ETags for JSON responses. Combined with the
-// browser's HTTP cache, a plain fetch() can get back a 304 with an empty
-// body instead of the actual data (especially with DevTools open and
-// caching disabled). `cache: "no-store"` forces a full fresh request every
-// time and sidesteps this entirely — always use this wrapper instead of the
-// raw fetch() for API calls.
-function apiFetch(url: string, init: RequestInit = {}) {
-  return fetch(url, {
-    ...init,
-    cache: "no-store",
-    headers: {
-      ...(init.body ? { "Content-Type": "application/json" } : {}),
-      ...init.headers,
-    },
-  });
-}
-
-async function handleResponse<T>(res: Response): Promise<T> {
-  if (res.status === 304) {
-    throw new Error(
-      "Got a 304 Not Modified with no body — check that API responses aren't being cached/ETag'd on the way to the browser.",
-    );
-  }
-  const data = await res.json();
-  
-  // Accept both explicit success: true and successful HTTP status codes (200-299, including 201)
-  const isSuccess = data.success === true || (res.ok && data.success !== false);
-  
-  if (!isSuccess) {
-    console.error("API Error Response:", {
-      status: res.status,
-      data,
-      message: data.message || "Request failed",
-    });
-    throw new Error(data.message || `Request failed with status ${res.status}`);
-  }
-  return data;
-}
-
-function buildQuery(params: Record<string, any>) {
-  const search = new URLSearchParams();
-  for (const [key, value] of Object.entries(params)) {
-    if (value !== undefined && value !== "") search.set(key, String(value));
-  }
-  const qs = search.toString();
-  return qs ? `?${qs}` : "";
-}
+import { apiFetch, handleResponse, buildQuery } from "./http";
 
 export async function listQuotations(
   filters: QuotationListFilters = {},

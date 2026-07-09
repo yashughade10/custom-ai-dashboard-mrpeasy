@@ -108,7 +108,7 @@ export function SalesOrderFormSheet({
     setValue,
     formState: { errors },
   } = useForm<FormValues>({
-    resolver: zodResolver(formSchema),
+    resolver: zodResolver(formSchema) as any,
     defaultValues: emptyValues,
   });
 

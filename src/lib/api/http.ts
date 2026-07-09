@@ -16,7 +16,9 @@ export async function apiFetch(url: string, init: RequestInit = {}) {
     }
   }
 
-  const response = await fetch(url, {
+  const finalUrl = url.startsWith("/") ? `${API_BASE_URL}${url}` : url;
+  
+  const response = await fetch(finalUrl, {
     ...init,
     cache: "no-store",
     headers: {
