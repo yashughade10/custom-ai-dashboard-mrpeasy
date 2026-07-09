@@ -32,8 +32,9 @@ import {
 } from "@/components/ui/alert-dialog";
 
 import { SalesOrderStatusBadge } from "./SalesOrderStatusBadge";
-import { useConfirmSalesOrder, useDeleteSalesOrder } from "@/hooks/use-sales-orders";
-import { getSalesOrderPdfUrl } from "@/lib/api/sales-orders";
+import { useRouter } from "next/navigation";
+import { useConfirmSalesOrder, useDeleteSalesOrder, usePackSalesOrder, useFulfillSalesOrder } from "@/hooks/use-sales-orders";
+import { getSalesOrderPdfUrl, getSalesOrder } from "@/lib/api/sales-orders";
 import type { SalesOrder } from "@/types/sales-order";
 
 interface SalesOrdersTableProps {
@@ -43,9 +44,29 @@ interface SalesOrdersTableProps {
 }
 
 export function SalesOrdersTable({ orders, isLoading, onEdit }: SalesOrdersTableProps) {
+  const router = useRouter();
   const [deleteTarget, setDeleteTarget] = useState<SalesOrder | null>(null);
   const confirmMutation = useConfirmSalesOrder();
   const deleteMutation = useDeleteSalesOrder();
+  const packMutation = usePackSalesOrder();
+  const fulfillMutation = useFulfillSalesOrder();
+
+  const openProductionOrder = async (order: SalesOrder) => {
+    try {
+      const fullOrder = await getSalesOrder(order.id);
+      const firstItem = fullOrder.items?.[0];
+      const params = new URLSearchParams();
+      params.set("new", "true");
+      params.set("po_number", order.order_number);
+      if (firstItem?.product_id) {
+        params.set("product_id", firstItem.product_id.toString());
+        params.set("quantity", firstItem.quantity.toString());
+      }
+      router.push(`/dashboard/production/orders?${params.toString()}`);
+    } catch (err) {
+      router.push(`/dashboard/production/orders?new=true&po_number=${order.order_number}`);
+    }
+  };
 
   const formatMoney = (value: number, currency: string) =>
     new Intl.NumberFormat("en-AU", { style: "currency", currency }).format(value);
@@ -117,6 +138,30 @@ export function SalesOrdersTable({ orders, isLoading, onEdit }: SalesOrdersTable
                       {o.status === "draft" && (
                         <DropdownMenuItem onClick={() => confirmMutation.mutate(o.id)}>
                           Confirm order
+                        </DropdownMenuItem>
+                      )}
+
+                      {o.status === "confirmed" && (
+                        <>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem
+                            className="text-amber-600 focus:text-amber-600 font-medium"
+                            onClick={() => openProductionOrder(o)}
+                          >
+                            Create Production Order
+                          </DropdownMenuItem>
+                        </>
+                      )}
+
+                      {(o.status === "allocated" || o.status === "confirmed") && (
+                        <DropdownMenuItem onClick={() => packMutation.mutate(o.id)}>
+                          Mark as Ready to Ship (Pack)
+                        </DropdownMenuItem>
+                      )}
+
+                      {o.status === "ready_to_ship" && (
+                        <DropdownMenuItem onClick={() => fulfillMutation.mutate(o.id)}>
+                          Ship Order
                         </DropdownMenuItem>
                       )}
 

@@ -53,12 +53,29 @@ export async function deleteSalesOrder(id: number): Promise<void> {
   await handleResponse(res);
 }
 
-export async function confirmSalesOrder(id: number): Promise<SalesOrder> {
+export interface ConfirmSalesOrderResponse extends SalesOrder {
+  requires_production?: boolean;
+  missing_items?: any[];
+}
+
+export async function confirmSalesOrder(id: number): Promise<ConfirmSalesOrderResponse> {
   const res = await apiFetch(`${BASE}/${id}/confirm`, { method: "POST" });
-  const data = await handleResponse<ApiResponse<SalesOrder>>(res);
+  const data = await handleResponse<ApiResponse<ConfirmSalesOrderResponse>>(res);
   return data.data;
 }
 
 export function getSalesOrderPdfUrl(id: number): string {
   return `${BASE}/${id}/pdf`;
 }
+
+export async function packSalesOrder(id: number): Promise<SalesOrder> {
+  const res = await apiFetch(`${BASE}/${id}/ready`, { method: "POST" });
+  const data = await handleResponse<ApiResponse<SalesOrder>>(res);
+  return data.data;
+}
+
+export async function fulfillSalesOrder(id: number): Promise<SalesOrder> {
+  const res = await apiFetch(`${BASE}/${id}/fulfill`, { method: "POST" });
+  const data = await handleResponse<ApiResponse<SalesOrder>>(res);
+  return data.data;
+}

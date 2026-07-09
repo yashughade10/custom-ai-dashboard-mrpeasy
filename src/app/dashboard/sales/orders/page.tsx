@@ -16,7 +16,7 @@ import { Input } from "@/components/ui/input";
 
 import { SalesOrdersTable } from "@/components/sales-orders/SalesOrdersTable";
 import { SalesOrderFormSheet } from "@/components/sales-orders/SalesOrderFormSheet";
-import { useSalesOrders } from "@/hooks/use-sales-orders";
+import { useSalesOrders, useSalesOrder } from "@/hooks/use-sales-orders";
 import type { SalesOrder, SalesOrderStatus } from "@/types/sales-order";
 
 const STATUS_FILTERS: { label: string; value: SalesOrderStatus | "all" }[] = [
@@ -36,7 +36,9 @@ export default function SalesOrdersPage() {
   const [page, setPage] = useState(1);
 
   const [formOpen, setFormOpen] = useState(false);
-  const [editing, setEditing] = useState<SalesOrder | undefined>(undefined);
+  const [editingId, setEditingId] = useState<number | null>(null);
+  
+  const { data: editingOrder } = useSalesOrder(editingId);
 
   const { data, isLoading } = useSalesOrders({
     status: status === "all" ? undefined : status,
@@ -47,12 +49,12 @@ export default function SalesOrdersPage() {
   });
 
   const openCreate = () => {
-    setEditing(undefined);
+    setEditingId(null);
     setFormOpen(true);
   };
 
   const openEdit = (order: SalesOrder) => {
-    setEditing(order);
+    setEditingId(order.id);
     setFormOpen(true);
   };
 
@@ -151,7 +153,14 @@ export default function SalesOrdersPage() {
         </div>
       )}
 
-      <SalesOrderFormSheet open={formOpen} onOpenChange={setFormOpen} salesOrder={editing} />
+      <SalesOrderFormSheet 
+        open={formOpen} 
+        onOpenChange={(open) => {
+          setFormOpen(open);
+          if (!open) setEditingId(null);
+        }} 
+        salesOrder={editingOrder} 
+      />
     </div>
   );
 }

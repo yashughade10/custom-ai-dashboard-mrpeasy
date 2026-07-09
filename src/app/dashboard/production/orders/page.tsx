@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import ProductionOrdersTable from "@/components/production/ProductionOrdersTable";
 import ProductionKanbanBoard from "@/components/production/ProductionKanbanBoard";
 import { Button } from "@/components/ui/button";
@@ -8,7 +8,21 @@ import { Plus, LayoutList, Kanban } from "lucide-react";
 
 export default function ProductionOrdersPage() {
   const [view, setView] = useState<"table" | "kanban">("kanban");
-  const openCreateRef = useRef<(() => void) | null>(null);
+  const openCreateRef = useRef<((defaults?: any) => void) | null>(null);
+
+  useEffect(() => {
+    if (typeof window !== "undefined" && window.location.search.includes("new=true")) {
+      const params = new URLSearchParams(window.location.search);
+      const defaults = {
+        po_number: params.get("po_number") || "",
+        product_id: params.get("product_id") || "",
+        quantity: params.get("quantity") || "",
+      };
+      setTimeout(() => {
+        openCreateRef.current?.(defaults);
+      }, 100);
+    }
+  }, []);
 
   return (
     <div className="space-y-6 overflow-x-hidden w-full max-w-full">

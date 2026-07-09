@@ -48,7 +48,7 @@ const priorityConfig: Record<string, { label: string; color: string }> = {
   urgent: { label: "Urgent", color: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400" },
 };
 
-export default function ProductionOrdersTable({ onOpenCreate }: { onOpenCreate?: (fn: () => void) => void }) {
+export default function ProductionOrdersTable({ onOpenCreate }: { onOpenCreate?: (fn: (defaults?: any) => void) => void }) {
   const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
@@ -57,6 +57,7 @@ export default function ProductionOrdersTable({ onOpenCreate }: { onOpenCreate?:
   // Create / Edit
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingOrder, setEditingOrder] = useState<any>(null);
+  const [newOrderDefaults, setNewOrderDefaults] = useState<any>(null);
 
   // Delete
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -142,8 +143,9 @@ export default function ProductionOrdersTable({ onOpenCreate }: { onOpenCreate?:
   });
 
   // Dialog handlers
-  const openCreateDialog = () => {
+  const openCreateDialog = (defaults?: any) => {
     setEditingOrder(null);
+    setNewOrderDefaults(defaults || null);
     setDialogOpen(true);
   };
 
@@ -343,7 +345,7 @@ export default function ProductionOrdersTable({ onOpenCreate }: { onOpenCreate?:
                     due_date: editingOrder.due_date ? new Date(editingOrder.due_date).toISOString().split("T")[0] : "",
                     notes: editingOrder.notes || "",
                   }
-                : undefined
+                : newOrderDefaults
             }
             onSubmit={handleFormSubmit}
             onCancel={closeDialog}

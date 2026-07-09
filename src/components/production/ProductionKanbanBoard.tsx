@@ -109,7 +109,7 @@ function KanbanColumn({ status, orders, products, onConsume }: { status: string;
   );
 }
 
-export default function ProductionKanbanBoard({ onOpenCreate }: { onOpenCreate?: (fn: () => void) => void }) {
+export default function ProductionKanbanBoard({ onOpenCreate }: { onOpenCreate?: (fn: (defaults?: any) => void) => void }) {
   const queryClient = useQueryClient();
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [consumeDialogOpen, setConsumeDialogOpen] = useState(false);
@@ -129,8 +129,14 @@ export default function ProductionKanbanBoard({ onOpenCreate }: { onOpenCreate?:
   const [consumeMaterialId, setConsumeMaterialId] = useState("");
   const [consumeQty, setConsumeQty] = useState("");
 
-  const openCreateDialog = () => {
-    setFormPoNumber(""); setFormProductId(""); setFormQuantity(""); setFormPriority("medium"); setFormStartDate(""); setFormDueDate(""); setFormNotes("");
+  const openCreateDialog = (defaults?: any) => {
+    setFormPoNumber(defaults?.po_number || "");
+    setFormProductId(defaults?.product_id || "");
+    setFormQuantity(defaults?.quantity || "");
+    setFormPriority("medium");
+    setFormStartDate("");
+    setFormDueDate("");
+    setFormNotes("");
     setCreateDialogOpen(true);
   };
 

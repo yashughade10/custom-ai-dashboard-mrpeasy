@@ -3,6 +3,8 @@
 export type SalesOrderStatus =
   | "draft"
   | "confirmed"
+  | "allocated"
+  | "ready_to_ship"
   | "in_production"
   | "shipped"
   | "delivered"
@@ -13,7 +15,8 @@ export type SalesOrderStatus =
 export const SALES_ORDER_FLOW: SalesOrderStatus[] = [
   "draft",
   "confirmed",
-  "in_production",
+  "allocated",
+  "ready_to_ship",
   "shipped",
   "delivered",
 ];

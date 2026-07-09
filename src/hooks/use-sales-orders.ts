@@ -83,8 +83,40 @@ export function useConfirmSalesOrder() {
     onSuccess: (order) => {
       queryClient.invalidateQueries({ queryKey: salesOrderKeys.lists() });
       queryClient.invalidateQueries({ queryKey: salesOrderKeys.detail(order.id) });
-      toast.success(`Sales order ${order.order_number} confirmed`);
+      if (order.requires_production) {
+        toast.warning(
+          `Sales order confirmed, but insufficient stock. Production required.`
+        );
+      } else {
+        toast.success(`Sales order ${order.order_number} confirmed and allocated.`);
+      }
     },
     onError: () => toast.error("Couldn't confirm the sales order."),
   });
 }
+
+export function usePackSalesOrder() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: number) => api.packSalesOrder(id),
+    onSuccess: (order) => {
+      queryClient.invalidateQueries({ queryKey: salesOrderKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: salesOrderKeys.detail(order.id) });
+      toast.success(`Sales order ${order.order_number} packed and ready to ship.`);
+    },
+    onError: () => toast.error("Couldn't pack the sales order."),
+  });
+}
+
+export function useFulfillSalesOrder() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: number) => api.fulfillSalesOrder(id),
+    onSuccess: (order) => {
+      queryClient.invalidateQueries({ queryKey: salesOrderKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: salesOrderKeys.detail(order.id) });
+      toast.success(`Sales order ${order.order_number} shipped successfully!`);
+    },
+    onError: () => toast.error("Couldn't ship the sales order."),
+  });
+}

@@ -7,6 +7,8 @@ const STEP_LABELS: Record<string, string> = {
   draft: "Draft",
   confirmed: "Confirmed",
   in_production: "In production",
+  allocated: "Allocated",
+  ready_to_ship: "Ready to ship",
   shipped: "Shipped",
   delivered: "Delivered",
 };
