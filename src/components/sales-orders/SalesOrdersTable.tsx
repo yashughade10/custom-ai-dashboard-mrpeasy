@@ -114,7 +114,7 @@ export function SalesOrdersTable({ orders, isLoading, onEdit }: SalesOrdersTable
                 <TableCell onClick={() => onEdit(o)}>{o.company_name ?? "—"}</TableCell>
                 <TableCell onClick={() => onEdit(o)}>{o.customer_po ?? "—"}</TableCell>
                 <TableCell onClick={() => onEdit(o)}>
-                  <SalesOrderStatusBadge status={o.status} />
+                  <SalesOrderStatusBadge status={o.status} hasStockAvailable={o.has_stock_available} />
                 </TableCell>
                 <TableCell onClick={() => onEdit(o)}>{o.delivery_date ?? "—"}</TableCell>
                 <TableCell className="text-right tabular-nums" onClick={() => onEdit(o)}>

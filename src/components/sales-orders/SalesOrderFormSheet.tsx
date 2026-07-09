@@ -42,6 +42,7 @@ import {
 } from "@/hooks/use-quotations";
 import { SalesOrderProgressTracker } from "./SalesOrderProgressTracker";
 import { useCreateSalesOrder, useUpdateSalesOrder } from "@/hooks/use-sales-orders";
+import { useStock } from "@/hooks/use-inventory";
 import type { SalesOrder } from "@/types/sales-order";
 
 const itemSchema = z.object({
@@ -98,6 +99,17 @@ export function SalesOrderFormSheet({
   const createMutation = useCreateSalesOrder();
   const updateMutation = useUpdateSalesOrder();
   const isSaving = createMutation.isPending || updateMutation.isPending;
+
+  const { data: stockData } = useStock({ limit: 1000 });
+  const stockItems = stockData?.data || [];
+  const stockMap = useMemo(() => {
+    const map = new Map<string, number>();
+    stockItems.forEach((s) => {
+      const existing = map.get(String(s.product_id)) || 0;
+      map.set(String(s.product_id), existing + s.quantity);
+    });
+    return map;
+  }, [stockItems]);
 
   const {
     control,
@@ -318,11 +330,13 @@ export function SalesOrderFormSheet({
                                     f.onChange(Number(v));
                                     const product = productMap.get(v);
                                     if (product) {
-                                      setValue(`items.${index}.description`, product.name);
+                                      setValue(`items.${index}.description`, product.description || product.name);
                                       const price =
-                                        product.unit_price ?? product.price ?? product.sale_price;
-                                      if (typeof price === "number") {
-                                        setValue(`items.${index}.unit_price`, price);
+                                        product.selling_price ?? product.unit_price ?? product.price ?? product.sale_price;
+                                      
+                                      const parsedPrice = parseFloat(price);
+                                      if (!isNaN(parsedPrice)) {
+                                        setValue(`items.${index}.unit_price`, parsedPrice);
                                       }
                                     }
                                   }}
@@ -352,9 +366,14 @@ export function SalesOrderFormSheet({
                               type="number"
                               min={1}
                               step="1"
-                              className="h-8"
+                              className="h-8 mb-1"
                               {...register(`items.${index}.quantity`)}
                             />
+                            {item?.product_id ? (
+                              <div className="text-[10px] text-slate-500 whitespace-nowrap">
+                                Stock: {stockMap.get(String(item.product_id)) || 0}
+                              </div>
+                            ) : null}
                           </TableCell>
                           <TableCell>
                             <Input

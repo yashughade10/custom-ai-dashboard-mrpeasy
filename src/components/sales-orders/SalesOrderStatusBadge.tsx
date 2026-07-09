@@ -16,7 +16,7 @@ const STATUS_STYLES: Record<SalesOrderStatus, string> = {
 
 const STATUS_LABELS: Record<SalesOrderStatus, string> = {
   draft: "Draft",
-  confirmed: "Confirmed (Missing Stock)",
+  confirmed: "Confirmed",
   allocated: "Allocated",
   ready_to_ship: "Ready to Ship",
   in_production: "In production",
@@ -25,10 +25,27 @@ const STATUS_LABELS: Record<SalesOrderStatus, string> = {
   cancelled: "Cancelled",
 };
 
-export function SalesOrderStatusBadge({ status }: { status: SalesOrderStatus }) {
+export function SalesOrderStatusBadge({ 
+  status, 
+  hasStockAvailable 
+}: { 
+  status: SalesOrderStatus;
+  hasStockAvailable?: boolean;
+}) {
   return (
-    <Badge variant="outline" className={cn("font-medium", STATUS_STYLES[status])}>
-      {STATUS_LABELS[status]}
-    </Badge>
+    <div className="flex flex-col gap-1 items-start">
+      <Badge
+        variant="outline"
+        className={cn(STATUS_STYLES[status] || "bg-slate-100", "capitalize")}
+      >
+        {STATUS_LABELS[status] || status}
+      </Badge>
+      {status === "confirmed" && hasStockAvailable && (
+        <span className="text-[10px] text-emerald-600 font-medium">Stock Ready</span>
+      )}
+      {status === "confirmed" && hasStockAvailable === false && (
+        <span className="text-[10px] text-red-500 font-medium">Missing Stock</span>
+      )}
+    </div>
   );
 }

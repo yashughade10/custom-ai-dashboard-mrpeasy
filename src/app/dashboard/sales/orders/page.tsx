@@ -23,7 +23,9 @@ import { RouteGuard } from "@/components/auth/RouteGuard";
 const STATUS_FILTERS: { label: string; value: SalesOrderStatus | "all" }[] = [
   { label: "All statuses", value: "all" },
   { label: "Draft", value: "draft" },
-  { label: "Confirmed", value: "confirmed" },
+  { label: "Confirmed (Missing Stock)", value: "confirmed" },
+  { label: "Allocated", value: "allocated" },
+  { label: "Ready to Ship", value: "ready_to_ship" },
   { label: "In production", value: "in_production" },
   { label: "Shipped", value: "shipped" },
   { label: "Delivered", value: "delivered" },

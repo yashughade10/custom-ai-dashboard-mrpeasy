@@ -57,6 +57,7 @@ export interface SalesOrder {
   items?: SalesOrderItem[];
   company_name?: string | null;
   contact_name?: string | null;
+  has_stock_available?: boolean;
 }
 
 // ----- Request payloads -----

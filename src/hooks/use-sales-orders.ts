@@ -46,7 +46,7 @@ export function useCreateSalesOrder() {
       queryClient.invalidateQueries({ queryKey: salesOrderKeys.lists() });
       toast.success(`Sales order ${order.order_number} created`);
     },
-    onError: () => toast.error("Couldn't create the sales order."),
+    onError: (err: any) => toast.error(err.message || "Couldn't create the sales order."),
   });
 }
 
@@ -60,7 +60,7 @@ export function useUpdateSalesOrder() {
       queryClient.invalidateQueries({ queryKey: salesOrderKeys.detail(order.id) });
       toast.success(`Sales order ${order.order_number} updated`);
     },
-    onError: () => toast.error("Couldn't save changes."),
+    onError: (err: any) => toast.error(err.message || "Couldn't save changes."),
   });
 }
 
@@ -72,7 +72,7 @@ export function useDeleteSalesOrder() {
       queryClient.invalidateQueries({ queryKey: salesOrderKeys.lists() });
       toast.success("Sales order deleted");
     },
-    onError: () => toast.error("Only draft sales orders can be deleted."),
+    onError: (err: any) => toast.error(err.message || "Only draft sales orders can be deleted."),
   });
 }
 
@@ -91,7 +91,7 @@ export function useConfirmSalesOrder() {
         toast.success(`Sales order ${order.order_number} confirmed and allocated.`);
       }
     },
-    onError: () => toast.error("Couldn't confirm the sales order."),
+    onError: (err: any) => toast.error(err.message || "Couldn't confirm the sales order."),
   });
 }
 
@@ -104,7 +104,7 @@ export function usePackSalesOrder() {
       queryClient.invalidateQueries({ queryKey: salesOrderKeys.detail(order.id) });
       toast.success(`Sales order ${order.order_number} packed and ready to ship.`);
     },
-    onError: () => toast.error("Couldn't pack the sales order."),
+    onError: (err: any) => toast.error(err.message || "Couldn't pack the sales order."),
   });
 }
 
@@ -117,6 +117,6 @@ export function useFulfillSalesOrder() {
       queryClient.invalidateQueries({ queryKey: salesOrderKeys.detail(order.id) });
       toast.success(`Sales order ${order.order_number} shipped successfully!`);
     },
-    onError: () => toast.error("Couldn't ship the sales order."),
+    onError: (err: any) => toast.error(err.message || "Couldn't ship the sales order."),
   });
 }
