@@ -1,5 +1,6 @@
 "use client";
 
+import { apiFetch } from "@/lib/api/http";
 import { useEffect, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -41,7 +42,7 @@ export function UserForm({ open, onOpenChange, user, onSuccess }: UserFormProps)
 
   const fetchRoles = async () => {
     try {
-      const res = await fetch("http://localhost:4000/api/admin/roles");
+      const res = await apiFetch("http://localhost:4000/api/admin/roles");
       if (res.ok) {
         const data = await res.json();
         setRoles(data);
@@ -67,7 +68,7 @@ export function UserForm({ open, onOpenChange, user, onSuccess }: UserFormProps)
         delete (payload as any).email; // Prevent email update for simplicity
       }
 
-      const res = await fetch(url, {
+      const res = await apiFetch(url, {
         method,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload)

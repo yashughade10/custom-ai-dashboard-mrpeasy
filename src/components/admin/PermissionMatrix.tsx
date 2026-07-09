@@ -1,5 +1,6 @@
 "use client";
 
+import { apiFetch } from "@/lib/api/http";
 import { useEffect, useState } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -26,7 +27,7 @@ export function PermissionMatrix() {
   const fetchRoles = async () => {
     setLoading(true);
     try {
-      const res = await fetch("http://localhost:4000/api/admin/roles");
+      const res = await apiFetch("http://localhost:4000/api/admin/roles");
       if (!res.ok) throw new Error("Failed to fetch roles");
       const data = await res.json();
       setRoles(data);
@@ -78,7 +79,7 @@ export function PermissionMatrix() {
     if (!activeRoleId) return;
     setSaving(true);
     try {
-      const res = await fetch(`http://localhost:4000/api/admin/roles/${activeRoleId}/permissions`, {
+      const res = await apiFetch(`http://localhost:4000/api/admin/roles/${activeRoleId}/permissions`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ permissions })
@@ -97,7 +98,7 @@ export function PermissionMatrix() {
     if (!roleToDelete) return;
     setIsDeleting(true);
     try {
-      const res = await fetch(`http://localhost:4000/api/admin/roles/${roleToDelete}`, { method: "DELETE" });
+      const res = await apiFetch(`http://localhost:4000/api/admin/roles/${roleToDelete}`, { method: "DELETE" });
       if (!res.ok) {
         const error = await res.json();
         throw new Error(error.error || "Failed to delete");
