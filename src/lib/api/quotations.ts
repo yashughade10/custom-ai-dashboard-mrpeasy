@@ -17,8 +17,9 @@ import type {
   SendQuotationInput,
   UpdateQuotationInput,
 } from "@/types/quotation";
+import { apiFetch } from "./http";
 
-const BASE = `/sales/quotations`;
+const BASE = `${API_BASE_URL}/sales/quotations`;
 
 // Express/NestJS auto-generates ETags for JSON responses. Combined with the
 // browser's HTTP cache, a plain fetch() can get back a 304 with an empty
@@ -26,16 +27,16 @@ const BASE = `/sales/quotations`;
 // caching disabled). `cache: "no-store"` forces a full fresh request every
 // time and sidesteps this entirely — always use this wrapper instead of the
 // raw fetch() for API calls.
-function apiFetch(url: string, init: RequestInit = {}) {
-  return fetch(url, {
-    ...init,
-    cache: "no-store",
-    headers: {
-      ...(init.body ? { "Content-Type": "application/json" } : {}),
-      ...init.headers,
-    },
-  });
-}
+// function apiFetch(url: string, init: RequestInit = {}) {
+//   return fetch(url, {
+//     ...init,
+//     cache: "no-store",
+//     headers: {
+//       ...(init.body ? { "Content-Type": "application/json" } : {}),
+//       ...init.headers,
+//     },
+//   });
+// }
 
 async function handleResponse<T>(res: Response): Promise<T> {
   if (res.status === 304) {
