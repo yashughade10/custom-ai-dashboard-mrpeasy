@@ -1,6 +1,9 @@
-import { InventoryReport } from "@/components/reports/InventoryReport";
+"use client";
 
-export default function InventoryReportsPage() {
+import { InventoryReport } from "@/components/reports/InventoryReport";
+import { RouteGuard } from "@/components/auth/RouteGuard";
+
+function InventoryReportsPage() {
   return (
     <div className="p-6 w-full max-w-full space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div className="flex flex-col gap-2">
@@ -9,5 +12,13 @@ export default function InventoryReportsPage() {
       </div>
       <InventoryReport />
     </div>
+  );
+}
+
+export default function InventoryReportsPageGuarded() {
+  return (
+    <RouteGuard module="reports">
+      <InventoryReportsPage />
+    </RouteGuard>
   );
 }

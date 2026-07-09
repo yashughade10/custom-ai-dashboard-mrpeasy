@@ -5,8 +5,9 @@ import LeadsTable from "@/components/crm/LeadsTable";
 import LeadKanbanBoard from "@/components/crm/LeadKanbanBoard";
 import { Button } from "@/components/ui/button";
 import { List, Kanban, Plus } from "lucide-react";
+import { RouteGuard } from "@/components/auth/RouteGuard";
 
-export default function LeadsPage() {
+function LeadsPage() {
   const [view, setView] = useState<"table" | "kanban">("table");
   const openCreateRef = useRef<(() => void) | null>(null);
 
@@ -56,5 +57,13 @@ export default function LeadsPage() {
         <LeadKanbanBoard />
       )}
     </div>
+  );
+}
+
+export default function LeadsPageGuarded() {
+  return (
+    <RouteGuard module="crm">
+      <LeadsPage />
+    </RouteGuard>
   );
 }

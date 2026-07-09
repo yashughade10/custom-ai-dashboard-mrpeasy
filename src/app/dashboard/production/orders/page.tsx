@@ -5,8 +5,9 @@ import ProductionOrdersTable from "@/components/production/ProductionOrdersTable
 import ProductionKanbanBoard from "@/components/production/ProductionKanbanBoard";
 import { Button } from "@/components/ui/button";
 import { Plus, LayoutList, Kanban } from "lucide-react";
+import { RouteGuard } from "@/components/auth/RouteGuard";
 
-export default function ProductionOrdersPage() {
+function ProductionOrdersPage() {
   const [view, setView] = useState<"table" | "kanban">("kanban");
   const openCreateRef = useRef<((defaults?: any) => void) | null>(null);
 
@@ -74,5 +75,13 @@ export default function ProductionOrdersPage() {
         <ProductionOrdersTable onOpenCreate={(fn) => { openCreateRef.current = fn; }} />
       )}
     </div>
+  );
+}
+
+export default function ProductionOrdersPageGuarded() {
+  return (
+    <RouteGuard module="production">
+      <ProductionOrdersPage />
+    </RouteGuard>
   );
 }

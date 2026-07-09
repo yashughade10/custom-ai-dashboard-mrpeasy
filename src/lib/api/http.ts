@@ -28,11 +28,18 @@ export async function apiFetch(url: string, init: RequestInit = {}) {
     },
   });
 
-  // Auto-logout on 401
+  // Auto-logout on 401 (use a flag to prevent multiple redirects from concurrent requests)
   if (response.status === 401 && typeof window !== "undefined") {
-    localStorage.removeItem("auth");
-    window.dispatchEvent(new Event("authChange"));
-    window.location.href = "/";
+    const alreadyRedirecting = (window as any).__authRedirecting;
+    if (!alreadyRedirecting) {
+      (window as any).__authRedirecting = true;
+      localStorage.removeItem("auth");
+      window.dispatchEvent(new Event("authChange"));
+      // Small delay to let state propagate before redirect
+      setTimeout(() => {
+        window.location.href = "/";
+      }, 100);
+    }
     throw new Error("Session expired. Please log in again.");
   }
 

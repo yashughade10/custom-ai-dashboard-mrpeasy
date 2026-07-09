@@ -7,8 +7,9 @@ import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { createPurchaseOrder } from "@/services/api";
+import { RouteGuard } from "@/components/auth/RouteGuard";
 
-export default function PurchaseOrdersPage() {
+function PurchaseOrdersPage() {
   const queryClient = useQueryClient();
   const [isCreateOpen, setIsCreateOpen] = useState(false);
 
@@ -45,5 +46,13 @@ export default function PurchaseOrdersPage() {
         />
       )}
     </div>
+  );
+}
+
+export default function PurchaseOrdersPageGuarded() {
+  return (
+    <RouteGuard module="procurement">
+      <PurchaseOrdersPage />
+    </RouteGuard>
   );
 }

@@ -9,6 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
 import { OrderFilters } from '@/components/ui/order-filters';
+import { RouteGuard } from "@/components/auth/RouteGuard";
 
 interface OrderData {
     customer_name: string;
@@ -243,4 +244,11 @@ function page() {
     )
 }
 
-export default page
+export default function pageGuarded() {
+  const Content = page;
+  return (
+    <RouteGuard module="orders">
+      <Content />
+    </RouteGuard>
+  );
+}

@@ -1,8 +1,9 @@
 "use client";
 
 import { PermissionMatrix } from "@/components/admin/PermissionMatrix";
+import { RouteGuard } from "@/components/auth/RouteGuard";
 
-export default function RolesPage() {
+function RolesPage() {
   return (
     <div className="w-full p-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div className="mb-6">
@@ -11,5 +12,13 @@ export default function RolesPage() {
       </div>
       <PermissionMatrix />
     </div>
+  );
+}
+
+export default function RolesPageGuarded() {
+  return (
+    <RouteGuard module="admin">
+      <RolesPage />
+    </RouteGuard>
   );
 }

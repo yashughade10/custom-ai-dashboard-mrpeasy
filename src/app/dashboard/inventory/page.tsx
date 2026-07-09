@@ -6,8 +6,9 @@ import { Warehouse as WarehouseIcon, History } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { StockTable } from "@/components/inventory/StockTable";
 import { LowStockAlert } from "@/components/inventory/LowStockAlert";
+import { RouteGuard } from "@/components/auth/RouteGuard";
 
-export default function InventoryOverviewPage() {
+function InventoryOverviewPage() {
   return (
     <div className="space-y-6 p-6">
       <div className="flex items-center justify-between">
@@ -36,5 +37,13 @@ export default function InventoryOverviewPage() {
       <LowStockAlert />
       <StockTable />
     </div>
+  );
+}
+
+export default function InventoryOverviewPageGuarded() {
+  return (
+    <RouteGuard module="inventory">
+      <InventoryOverviewPage />
+    </RouteGuard>
   );
 }

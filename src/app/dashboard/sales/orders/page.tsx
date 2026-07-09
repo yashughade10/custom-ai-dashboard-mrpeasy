@@ -18,6 +18,7 @@ import { SalesOrdersTable } from "@/components/sales-orders/SalesOrdersTable";
 import { SalesOrderFormSheet } from "@/components/sales-orders/SalesOrderFormSheet";
 import { useSalesOrders, useSalesOrder } from "@/hooks/use-sales-orders";
 import type { SalesOrder, SalesOrderStatus } from "@/types/sales-order";
+import { RouteGuard } from "@/components/auth/RouteGuard";
 
 const STATUS_FILTERS: { label: string; value: SalesOrderStatus | "all" }[] = [
   { label: "All statuses", value: "all" },
@@ -29,7 +30,7 @@ const STATUS_FILTERS: { label: string; value: SalesOrderStatus | "all" }[] = [
   { label: "Cancelled", value: "cancelled" },
 ];
 
-export default function SalesOrdersPage() {
+function SalesOrdersPage() {
   const [status, setStatus] = useState<SalesOrderStatus | "all">("all");
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
@@ -162,5 +163,13 @@ export default function SalesOrdersPage() {
         salesOrder={editingOrder} 
       />
     </div>
+  );
+}
+
+export default function SalesOrdersPageGuarded() {
+  return (
+    <RouteGuard module="sales">
+      <SalesOrdersPage />
+    </RouteGuard>
   );
 }

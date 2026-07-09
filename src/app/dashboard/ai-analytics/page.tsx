@@ -7,6 +7,7 @@ import { fetchAIReport } from "@/services/api";
 import { useQuery } from "@tanstack/react-query";
 import { RefreshCw } from "lucide-react";
 import React from "react";
+import { RouteGuard } from "@/components/auth/RouteGuard";
 
 function scrollToHash(hash: string, behavior: ScrollBehavior) {
   const id = hash.replace(/^#/, "");
@@ -29,7 +30,7 @@ function scrollToHash(hash: string, behavior: ScrollBehavior) {
   tryScroll();
 }
 
-export default function AIAnalyticsPage() {
+function AIAnalyticsPage() {
   const {
     data: aiReport,
     error: aiReportError,
@@ -81,5 +82,13 @@ export default function AIAnalyticsPage() {
 
       <AIAnalyticsChat />
     </div>
+  );
+}
+
+export default function AIAnalyticsPageGuarded() {
+  return (
+    <RouteGuard module="ai_analytics">
+      <AIAnalyticsPage />
+    </RouteGuard>
   );
 }

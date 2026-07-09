@@ -1,6 +1,7 @@
 "use client";
 
 import AnalyticsDashboard from "@/components/analytics/AnalyticsDashboard";
+import { RouteGuard } from "@/components/auth/RouteGuard";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { fetchAnalytics } from "@/services/api";
@@ -46,4 +47,10 @@ function DashboardPage() {
   );
 }
 
-export default DashboardPage;
+export default function DashboardPageGuarded() {
+  return (
+    <RouteGuard module="dashboard">
+      <DashboardPage />
+    </RouteGuard>
+  );
+}

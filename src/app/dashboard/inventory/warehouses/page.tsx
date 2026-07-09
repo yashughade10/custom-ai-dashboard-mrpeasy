@@ -29,8 +29,9 @@ import {
 import { WarehouseForm } from "@/components/inventory/WarehouseForm";
 import { useDeleteWarehouse, useWarehouses } from "@/hooks/use-inventory";
 import type { Warehouse } from "@/types/inventory";
+import { RouteGuard } from "@/components/auth/RouteGuard";
 
-export default function WarehousesPage() {
+function WarehousesPage() {
   const { data: warehouses = [], isLoading } = useWarehouses();
   const deleteMutation = useDeleteWarehouse();
 
@@ -164,5 +165,13 @@ export default function WarehousesPage() {
         </AlertDialogContent>
       </AlertDialog>
     </div>
+  );
+}
+
+export default function WarehousesPageGuarded() {
+  return (
+    <RouteGuard module="inventory">
+      <WarehousesPage />
+    </RouteGuard>
   );
 }

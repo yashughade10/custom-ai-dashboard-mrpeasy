@@ -7,16 +7,17 @@ import { toast } from "sonner";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { RouteGuard } from "@/components/auth/RouteGuard";
+import { apiFetch } from "@/lib/api/http";
 
-export default function ReportsDashboard() {
+function ReportsDashboard() {
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchDashboard = async () => {
       try {
-        const res = await fetch("http://localhost:4000/api/reports/dashboard");
-        if (!res.ok) throw new Error("Failed to fetch dashboard data");
+        const res = await apiFetch("/reports/dashboard");
         const json = await res.json();
         setData(json);
       } catch (error: any) {
@@ -120,5 +121,13 @@ export default function ReportsDashboard() {
         </Card>
       </div>
     </div>
+  );
+}
+
+export default function ReportsDashboardGuarded() {
+  return (
+    <RouteGuard module="reports">
+      <ReportsDashboard />
+    </RouteGuard>
   );
 }

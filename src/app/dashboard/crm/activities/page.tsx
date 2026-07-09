@@ -4,8 +4,9 @@ import { useRef } from "react";
 import ActivitiesTimeline from "@/components/crm/ActivitiesTimeline";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
+import { RouteGuard } from "@/components/auth/RouteGuard";
 
-export default function ActivitiesPage() {
+function ActivitiesPage() {
   const openCreateRef = useRef<(() => void) | null>(null);
 
   return (
@@ -28,5 +29,13 @@ export default function ActivitiesPage() {
         <ActivitiesTimeline onOpenCreate={(fn) => { openCreateRef.current = fn; }} />
       </div>
     </div>
+  );
+}
+
+export default function ActivitiesPageGuarded() {
+  return (
+    <RouteGuard module="crm">
+      <ActivitiesPage />
+    </RouteGuard>
   );
 }

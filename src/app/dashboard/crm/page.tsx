@@ -1,6 +1,9 @@
-import CrmOverview from "@/components/crm/CrmOverview";
+"use client";
 
-export default function Page() {
+import CrmOverview from "@/components/crm/CrmOverview";
+import { RouteGuard } from "@/components/auth/RouteGuard";
+
+function Page() {
   return (
     <div className="space-y-8">
       <div>
@@ -11,5 +14,13 @@ export default function Page() {
       </div>
       <CrmOverview />
     </div>
+  );
+}
+
+export default function PageGuarded() {
+  return (
+    <RouteGuard module="crm">
+      <Page />
+    </RouteGuard>
   );
 }
