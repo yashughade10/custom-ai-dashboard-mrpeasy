@@ -18,7 +18,7 @@ import type {
   UpdateQuotationInput,
 } from "@/types/quotation";
 
-const BASE = `${API_BASE_URL}/sales/quotations`;
+const BASE = `/sales/quotations`;
 
 // Express/NestJS auto-generates ETags for JSON responses. Combined with the
 // browser's HTTP cache, a plain fetch() can get back a 304 with an empty

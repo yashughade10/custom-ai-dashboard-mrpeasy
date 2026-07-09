@@ -18,7 +18,7 @@ import type {
   Warehouse,
 } from "@/types/inventory";
 
-const BASE = `${API_BASE_URL}/inventory`;
+const BASE = `/inventory`;
 
 // ----- Warehouses -----
 // Spec only confirms GET; create/update/delete assume standard REST verbs

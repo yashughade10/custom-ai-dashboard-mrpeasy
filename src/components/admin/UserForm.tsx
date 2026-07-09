@@ -42,7 +42,7 @@ export function UserForm({ open, onOpenChange, user, onSuccess }: UserFormProps)
 
   const fetchRoles = async () => {
     try {
-      const res = await apiFetch("http://localhost:4000/api/admin/roles");
+      const res = await apiFetch("/admin/roles");
       if (res.ok) {
         const data = await res.json();
         setRoles(data);

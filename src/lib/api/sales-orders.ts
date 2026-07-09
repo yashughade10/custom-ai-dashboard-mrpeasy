@@ -10,7 +10,7 @@ import type {
   UpdateSalesOrderInput,
 } from "@/types/sales-order";
 
-const BASE = `${API_BASE_URL}/sales/orders`;
+const BASE = `/sales/orders`;
 
 export async function listSalesOrders(
   filters: SalesOrderListFilters = {},
