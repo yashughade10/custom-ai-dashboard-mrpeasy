@@ -353,7 +353,6 @@ export function SalesOrderFormSheet({
                               name={`items.${index}.product_id`}
                               render={({ field: f }) => (
                                 <Select
-                                  disabled={isItemsDisabled}
                                   disabled={isLocked}
                                   value={f.value ? String(f.value) : undefined}
                                   onValueChange={(v) => {
@@ -387,7 +386,6 @@ export function SalesOrderFormSheet({
                           </TableCell>
                           <TableCell>
                             <Input
-                              disabled={isItemsDisabled}
                               disabled={isLocked}
                               className="h-8"
                               {...register(`items.${index}.description`)}
@@ -395,7 +393,6 @@ export function SalesOrderFormSheet({
                           </TableCell>
                           <TableCell>
                             <Input
-                              disabled={isItemsDisabled}
                               type="number"
                               min={1}
                               step="1"
@@ -411,7 +408,6 @@ export function SalesOrderFormSheet({
                           </TableCell>
                           <TableCell>
                             <Input
-                              disabled={isItemsDisabled}
                               type="number"
                               min={0}
                               step="0.01"
@@ -422,7 +418,6 @@ export function SalesOrderFormSheet({
                           </TableCell>
                           <TableCell>
                             <Input
-                              disabled={isItemsDisabled}
                               type="number"
                               min={0}
                               max={100}
@@ -434,7 +429,6 @@ export function SalesOrderFormSheet({
                           </TableCell>
                           <TableCell>
                             <Input
-                              disabled={isItemsDisabled}
                               type="number"
                               min={0}
                               max={100}
