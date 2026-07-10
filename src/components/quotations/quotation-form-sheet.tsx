@@ -48,6 +48,18 @@ import {
   type Quotation,
 } from "@/types/quotation";
 
+// Helper to convert ISO 8601 datetime to YYYY-MM-DD format for HTML date input
+const formatDateForInput = (dateStr: string | null): string | null => {
+  if (!dateStr) return null;
+  try {
+    const date = new Date(dateStr);
+    if (isNaN(date.getTime())) return null;
+    return date.toISOString().split("T")[0]; // Returns YYYY-MM-DD
+  } catch {
+    return null;
+  }
+};
+
 const itemSchema = z.object({
   id: z.number().optional(),
   product_id: z.coerce.number({ message: "Pick a product" }).positive(),
@@ -63,6 +75,7 @@ const formSchema = z.object({
   deal_id: z.coerce.number().nullable(),
   currency: z.string().min(1),
   valid_until: z.string().nullable(),
+  delivery_date: z.string().nullable(),
   notes: z.string().nullable(),
   terms: z.string().nullable(),
   items: z.array(itemSchema).min(1, "Add at least one line item"),
@@ -76,6 +89,7 @@ const emptyValues: FormValues = {
   deal_id: null,
   currency: "AUD",
   valid_until: null,
+  delivery_date: null,
   notes: "",
   terms: "Net 30",
   items: [
@@ -146,7 +160,8 @@ export function QuotationFormSheet({
         contact_id: quotation.contact_id,
         deal_id: quotation.deal_id,
         currency: quotation.currency,
-        valid_until: quotation.valid_until,
+        valid_until: formatDateForInput(quotation.valid_until),
+        delivery_date: formatDateForInput(quotation.delivery_date),
         notes: quotation.notes ?? "",
         terms: quotation.terms ?? "",
         items: quotationItems,
@@ -195,6 +210,9 @@ export function QuotationFormSheet({
     };
   }, [watchedItems, productMap]);
 
+  // Check if form is locked (not in draft status)
+  const isLocked = isEdit && quotation && quotation.status !== "draft";
+
   const onSubmit = (values: FormValues) => {
     const payload = {
       company_id: values.company_id,
@@ -202,6 +220,7 @@ export function QuotationFormSheet({
       deal_id: values.deal_id,
       currency: values.currency,
       valid_until: values.valid_until,
+      delivery_date: values.delivery_date,
       notes: values.notes,
       terms: values.terms,
       items: values.items.map((item, index) => ({
@@ -237,6 +256,14 @@ export function QuotationFormSheet({
           </SheetHeader>
 
           <div className="min-h-0 flex-1 space-y-6 overflow-y-auto px-6 py-4">
+            {isLocked && (
+              <div className="rounded-md border border-yellow-200 bg-yellow-50 px-4 py-3">
+                <p className="text-sm font-medium text-yellow-800">
+                  This quotation is <strong>{quotation?.status}</strong>. You can only edit delivery date and notes. All other fields are locked.
+                </p>
+              </div>
+            )}
+
             {/* Company / contact / deal */}
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1.5">
@@ -246,6 +273,7 @@ export function QuotationFormSheet({
                   name="company_id"
                   render={({ field }) => (
                     <Select
+                      disabled={isLocked}
                       value={field.value ? String(field.value) : ""}
                       onValueChange={(v) => field.onChange(v ? Number(v) : null)}
                     >
@@ -271,6 +299,7 @@ export function QuotationFormSheet({
                   name="contact_id"
                   render={({ field }) => (
                     <Select
+                      disabled={isLocked}
                       value={field.value ? String(field.value) : ""}
                       onValueChange={(v) => field.onChange(v ? Number(v) : null)}
                     >
@@ -296,6 +325,7 @@ export function QuotationFormSheet({
                   name="deal_id"
                   render={({ field }) => (
                     <Select
+                      disabled={isLocked}
                       value={field.value ? String(field.value) : ""}
                       onValueChange={(v) => field.onChange(v ? Number(v) : null)}
                     >
@@ -320,7 +350,7 @@ export function QuotationFormSheet({
                   control={control}
                   name="currency"
                   render={({ field }) => (
-                    <Select value={field.value} onValueChange={field.onChange}>
+                    <Select disabled={isLocked} value={field.value} onValueChange={field.onChange}>
                       <SelectTrigger>
                         <SelectValue />
                       </SelectTrigger>
@@ -338,7 +368,12 @@ export function QuotationFormSheet({
 
               <div className="space-y-1.5">
                 <Label>Valid until</Label>
-                <Input type="date" {...register("valid_until")} />
+                <Input type="date" disabled={isLocked} {...register("valid_until")} />
+              </div>
+
+              <div className="space-y-1.5">
+                <Label>Delivery date</Label>
+                <Input type="date" {...register("delivery_date")} />
               </div>
             </div>
 
@@ -350,6 +385,7 @@ export function QuotationFormSheet({
                   type="button"
                   variant="outline"
                   size="sm"
+                  disabled={isLocked}
                   onClick={() =>
                     append({
                       product_id: 0,
@@ -367,19 +403,20 @@ export function QuotationFormSheet({
                 <p className="text-sm text-red-600">{errors.items.message}</p>
               )}
 
-              <div className="overflow-hidden rounded-md border">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="w-[36%]">Product</TableHead>
-                      <TableHead className="w-[14%]">Qty</TableHead>
-                      <TableHead className="w-[15%]">Discount %</TableHead>
-                      <TableHead className="w-[15%]">Tax %</TableHead>
-                      <TableHead className="text-right">Line total</TableHead>
-                      <TableHead className="w-8" />
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
+              <div className="overflow-x-auto rounded-md border">
+                <div className="min-w-max">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="min-w-[300px]">Product</TableHead>
+                        <TableHead className="min-w-[80px]">Qty</TableHead>
+                        <TableHead className="min-w-[100px]">Discount %</TableHead>
+                        <TableHead className="min-w-[100px]">Tax %</TableHead>
+                        <TableHead className="min-w-[120px] text-right">Line total</TableHead>
+                        <TableHead className="w-8 min-w-[32px]" />
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
                     {fields.length === 0 && (
                       <TableRow>
                         <TableCell colSpan={6} className="h-12 text-center text-sm text-slate-500">
@@ -407,6 +444,7 @@ export function QuotationFormSheet({
                               name={`items.${index}.product_id`}
                               render={({ field: f }) => (
                                 <Select
+                                  disabled={isLocked}
                                   value={f.value && f.value > 0 ? String(f.value) : ""}
                                   onValueChange={(v) => f.onChange(v ? Number(v) : 0)}
                                 >
@@ -429,6 +467,7 @@ export function QuotationFormSheet({
                               type="number"
                               min={1}
                               step="1"
+                              disabled={isLocked}
                               className="h-8"
                               {...register(`items.${index}.quantity`)}
                             />
@@ -439,6 +478,7 @@ export function QuotationFormSheet({
                               min={0}
                               max={100}
                               step="0.01"
+                              disabled={isLocked}
                               className="h-8"
                               {...register(`items.${index}.discount_pct`)}
                             />
@@ -449,6 +489,7 @@ export function QuotationFormSheet({
                               min={0}
                               max={100}
                               step="0.01"
+                              disabled={isLocked}
                               className="h-8"
                               {...register(`items.${index}.tax_pct`)}
                             />
@@ -462,7 +503,7 @@ export function QuotationFormSheet({
                               variant="ghost"
                               size="icon"
                               className="h-8 w-8 text-slate-400 hover:text-red-600"
-                              disabled={fields.length === 1}
+                              disabled={fields.length === 1 || isLocked}
                               onClick={() => remove(index)}
                             >
                               <Trash2 className="h-4 w-4" />
@@ -472,7 +513,8 @@ export function QuotationFormSheet({
                       );
                     })}
                   </TableBody>
-                </Table>
+                  </Table>
+                </div>
               </div>
 
               <div className="ml-auto w-64 space-y-1 pt-2 text-sm">

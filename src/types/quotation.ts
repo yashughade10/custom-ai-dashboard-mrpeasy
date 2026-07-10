@@ -33,6 +33,7 @@ export interface Quotation {
   total: number;
   currency: string;
   valid_until: string | null; // YYYY-MM-DD
+  delivery_date: string | null; // YYYY-MM-DD
   notes: string | null;
   terms: string | null;
   approved_by: number | null;
@@ -74,6 +75,7 @@ export interface CreateQuotationInput {
   deal_id?: number | null;
   currency: string;
   valid_until?: string | null;
+  delivery_date?: string | null;
   notes?: string | null;
   terms?: string | null;
   items: QuotationItemInput[];

@@ -45,6 +45,18 @@ import { useCreateSalesOrder, useUpdateSalesOrder } from "@/hooks/use-sales-orde
 import { useStock } from "@/hooks/use-inventory";
 import type { SalesOrder } from "@/types/sales-order";
 
+// Helper to convert ISO 8601 datetime to YYYY-MM-DD format for HTML date input
+const formatDateForInput = (dateStr: string | null): string | null => {
+  if (!dateStr) return null;
+  try {
+    const date = new Date(dateStr);
+    if (isNaN(date.getTime())) return null;
+    return date.toISOString().split("T")[0]; // Returns YYYY-MM-DD
+  } catch {
+    return null;
+  }
+};
+
 const itemSchema = z.object({
   id: z.number().optional(),
   product_id: z.coerce.number({ message: "Pick a product" }).positive(),
@@ -134,7 +146,7 @@ export function SalesOrderFormSheet({
         company_id: salesOrder.company_id,
         contact_id: salesOrder.contact_id,
         customer_po: salesOrder.customer_po ?? "",
-        delivery_date: salesOrder.delivery_date,
+        delivery_date: formatDateForInput(salesOrder.delivery_date),
         shipping_address: salesOrder.shipping_address ?? "",
         notes: salesOrder.notes ?? "",
         items: (salesOrder.items ?? []).map((item) => ({
@@ -173,6 +185,9 @@ export function SalesOrderFormSheet({
     return { subtotal, discountAmount, taxAmount, total: subtotal - discountAmount + taxAmount };
   }, [watchedItems]);
 
+  // Check if form is locked (not in draft status)
+  const isLocked = isEdit && salesOrder && salesOrder.status !== "draft";
+
   const onSubmit = (values: FormValues) => {
     const payload = { ...values };
 
@@ -200,6 +215,14 @@ export function SalesOrderFormSheet({
               </div>
             )}
 
+            {isLocked && (
+              <div className="rounded-md border border-yellow-200 bg-yellow-50 px-4 py-3">
+                <p className="text-sm font-medium text-yellow-800">
+                  This order is <strong>{salesOrder?.status}</strong>. You can only edit delivery date and shipping address. All other fields are locked.
+                </p>
+              </div>
+            )}
+
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1.5">
                 <Label>Company</Label>
@@ -208,6 +231,7 @@ export function SalesOrderFormSheet({
                   name="company_id"
                   render={({ field }) => (
                     <Select
+                      disabled={isLocked}
                       value={field.value ? String(field.value) : undefined}
                       onValueChange={(v) => field.onChange(Number(v))}
                     >
@@ -233,6 +257,7 @@ export function SalesOrderFormSheet({
                   name="contact_id"
                   render={({ field }) => (
                     <Select
+                      disabled={isLocked}
                       value={field.value ? String(field.value) : undefined}
                       onValueChange={(v) => field.onChange(Number(v))}
                     >
@@ -253,7 +278,7 @@ export function SalesOrderFormSheet({
 
               <div className="space-y-1.5">
                 <Label>Customer PO</Label>
-                <Input placeholder="PO-998877" {...register("customer_po")} />
+                <Input disabled={isLocked} placeholder="PO-998877" {...register("customer_po")} />
               </div>
 
               <div className="space-y-1.5">
@@ -275,6 +300,7 @@ export function SalesOrderFormSheet({
                   type="button"
                   variant="outline"
                   size="sm"
+                  disabled={isLocked}
                   onClick={() =>
                     append({
                       product_id: 0,
@@ -325,6 +351,7 @@ export function SalesOrderFormSheet({
                               name={`items.${index}.product_id`}
                               render={({ field: f }) => (
                                 <Select
+                                  disabled={isLocked}
                                   value={f.value ? String(f.value) : undefined}
                                   onValueChange={(v) => {
                                     f.onChange(Number(v));
@@ -357,6 +384,7 @@ export function SalesOrderFormSheet({
                           </TableCell>
                           <TableCell>
                             <Input
+                              disabled={isLocked}
                               className="h-8"
                               {...register(`items.${index}.description`)}
                             />
@@ -366,6 +394,7 @@ export function SalesOrderFormSheet({
                               type="number"
                               min={1}
                               step="1"
+                              disabled={isLocked}
                               className="h-8 mb-1"
                               {...register(`items.${index}.quantity`)}
                             />
@@ -380,6 +409,7 @@ export function SalesOrderFormSheet({
                               type="number"
                               min={0}
                               step="0.01"
+                              disabled={isLocked}
                               className="h-8"
                               {...register(`items.${index}.unit_price`)}
                             />
@@ -390,6 +420,7 @@ export function SalesOrderFormSheet({
                               min={0}
                               max={100}
                               step="0.01"
+                              disabled={isLocked}
                               className="h-8"
                               {...register(`items.${index}.discount_pct`)}
                             />
@@ -400,6 +431,7 @@ export function SalesOrderFormSheet({
                               min={0}
                               max={100}
                               step="0.01"
+                              disabled={isLocked}
                               className="h-8"
                               {...register(`items.${index}.tax_pct`)}
                             />
@@ -413,7 +445,7 @@ export function SalesOrderFormSheet({
                               variant="ghost"
                               size="icon"
                               className="h-8 w-8 text-slate-400 hover:text-red-600"
-                              disabled={fields.length === 1}
+                              disabled={fields.length === 1 || isLocked}
                               onClick={() => remove(index)}
                             >
                               <Trash2 className="h-4 w-4" />
