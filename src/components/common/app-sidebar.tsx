@@ -121,7 +121,6 @@ const navItems = [
         children: [
             { name: "Overview", hash: "", href: "/dashboard/admin", icon: LayoutDashboard },
             { name: "Users", hash: "users", href: "/dashboard/admin/users", icon: Users2 },
-            { name: "Roles & Permissions", hash: "roles", href: "/dashboard/admin/roles", icon: ShieldCheck },
             { name: "Audit Log", hash: "audit-log", href: "/dashboard/admin/audit-log", icon: History },
             { name: "Settings", hash: "settings", href: "/dashboard/admin/settings", icon: Settings },
         ],

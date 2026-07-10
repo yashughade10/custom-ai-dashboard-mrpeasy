@@ -15,14 +15,7 @@ function AdminDashboard() {
       color: "text-blue-500", 
       bg: "bg-blue-500/10" 
     },
-    { 
-      title: "Roles & Permissions", 
-      desc: "Define roles and configure access control", 
-      icon: Shield, 
-      href: "/dashboard/admin/roles", 
-      color: "text-emerald-500", 
-      bg: "bg-emerald-500/10" 
-    },
+
     { 
       title: "Audit Log", 
       desc: "Review system events and user actions", 
@@ -48,7 +41,7 @@ function AdminDashboard() {
         <p className="text-muted-foreground">Manage users, security, and global system settings.</p>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         {modules.map((mod, i) => {
           const Icon = mod.icon;
           return (
