@@ -47,9 +47,20 @@ function DashboardPage() {
   );
 }
 
+function WelcomeDashboard() {
+  return (
+    <div className="flex flex-col items-center justify-center min-h-[50vh] gap-4 text-center animate-in fade-in slide-in-from-bottom-4 duration-500">
+      <h2 className="text-3xl font-bold tracking-tight">Welcome to the Dashboard</h2>
+      <p className="text-muted-foreground max-w-md">
+        Select a module from the sidebar to get started. More dashboard features will be available here soon.
+      </p>
+    </div>
+  );
+}
+
 export default function DashboardPageGuarded() {
   return (
-    <RouteGuard module="dashboard">
+    <RouteGuard module="dashboard" fallback={<WelcomeDashboard />}>
       <DashboardPage />
     </RouteGuard>
   );

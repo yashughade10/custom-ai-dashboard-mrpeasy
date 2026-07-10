@@ -81,6 +81,16 @@ const navItems = [
         ],
     },
     {
+        name: "Sales",
+        href: "/dashboard/sales",
+        icon: ShoppingCart,
+        children: [
+            { name: "Quotations", hash: "quotations", href: "/dashboard/sales", icon: FileText },
+            { name: "Sales Orders", hash: "orders", href: "/dashboard/sales/orders", icon: ClipboardList }
+
+        ],
+    },
+    {
         name: "Production",
         href: "/dashboard/production",
         icon: Factory,
@@ -99,6 +109,17 @@ const navItems = [
             { name: "Overview", hash: "", href: "/dashboard/procurement", icon: LayoutDashboard },
             { name: "Suppliers", hash: "suppliers", href: "/dashboard/procurement/suppliers", icon: Users2 },
             { name: "Purchase Orders", hash: "orders", href: "/dashboard/procurement/orders", icon: ClipboardList },
+        ],
+    },
+    {
+        name: "Inventory",
+        href: "/dashboard/inventory",
+        icon: Boxes,
+        children: [
+            { name: "Stock", hash: "quotations", href: "/dashboard/inventory", icon: Package },
+            { name: "Warehouses", hash: "warehouses", href: "/dashboard/inventory/warehouses", icon: Building2 },
+            { name: "History", hash: "history", href: "/dashboard/inventory/history", icon: History }
+
         ],
     },
     { name: "Orders", href: "/dashboard/orders", icon: ListOrdered },
@@ -123,28 +144,6 @@ const navItems = [
             { name: "Users", hash: "users", href: "/dashboard/admin/users", icon: Users2 },
             { name: "Audit Log", hash: "audit-log", href: "/dashboard/admin/audit-log", icon: History },
             { name: "Settings", hash: "settings", href: "/dashboard/admin/settings", icon: Settings },
-        ],
-    },
-    // { name: "Orders", href: "/dashboard/orders", icon: ListOrdered },
-    {
-        name: "Sales",
-        href: "/dashboard/sales",
-        icon: ShoppingCart,
-        children: [
-            { name: "Quotations", hash: "quotations", href: "/dashboard/sales", icon: FileText },
-            { name: "Sales Orders", hash: "orders", href: "/dashboard/sales/orders", icon: ClipboardList }
-
-        ],
-    },
-    {
-        name: "Inventory",
-        href: "/dashboard/inventory",
-        icon: Boxes,
-        children: [
-            { name: "Stock", hash: "quotations", href: "/dashboard/inventory", icon: Package },
-            { name: "Warehouses", hash: "warehouses", href: "/dashboard/inventory/warehouses", icon: Building2 },
-            { name: "History", hash: "history", href: "/dashboard/inventory/history", icon: History }
-
         ],
     },
     // { name: "Announcements", href: "/dashboard/announcements", icon: Megaphone },
