@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 
@@ -19,37 +20,56 @@ interface UserFormProps {
 
 export function UserForm({ open, onOpenChange, user, onSuccess }: UserFormProps) {
   const [loading, setLoading] = useState(false);
-  const [roles, setRoles] = useState<any[]>([]);
+  const [systemRoles, setSystemRoles] = useState<string[]>([]);
+  const [systemModules, setSystemModules] = useState<string[]>([]);
   const isEditing = !!user;
 
   const [formData, setFormData] = useState({
     name: "",
     email: "",
     password: "",
-    role: "User"
+    role: "user",
+    permissions: [] as string[]
   });
 
   useEffect(() => {
     if (open) {
-      fetchRoles();
+      fetchConstants();
       if (user) {
-        setFormData({ name: user.name || "", email: user.email || "", password: "", role: user.role || "User" });
+        setFormData({ 
+          name: user.name || "", 
+          email: user.email || "", 
+          password: "", 
+          role: user.role || "user",
+          permissions: user.permissions || []
+        });
       } else {
-        setFormData({ name: "", email: "", password: "", role: "User" });
+        setFormData({ name: "", email: "", password: "", role: "user", permissions: [] });
       }
     }
   }, [open, user]);
 
-  const fetchRoles = async () => {
+  const fetchConstants = async () => {
     try {
-      const res = await apiFetch("http://localhost:4000/api/admin/roles");
+      const res = await apiFetch("http://localhost:4000/api/admin/system-constants");
       if (res.ok) {
-        const data = await res.json();
-        setRoles(data);
+        const json = await res.json();
+        setSystemRoles(json.data.roles);
+        setSystemModules(json.data.modules);
       }
     } catch (e) {
       console.error(e);
     }
+  };
+
+  const handlePermissionChange = (moduleName: string, checked: boolean) => {
+    setFormData(prev => {
+      if (checked) {
+        return { ...prev, permissions: [...prev.permissions, moduleName] };
+      } else {
+        return { ...prev, permissions: prev.permissions.filter(m => m !== moduleName) };
+      }
+    });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -88,7 +108,7 @@ export function UserForm({ open, onOpenChange, user, onSuccess }: UserFormProps)
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-[425px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{isEditing ? "Edit User" : "Add User"}</DialogTitle>
         </DialogHeader>
@@ -132,17 +152,46 @@ export function UserForm({ open, onOpenChange, user, onSuccess }: UserFormProps)
                 <SelectValue placeholder="Select a role" />
               </SelectTrigger>
               <SelectContent>
-                {roles.length > 0 ? roles.map(r => (
-                  <SelectItem key={r.id} value={r.name}>{r.name}</SelectItem>
+                {systemRoles.length > 0 ? systemRoles.map(r => (
+                  <SelectItem key={r} value={r}>{r}</SelectItem>
                 )) : (
                   <>
-                    <SelectItem value="Admin">Admin</SelectItem>
-                    <SelectItem value="User">User</SelectItem>
+                    <SelectItem value="super_admin">super_admin</SelectItem>
+                    <SelectItem value="admin">admin</SelectItem>
+                    <SelectItem value="user">user</SelectItem>
                   </>
                 )}
               </SelectContent>
             </Select>
           </div>
+
+          {formData.role !== "super_admin" && systemModules.length > 0 && (
+            <div className="space-y-3 pt-2">
+              <Label>Permissions</Label>
+              <div className="grid grid-cols-2 gap-2 border p-3 rounded-md">
+                {systemModules.map(mod => (
+                  <div key={mod} className="flex items-center space-x-2">
+                    <Checkbox 
+                      id={`perm-${mod}`} 
+                      checked={formData.permissions.includes(mod)}
+                      onCheckedChange={(checked) => handlePermissionChange(mod, checked as boolean)}
+                    />
+                    <label 
+                      htmlFor={`perm-${mod}`} 
+                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer capitalize"
+                    >
+                      {mod.replace('_', ' ')}
+                    </label>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+          {formData.role === "super_admin" && (
+            <p className="text-xs text-muted-foreground pt-2">
+              Super Admin automatically has access to all modules.
+            </p>
+          )}
 
           <DialogFooter className="pt-4">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
