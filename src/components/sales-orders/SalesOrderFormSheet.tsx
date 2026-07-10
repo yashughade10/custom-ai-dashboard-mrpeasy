@@ -173,6 +173,8 @@ export function SalesOrderFormSheet({
     return { subtotal, discountAmount, taxAmount, total: subtotal - discountAmount + taxAmount };
   }, [watchedItems]);
 
+  const isItemsDisabled = isEdit && salesOrder?.status !== "draft";
+
   const onSubmit = (values: FormValues) => {
     const payload = { ...values };
 
@@ -283,9 +285,9 @@ export function SalesOrderFormSheet({
                       unit_price: 0,
                       discount_pct: 0,
                       tax_pct: 0,
-                    })
-                  }
-                >
+                      })
+                    }
+                  >
                   <Plus className="mr-1 h-4 w-4" /> Add item
                 </Button>
               </div>
@@ -325,6 +327,7 @@ export function SalesOrderFormSheet({
                               name={`items.${index}.product_id`}
                               render={({ field: f }) => (
                                 <Select
+                                  disabled={isItemsDisabled}
                                   value={f.value ? String(f.value) : undefined}
                                   onValueChange={(v) => {
                                     f.onChange(Number(v));
@@ -341,8 +344,8 @@ export function SalesOrderFormSheet({
                                     }
                                   }}
                                 >
-                                  <SelectTrigger className="h-8">
-                                    <SelectValue placeholder="Select" />
+                                  <SelectTrigger className="h-8 w-full border-none shadow-none focus:ring-0">
+                                    <SelectValue placeholder="Select..." />
                                   </SelectTrigger>
                                   <SelectContent>
                                     {products.map((p) => (
@@ -357,12 +360,14 @@ export function SalesOrderFormSheet({
                           </TableCell>
                           <TableCell>
                             <Input
+                              disabled={isItemsDisabled}
                               className="h-8"
                               {...register(`items.${index}.description`)}
                             />
                           </TableCell>
                           <TableCell>
                             <Input
+                              disabled={isItemsDisabled}
                               type="number"
                               min={1}
                               step="1"
@@ -377,6 +382,7 @@ export function SalesOrderFormSheet({
                           </TableCell>
                           <TableCell>
                             <Input
+                              disabled={isItemsDisabled}
                               type="number"
                               min={0}
                               step="0.01"
@@ -386,6 +392,7 @@ export function SalesOrderFormSheet({
                           </TableCell>
                           <TableCell>
                             <Input
+                              disabled={isItemsDisabled}
                               type="number"
                               min={0}
                               max={100}
@@ -396,6 +403,7 @@ export function SalesOrderFormSheet({
                           </TableCell>
                           <TableCell>
                             <Input
+                              disabled={isItemsDisabled}
                               type="number"
                               min={0}
                               max={100}
@@ -413,7 +421,7 @@ export function SalesOrderFormSheet({
                               variant="ghost"
                               size="icon"
                               className="h-8 w-8 text-slate-400 hover:text-red-600"
-                              disabled={fields.length === 1}
+                              disabled={isItemsDisabled || fields.length === 1}
                               onClick={() => remove(index)}
                             >
                               <Trash2 className="h-4 w-4" />
