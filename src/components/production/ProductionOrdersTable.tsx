@@ -11,10 +11,12 @@ import {
   consumeMaterial,
   fetchProducts,
 } from "@/services/api";
+import { useWarehouses } from "@/hooks/use-inventory";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import ProductionOrderForm, { type ProductionOrderFormData } from "./ProductionOrderForm";
@@ -78,6 +80,8 @@ export default function ProductionOrdersTable({ onOpenCreate }: { onOpenCreate?:
     queryFn: () => fetchProducts({ page: 1 }),
   });
 
+  const { data: warehouses = [] } = useWarehouses();
+
   const allOrders = ordersData?.data || [];
   const products = productsData?.data || [];
 
@@ -124,9 +128,11 @@ export default function ProductionOrdersTable({ onOpenCreate }: { onOpenCreate?:
   });
 
   const completeMutation = useMutation({
-    mutationFn: (id: string) => completeProductionOrder(id),
+    mutationFn: ({ id, warehouse_id }: { id: string; warehouse_id: string }) => completeProductionOrder(id, { warehouse_id }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["production-orders"] });
+      setCompletingOrder(null);
+      setCompleteDialogOpen(false);
       toast.success("Production completed");
     },
     onError: (err: any) => toast.error(err.message || "Failed to complete production"),
@@ -141,6 +147,11 @@ export default function ProductionOrdersTable({ onOpenCreate }: { onOpenCreate?:
     },
     onError: (err: any) => toast.error(err.message || "Failed to log consumption"),
   });
+
+  // Completion Dialog
+  const [completeDialogOpen, setCompleteDialogOpen] = useState(false);
+  const [completingOrder, setCompletingOrder] = useState<any>(null);
+  const [completionWarehouseId, setCompletionWarehouseId] = useState("");
 
   // Dialog handlers
   const openCreateDialog = (defaults?: any) => {
@@ -296,7 +307,7 @@ export default function ProductionOrdersTable({ onOpenCreate }: { onOpenCreate?:
                           )}
                           {order.status === "in_progress" && (
                             <>
-                              <DropdownMenuItem onClick={() => completeMutation.mutate(order.id.toString())}>
+                              <DropdownMenuItem onClick={() => { setCompletingOrder(order); setCompleteDialogOpen(true); }}>
                                 <CheckCircle2 className="h-4 w-4 mr-2" /> Complete
                               </DropdownMenuItem>
                               <DropdownMenuItem onClick={() => { setConsumingOrder(order); setConsumeDialogOpen(true); }}>
@@ -371,6 +382,49 @@ export default function ProductionOrdersTable({ onOpenCreate }: { onOpenCreate?:
               isSubmitting={consumeMutation.isPending}
             />
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Completion Dialog */}
+      <Dialog open={completeDialogOpen} onOpenChange={(v) => { if (!v) { setCompleteDialogOpen(false); setCompletingOrder(null); setCompletionWarehouseId(""); } }}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Complete Production Order</DialogTitle>
+            <DialogDescription>
+              Receive the manufactured goods into a warehouse.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Warehouse</label>
+              <Select value={completionWarehouseId} onValueChange={setCompletionWarehouseId}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select a warehouse..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {warehouses.map((w: any) => (
+                    <SelectItem key={w.id} value={w.id.toString()}>
+                      {w.name} {w.is_default ? "(Default)" : ""}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => { setCompleteDialogOpen(false); setCompletingOrder(null); setCompletionWarehouseId(""); }}>Cancel</Button>
+            <Button
+              disabled={!completionWarehouseId || completeMutation.isPending}
+              onClick={() => {
+                if (completingOrder && completionWarehouseId) {
+                  completeMutation.mutate({ id: completingOrder.id.toString(), warehouse_id: completionWarehouseId });
+                }
+              }}
+            >
+              {completeMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Complete Order
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
 

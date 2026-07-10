@@ -14,9 +14,11 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, Loader2, Play, CheckCircle2, Package, Clock, Cog, Trophy } from "lucide-react";
 import { toast } from "sonner";
+import { useWarehouses } from "@/hooks/use-inventory";
 import {
   DndContext,
   DragOverlay,
@@ -171,10 +173,16 @@ export default function ProductionKanbanBoard({ onOpenCreate }: { onOpenCreate?:
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
   );
 
+  const [completeDialogOpen, setCompleteDialogOpen] = useState(false);
+  const [completingOrder, setCompletingOrder] = useState<any>(null);
+  const [completionWarehouseId, setCompletionWarehouseId] = useState("");
+
+  const { data: warehouses = [] } = useWarehouses();
+
   const updateStatusMutation = useMutation({
-    mutationFn: ({ id, status }: { id: string; status: string }) => {
+    mutationFn: ({ id, status, warehouse_id }: { id: string; status: string; warehouse_id?: string }) => {
       if (status === "in_progress") return startProductionOrder(id);
-      if (status === "completed") return completeProductionOrder(id);
+      if (status === "completed") return completeProductionOrder(id, { warehouse_id: warehouse_id! });
       return updateProductionOrder(id, { status });
     },
     onMutate: async ({ id, status }) => {
@@ -242,7 +250,12 @@ export default function ProductionKanbanBoard({ onOpenCreate }: { onOpenCreate?:
     }
 
     if (targetStatus && targetStatus !== draggedOrder.status) {
-      updateStatusMutation.mutate({ id: draggedOrder.id.toString(), status: targetStatus });
+      if (targetStatus === "completed") {
+        setCompletingOrder(draggedOrder);
+        setCompleteDialogOpen(true);
+      } else {
+        updateStatusMutation.mutate({ id: draggedOrder.id.toString(), status: targetStatus });
+      }
     }
   };
 
@@ -331,6 +344,59 @@ export default function ProductionKanbanBoard({ onOpenCreate }: { onOpenCreate?:
           </DragOverlay>
         </DndContext>
       )}
+
+      {/* Complete Order Dialog */}
+      <Dialog open={completeDialogOpen} onOpenChange={(v) => { if (!v) { setCompleteDialogOpen(false); setCompletingOrder(null); setCompletionWarehouseId(""); } }}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Complete Production Order</DialogTitle>
+            <DialogDescription>
+              Receive the manufactured goods into a warehouse.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Warehouse</label>
+              <Select value={completionWarehouseId} onValueChange={setCompletionWarehouseId}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select a warehouse..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {warehouses.map((w: any) => (
+                    <SelectItem key={w.id} value={w.id.toString()}>
+                      {w.name} {w.is_default ? "(Default)" : ""}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => { setCompleteDialogOpen(false); setCompletingOrder(null); setCompletionWarehouseId(""); }}>Cancel</Button>
+            <Button
+              disabled={!completionWarehouseId || updateStatusMutation.isPending}
+              onClick={() => {
+                if (completingOrder && completionWarehouseId) {
+                  updateStatusMutation.mutate({
+                    id: completingOrder.id.toString(),
+                    status: "completed",
+                    warehouse_id: completionWarehouseId
+                  }, {
+                    onSuccess: () => {
+                      setCompleteDialogOpen(false);
+                      setCompletingOrder(null);
+                      setCompletionWarehouseId("");
+                    }
+                  });
+                }
+              }}
+            >
+              {updateStatusMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Complete Order
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Create Order Dialog */}
       <Dialog open={createDialogOpen} onOpenChange={(v) => { if (!v) setCreateDialogOpen(false); }}>

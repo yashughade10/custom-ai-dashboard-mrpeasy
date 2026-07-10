@@ -448,9 +448,11 @@ async function startProductionOrder(id: string) {
   return (await response.json()).data;
 }
 
-async function completeProductionOrder(id: string) {
+async function completeProductionOrder(id: string, data: { warehouse_id: string | number }) {
   const response = await apiFetch(`${API_BASE_URL}/production/orders/${id}/complete`, {
     method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
   });
   if (!response.ok) throw new Error("Failed to complete production order");
   return (await response.json()).data;
