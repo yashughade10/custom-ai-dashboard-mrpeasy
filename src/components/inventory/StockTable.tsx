@@ -38,11 +38,17 @@ export function StockTable() {
   const { data: warehouses = [] } = useWarehouses();
   const { data, isLoading } = useStock({
     warehouse_id: warehouseId === "all" ? undefined : Number(warehouseId),
-    search: search || undefined,
     limit: 50,
   });
 
-  const items = data?.data ?? [];
+  const allItems = data?.data ?? [];
+  const items = search
+    ? allItems.filter(
+        (item) =>
+          item.product_name?.toLowerCase().includes(search.toLowerCase()) ||
+          item.sku?.toLowerCase().includes(search.toLowerCase())
+      )
+    : allItems;
 
   return (
     <div className="space-y-4">

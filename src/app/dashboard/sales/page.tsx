@@ -27,6 +27,7 @@ const STATUS_FILTERS: { label: string; value: QuotationStatus | "all" }[] = [
   { label: "Accepted", value: "accepted" },
   { label: "Rejected", value: "rejected" },
   { label: "Expired", value: "expired" },
+  { label: "Converted", value: "converted" },
 ];
 
 function QuotationsPage() {

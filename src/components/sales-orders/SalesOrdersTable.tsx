@@ -2,6 +2,7 @@
 "use client";
 
 import { useState } from "react";
+import { toast } from "sonner";
 import { MoreHorizontal } from "lucide-react";
 
 import {
@@ -30,6 +31,24 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { useWarehouses } from "@/hooks/use-inventory";
+import { listStock } from "@/lib/api/inventory";
+import { useQuery } from "@tanstack/react-query";
 
 import { SalesOrderStatusBadge } from "./SalesOrderStatusBadge";
 import { useRouter } from "next/navigation";
@@ -50,6 +69,38 @@ export function SalesOrdersTable({ orders, isLoading, onEdit }: SalesOrdersTable
   const deleteMutation = useDeleteSalesOrder();
   const packMutation = usePackSalesOrder();
   const fulfillMutation = useFulfillSalesOrder();
+  const { data: warehouses = [] } = useWarehouses();
+
+  const [fulfillDialogOpen, setFulfillDialogOpen] = useState(false);
+  const [fulfillingOrder, setFulfillingOrder] = useState<SalesOrder | null>(null);
+  const [fulfillWarehouseId, setFulfillWarehouseId] = useState<string>("");
+
+  const { data: stockData } = useQuery({
+    queryKey: ["inventory-stock-all"],
+    queryFn: () => listStock({ limit: 1000 }),
+    enabled: fulfillDialogOpen,
+  });
+  
+  const allStock = stockData?.data || [];
+  const validWarehouses = warehouses.filter((w) => {
+    if (!fulfillingOrder) return false;
+    return fulfillingOrder.items?.every((item) => {
+      const stockItem = allStock.find(
+        (s) => s.product_id === item.product_id && s.warehouse_id === w.id
+      );
+      return stockItem && Number(stockItem.quantity) >= Number(item.quantity);
+    });
+  });
+
+  const openShipOrder = async (order: SalesOrder) => {
+    try {
+      const fullOrder = await getSalesOrder(order.id);
+      setFulfillingOrder(fullOrder);
+      setFulfillDialogOpen(true);
+    } catch (e: any) {
+      toast.error("Failed to load order details");
+    }
+  };
 
   const openProductionOrder = async (order: SalesOrder) => {
     try {
@@ -160,7 +211,7 @@ export function SalesOrdersTable({ orders, isLoading, onEdit }: SalesOrdersTable
                       )}
 
                       {o.status === "ready_to_ship" && (
-                        <DropdownMenuItem onClick={() => fulfillMutation.mutate(o.id)}>
+                        <DropdownMenuItem onClick={() => openShipOrder(o)}>
                           Ship Order
                         </DropdownMenuItem>
                       )}
@@ -207,6 +258,55 @@ export function SalesOrdersTable({ orders, isLoading, onEdit }: SalesOrdersTable
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+      <Dialog open={fulfillDialogOpen} onOpenChange={(v) => { if (!v) { setFulfillDialogOpen(false); setFulfillingOrder(null); setFulfillWarehouseId(""); } }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Ship Sales Order</DialogTitle>
+            <DialogDescription>
+              Select the warehouse from which the stock will be deducted for this sales order.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Warehouse</label>
+              <Select value={fulfillWarehouseId} onValueChange={setFulfillWarehouseId}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select a warehouse..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {validWarehouses.length > 0 ? (
+                    validWarehouses.map((w: any) => (
+                      <SelectItem key={w.id} value={w.id.toString()}>
+                        {w.name}
+                      </SelectItem>
+                    ))
+                  ) : (
+                    <div className="p-2 text-sm text-slate-500">
+                      No single warehouse has enough stock to fulfill this order completely.
+                    </div>
+                  )}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => { setFulfillDialogOpen(false); setFulfillingOrder(null); setFulfillWarehouseId(""); }}>Cancel</Button>
+            <Button 
+              disabled={!fulfillWarehouseId || fulfillMutation.isPending} 
+              onClick={() => {
+                if (fulfillingOrder && fulfillWarehouseId) {
+                  fulfillMutation.mutate(
+                    { id: fulfillingOrder.id, warehouse_id: Number(fulfillWarehouseId) },
+                    { onSuccess: () => { setFulfillDialogOpen(false); setFulfillingOrder(null); setFulfillWarehouseId(""); } }
+                  );
+                }
+              }}
+            >
+              {fulfillMutation.isPending ? "Shipping..." : "Ship Order"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }

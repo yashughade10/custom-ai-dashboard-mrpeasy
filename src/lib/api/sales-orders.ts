@@ -74,8 +74,11 @@ export async function packSalesOrder(id: number): Promise<SalesOrder> {
   return data.data;
 }
 
-export async function fulfillSalesOrder(id: number): Promise<SalesOrder> {
-  const res = await apiFetch(`${BASE}/${id}/fulfill`, { method: "POST" });
+export async function fulfillSalesOrder(id: number, warehouseId?: number): Promise<SalesOrder> {
+  const res = await apiFetch(`${BASE}/${id}/fulfill`, {
+    method: "POST",
+    body: JSON.stringify({ warehouse_id: warehouseId }),
+  });
   const data = await handleResponse<ApiResponse<SalesOrder>>(res);
   return data.data;
-}
+}
