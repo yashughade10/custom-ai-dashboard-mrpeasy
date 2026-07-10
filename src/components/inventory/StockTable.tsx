@@ -46,26 +46,31 @@ export function StockTable() {
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-center gap-3">
-        <Input
-          placeholder="Search products..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="w-56"
-        />
-        <Select value={warehouseId} onValueChange={setWarehouseId}>
-          <SelectTrigger className="w-56">
-            <SelectValue placeholder="All warehouses" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All warehouses</SelectItem>
-            {warehouses.map((w) => (
-              <SelectItem key={w.id} value={String(w.id)}>
-                {w.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex flex-wrap items-center gap-3">
+          <Input
+            placeholder="Search products..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="w-56"
+          />
+          <Select value={warehouseId} onValueChange={setWarehouseId}>
+            <SelectTrigger className="w-56">
+              <SelectValue placeholder="All warehouses" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All warehouses</SelectItem>
+              {warehouses.map((w) => (
+                <SelectItem key={w.id} value={String(w.id)}>
+                  {w.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <Button onClick={() => setMovement({ item: null as any, type: "stock_in" })} className="gap-2">
+          <PackagePlus className="h-4 w-4" /> Direct Stock In
+        </Button>
       </div>
 
       <div className="overflow-hidden rounded-md border">

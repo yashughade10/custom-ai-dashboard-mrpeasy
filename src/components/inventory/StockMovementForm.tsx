@@ -13,8 +13,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useQuery } from "@tanstack/react-query";
+import { fetchProducts } from "@/services/api";
 
-import { useStockAdjustment, useStockIn, useStockOut } from "@/hooks/use-inventory";
+import { useStockAdjustment, useStockIn, useStockOut, useWarehouses } from "@/hooks/use-inventory";
 import type { MovementType, StockItem } from "@/types/inventory";
 
 const TITLES: Record<MovementType, string> = {
@@ -39,6 +42,18 @@ export function StockMovementForm({
   const [quantity, setQuantity] = useState("");
   const [reference, setReference] = useState("");
   const [reason, setReason] = useState("");
+  
+  // For direct stock-in
+  const [selectedProductId, setSelectedProductId] = useState("");
+  const [selectedWarehouseId, setSelectedWarehouseId] = useState("");
+
+  const { data: warehouses = [] } = useWarehouses();
+  const { data: productsData } = useQuery({
+    queryKey: ["products-all"],
+    queryFn: () => fetchProducts({ page: 1 }),
+    enabled: open && !stockItem,
+  });
+  const products = productsData?.data || [];
 
   const stockInMutation = useStockIn();
   const stockOutMutation = useStockOut();
@@ -56,18 +71,25 @@ export function StockMovementForm({
       setQuantity("");
       setReference("");
       setReason("");
+      setSelectedProductId("");
+      setSelectedWarehouseId("");
     }
   }, [open, stockItem]);
 
   const handleSubmit = () => {
-    if (!stockItem || !quantity) return;
+    if (!quantity) return;
+    const prodId = stockItem ? stockItem.product_id : Number(selectedProductId);
+    const wareId = stockItem ? stockItem.warehouse_id : Number(selectedWarehouseId);
+    
+    if (!prodId || !wareId) return;
+
     mutation.mutate(
       {
-        product_id: stockItem.product_id,
-        warehouse_id: stockItem.warehouse_id,
+        product_id: prodId,
+        warehouse_id: wareId,
         quantity:
           movementType === "adjustment" ? Number(quantity) : Math.abs(Number(quantity)),
-        reference_type: reference ? "manual" : undefined,
+        reference_type: reference ? "manual" : "manual",
         notes: [reference && `Ref: ${reference}`, reason].filter(Boolean).join(" | ") || undefined,
       },
       { onSuccess: () => onOpenChange(false) },
@@ -81,13 +103,46 @@ export function StockMovementForm({
           <DialogTitle>{TITLES[movementType]}</DialogTitle>
         </DialogHeader>
 
-        {stockItem && (
+        {stockItem ? (
           <div className="rounded-md bg-slate-50 px-3 py-2 text-sm">
             <div className="font-medium">{stockItem.product_name}</div>
             <div className="text-slate-500">
               {stockItem.warehouse_name} · currently {stockItem.quantity} on hand
             </div>
           </div>
+        ) : (
+          <>
+            <div className="space-y-1.5">
+              <Label>Product</Label>
+              <Select value={selectedProductId} onValueChange={setSelectedProductId}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select a product" />
+                </SelectTrigger>
+                <SelectContent>
+                  {products.map((p: any) => (
+                    <SelectItem key={p.id} value={String(p.id)}>
+                      {p.name} {p.sku ? `(${p.sku})` : ""}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1.5">
+              <Label>Warehouse</Label>
+              <Select value={selectedWarehouseId} onValueChange={setSelectedWarehouseId}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select a warehouse" />
+                </SelectTrigger>
+                <SelectContent>
+                  {warehouses.map((w: any) => (
+                    <SelectItem key={w.id} value={String(w.id)}>
+                      {w.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </>
         )}
 
         <div className="space-y-3">
