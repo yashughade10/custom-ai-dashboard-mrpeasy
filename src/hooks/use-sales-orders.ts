@@ -111,7 +111,8 @@ export function usePackSalesOrder() {
 export function useFulfillSalesOrder() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (id: number) => api.fulfillSalesOrder(id),
+    mutationFn: ({ id, warehouse_id }: { id: number; warehouse_id: number }) => 
+      api.fulfillSalesOrder(id, warehouse_id),
     onSuccess: (order) => {
       queryClient.invalidateQueries({ queryKey: salesOrderKeys.lists() });
       queryClient.invalidateQueries({ queryKey: salesOrderKeys.detail(order.id) });
