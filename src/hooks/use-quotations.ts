@@ -144,7 +144,7 @@ export function useConvertQuotation() {
     mutationFn: (id: number) => api.convertQuotation(id),
     onSuccess: (result) => {
       queryClient.invalidateQueries({ queryKey: quotationKeys.lists() });
-      toast.success(`Converted to sales order ${result.order_number}`);
+      toast.success(`Converted to sales order ${result.sales_order_number}`);
     },
     onError: (error: Error) => {
       const message = error.message || "Couldn't convert to a sales order.";

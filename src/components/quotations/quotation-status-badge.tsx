@@ -9,6 +9,7 @@ const STATUS_STYLES: Record<QuotationStatus, string> = {
   accepted: "bg-emerald-50 text-emerald-700 border-emerald-200",
   rejected: "bg-red-50 text-red-700 border-red-200",
   expired: "bg-amber-50 text-amber-700 border-amber-200",
+  converted: "bg-indigo-50 text-indigo-700 border-indigo-200",
 };
 
 const STATUS_LABELS: Record<QuotationStatus, string> = {
@@ -17,6 +18,7 @@ const STATUS_LABELS: Record<QuotationStatus, string> = {
   accepted: "Accepted",
   rejected: "Rejected",
   expired: "Expired",
+  converted: "Converted to Sales",
 };
 
 export function QuotationStatusBadge({ status }: { status: QuotationStatus }) {

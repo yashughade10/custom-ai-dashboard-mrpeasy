@@ -157,7 +157,7 @@ export function QuotationsTable({
                         <DropdownMenuItem
                           onClick={() => {
                             setSendTarget(q);
-                            setSendEmail("");
+                            setSendEmail(q.contact?.email || "");
                           }}
                         >
                           Send to customer
@@ -238,6 +238,11 @@ export function QuotationsTable({
             <DialogTitle>Send {sendTarget?.quote_number}</DialogTitle>
           </DialogHeader>
           <div className="space-y-1.5">
+            {sendTarget?.contact?.email && (
+              <p className="text-sm text-muted-foreground mb-2">
+                This quotation will be sent to the contact's email address by default. You can change it below if needed.
+              </p>
+            )}
             <Label>Customer email</Label>
             <Input
               type="email"

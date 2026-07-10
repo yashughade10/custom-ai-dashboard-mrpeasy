@@ -83,11 +83,11 @@ export async function approveQuotation(id: number): Promise<Quotation> {
 
 export async function convertQuotation(
   id: number,
-): Promise<{ sales_order_id: number; order_number: string }> {
+): Promise<{ sales_order_id: number; sales_order_number: string }> {
   const res = await apiFetch(`${BASE}/${id}/convert`, { method: "POST" });
   const data = await handleResponse<{
     success: true;
-    data: { sales_order_id: number; order_number: string };
+    data: { sales_order_id: number; sales_order_number: string };
   }>(res);
   return data.data;
 }

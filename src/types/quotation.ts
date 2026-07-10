@@ -5,7 +5,8 @@ export type QuotationStatus =
   | "sent"
   | "accepted"
   | "rejected"
-  | "expired";
+  | "expired"
+  | "converted";
 
 export interface QuotationItem {
   id?: number;
@@ -43,6 +44,17 @@ export interface Quotation {
   // convenience fields the backend may join in on list/detail responses
   company_name?: string | null;
   contact_name?: string | null;
+  contact?: {
+    id: number;
+    first_name?: string;
+    last_name?: string;
+    email?: string;
+    phone?: string;
+  } | null;
+  company?: {
+    id: number;
+    name?: string;
+  } | null;
 }
 
 // ----- Request payloads -----
@@ -143,7 +155,7 @@ export interface ProductOption {
 export function getProductUnitPrice(product?: ProductOption | null): number {
   if (!product) return 0;
   const value =
-    product.unit_price ?? product.price ?? product.sale_price ?? product.unitPrice;
+    product.selling_price ?? product.unit_price ?? product.price ?? product.sale_price ?? product.unitPrice;
   return typeof value === "number" ? value : Number(value) || 0;
 }
 
