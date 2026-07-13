@@ -2,7 +2,7 @@
 "use client";
 
 import { useState } from "react";
-import { MoreHorizontal } from "lucide-react";
+import { MoreHorizontal, Loader2 } from "lucide-react";
 
 import {
   Table,
@@ -75,6 +75,12 @@ export function QuotationsTable({
       value,
     );
 
+  const isMutating =
+    deleteMutation.isPending ||
+    sendMutation.isPending ||
+    approveMutation.isPending ||
+    convertMutation.isPending;
+
   if (isLoading) {
     return (
       <div className="rounded-md border p-8 text-center text-sm text-slate-500">
@@ -98,8 +104,14 @@ export function QuotationsTable({
 
   return (
     <>
-      <div className="overflow-hidden rounded-md border">
-        <Table>
+      <div className="relative">
+        {isMutating && (
+          <div className="absolute inset-0 z-50 flex items-center justify-center bg-white/50 backdrop-blur-[1px] rounded-md">
+            <Loader2 className="h-6 w-6 animate-spin text-primary" />
+          </div>
+        )}
+        <div className="overflow-hidden rounded-md border">
+          <Table>
           <TableHeader>
             <TableRow>
               <TableHead>Quote #</TableHead>
@@ -198,6 +210,7 @@ export function QuotationsTable({
             ))}
           </TableBody>
         </Table>
+      </div>
       </div>
 
       {/* Delete confirmation */}
