@@ -112,14 +112,15 @@ const navItems = [
         ],
     },
     {
-        name: "Inventory",
-        href: "/dashboard/inventory",
+        name: "Inventory (MRP Easy)",
+        href: "/dashboard/mrp/dashboard",
         icon: Boxes,
         children: [
-            { name: "Stock", hash: "quotations", href: "/dashboard/inventory", icon: Package },
-            { name: "Warehouses", hash: "warehouses", href: "/dashboard/inventory/warehouses", icon: Building2 },
-            { name: "History", hash: "history", href: "/dashboard/inventory/history", icon: History }
-
+            { name: "MRP Dashboard", hash: "", href: "/dashboard/mrp/dashboard", icon: LayoutDashboard },
+            { name: "MRP CRM", hash: "crm", href: "/dashboard/mrp/crm", icon: Users2 },
+            { name: "MRP Production", hash: "production", href: "/dashboard/mrp/production", icon: Factory },
+            { name: "MRP Stock", hash: "stock", href: "/dashboard/mrp/inventory", icon: Package },
+            { name: "MRP Procurement", hash: "procurement", href: "/dashboard/mrp/procurement", icon: ShoppingCart },
         ],
     },
     { name: "Orders", href: "/dashboard/orders", icon: ListOrdered },
@@ -156,7 +157,7 @@ const navItemModuleMap: Record<string, string> = {
     "CRM": "crm",
     "Orders": "orders",
     "Sales": "sales",
-    "Inventory": "inventory",
+    "Inventory (MRP Easy)": "inventory",
     "Production": "production",
     "Procurement": "procurement",
     "Reports": "reports",
