@@ -84,16 +84,16 @@ function DashboardPage() {
     coReady: data.coReady,
     moInProgress: data.moInProgress,
     moReady: data.moReady,
-    oee: `${data.oee}%`,
-    teep: "0%",
-    sales: `$${Number(data.sales || 0).toLocaleString()}`,
-    stock: `$${Number(data.stock || 0).toLocaleString()}`,
-    cashFlow: `$${Number(data.cashFlow || 0).toLocaleString()}`,
-    purchasesOnTime: `${data.purchasesOnTime}%`,
-    manufacturingOnTime: `${data.manufacturingOnTime}%`,
-    deliveriesOnTime: `${data.deliveriesOnTime}%`,
+    oee: `${data.oee ?? 0}%`,
+    teep: `${data.teep ?? 0}%`,
+    sales: `$ ${Number(data.sales || 0).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`,
+    stock: `$ ${Number(data.stock || 0).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`,
+    cashFlow: `$ ${Number(data.cashFlow || 0).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`,
+    purchasesOnTime: `${data.purchasesOnTime ?? 0}%`,
+    manufacturingOnTime: `${data.manufacturingOnTime ?? 0}%`,
+    deliveriesOnTime: `${data.deliveriesOnTime ?? 0}%`,
     awaitingInspection: data.awaitingInspection || 0,
-    rejectionRate: `${data.rejectionRate || 0}%`,
+    rejectionRate: data.rejectionRate !== null && data.rejectionRate !== undefined ? `${data.rejectionRate}%` : "No data",
     cashFlowForecast: "No data"
   };
 
@@ -114,7 +114,7 @@ function DashboardPage() {
 
       <div className="mt-8">
         <Dialog>
-          <DialogTrigger asChild>
+          <DialogTrigger>
             <Button variant="outline" className="text-blue-600 border-blue-600 font-medium">
               + Customize dashboard
             </Button>

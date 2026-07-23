@@ -12,17 +12,17 @@ export function MrpKpiCard({ title, value, href, className }: MrpKpiCardProps) {
   const content = (
     <div
       className={cn(
-        "flex flex-col bg-white border border-gray-200 border-l-4 border-l-blue-600 shadow-sm p-4 hover:shadow-md transition-shadow h-24 justify-center",
+        "flex flex-col bg-white border border-gray-200 border-l-4 border-l-blue-600 p-3 hover:shadow-md transition-shadow min-h-[90px] justify-between",
         className
       )}
     >
-      <span className="text-gray-500 text-sm font-medium">{title}</span>
-      <span className="text-2xl font-bold text-gray-900 mt-1">{value}</span>
+      <span className="text-2xl font-bold text-gray-900 leading-none">{value}</span>
+      <span className="text-gray-500 text-xs font-normal mt-2 leading-tight">{title}</span>
     </div>
   );
 
   if (href) {
-    return <Link href={href}>{content}</Link>;
+    return <Link href={href} className="block">{content}</Link>;
   }
 
   return content;

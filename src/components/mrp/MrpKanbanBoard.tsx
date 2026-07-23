@@ -22,15 +22,15 @@ interface MrpKanbanBoardProps {
 
 export function MrpKanbanBoard({ columns, onItemClick }: MrpKanbanBoardProps) {
   return (
-    <div className="flex h-full gap-4 overflow-x-auto pb-4">
+    <div className="flex h-full gap-2.5 overflow-x-auto pb-4">
       {columns.map((column) => (
-        <div key={column.id} className="flex flex-col flex-shrink-0 w-72 bg-[#f0f4f8] rounded-sm border border-gray-200">
-          {/* Column Header */}
-          <div className="p-3 border-b border-gray-200 flex justify-between items-center bg-[#e2e8f0]">
-            <h3 className="font-semibold text-sm text-gray-700">{column.title}</h3>
+        <div key={column.id} className="flex flex-col flex-shrink-0 w-64 bg-[#f1f5f9] rounded-sm border border-gray-200">
+          {/* Column Header matching MRPeasy chevron design */}
+          <div className="p-2.5 border-b border-gray-200 bg-[#e2e8f0] flex flex-col justify-between min-h-[50px]">
+            <h3 className="font-semibold text-xs text-gray-800 leading-tight">{column.title}</h3>
             {column.totalValue !== undefined && (
-              <span className="text-xs font-bold text-gray-500">
-                ${column.totalValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              <span className="text-[11px] font-semibold text-gray-600 mt-1">
+                $ {column.totalValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </span>
             )}
           </div>
@@ -41,22 +41,26 @@ export function MrpKanbanBoard({ columns, onItemClick }: MrpKanbanBoardProps) {
               <div
                 key={item.id}
                 onClick={() => onItemClick?.(item)}
-                className="bg-white p-3 rounded-sm shadow-sm border border-gray-200 cursor-pointer hover:border-blue-400 hover:shadow-md transition-all"
+                className="bg-white p-2.5 rounded-sm shadow-xs border border-gray-200 cursor-pointer hover:border-blue-400 hover:shadow-sm transition-all"
               >
-                <div className="flex justify-between items-start mb-2">
-                  <span className="text-sm font-semibold text-blue-600">{item.id}</span>
-                  {item.amount !== undefined && (
-                    <span className="text-sm font-bold text-gray-700">
+                <div className="flex justify-between items-start mb-1">
+                  <span className="text-xs font-bold text-gray-900">{item.id}</span>
+                </div>
+                <div className="text-[11px] font-medium text-gray-700 leading-tight mb-2">
+                  {item.title}
+                </div>
+                {item.amount !== undefined && (
+                  <div className="flex justify-between items-center border-t border-gray-100 pt-1.5 mt-1 text-[11px]">
+                    <span className="text-gray-400">Total:</span>
+                    <span className="font-bold text-gray-900">
                       ${item.amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                     </span>
-                  )}
-                </div>
-                <div className="text-sm text-gray-800">{item.title}</div>
-                {item.subtitle && <div className="text-xs text-gray-500 mt-1">{item.subtitle}</div>}
+                  </div>
+                )}
               </div>
             ))}
             {column.items.length === 0 && (
-              <div className="text-center p-4 text-xs text-gray-400 border-2 border-dashed border-gray-300 rounded-sm">
+              <div className="text-center p-4 text-xs text-gray-400 border border-dashed border-gray-300 rounded-sm bg-white/50">
                 No orders
               </div>
             )}
