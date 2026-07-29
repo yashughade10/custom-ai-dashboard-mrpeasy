@@ -19,9 +19,21 @@ export const mrpApi = {
     return res.json();
   },
 
-  getCustomerOrders: async () => {
-    const res = await fetch(`${API_BASE}/mrp/crm/customer-orders`);
+  getCustomerById: async (id: string) => {
+    const res = await fetch(`${API_BASE}/mrp/crm/customers/${id}`);
+    if (!res.ok) throw new Error("Failed to fetch customer");
+    return res.json();
+  },
+
+  getCustomerOrders: async (page = 1, limit = 100) => {
+    const res = await fetch(`${API_BASE}/mrp/crm/customer-orders?page=${page}&limit=${limit}`);
     if (!res.ok) throw new Error("Failed to fetch customer orders");
+    return res.json();
+  },
+
+  getCustomerOrderById: async (id: string) => {
+    const res = await fetch(`${API_BASE}/mrp/crm/customer-orders/${id}`);
+    if (!res.ok) throw new Error("Failed to fetch customer order");
     return res.json();
   },
 

@@ -1,11 +1,14 @@
 "use client";
 
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { useRouter } from "next/navigation";
 import { mrpApi } from "@/services/mrpApi";
 import { MrpTabBar } from "@/components/mrp/MrpTabBar";
 import { MrpExportBar } from "@/components/mrp/MrpExportBar";
 import { RouteGuard } from "@/components/auth/RouteGuard";
 import { MrpDataTable, Column } from "@/components/mrp/MrpDataTable";
+import { Button } from "@/components/ui/button";
 
 const crmTabs = [
   { name: "Customer orders", href: "/dashboard/mrp/crm" },
@@ -17,9 +20,12 @@ const crmTabs = [
 ];
 
 export default function CustomersPage() {
+  const router = useRouter();
+  const [limit, setLimit] = useState(100);
+
   const { data: response, isLoading } = useQuery({
-    queryKey: ["mrpCustomers"],
-    queryFn: () => mrpApi.getCustomers(1, 100),
+    queryKey: ["mrpCustomers", limit],
+    queryFn: () => mrpApi.getCustomers(1, limit),
   });
 
   const customers = response?.data || [];
@@ -37,18 +43,29 @@ export default function CustomersPage() {
 
   return (
     <RouteGuard module="crm" fallback={<div>Access Denied</div>}>
-      <div className="flex flex-col h-full bg-[#f4f7fb] min-h-[calc(100vh-4rem)] p-4 -m-4 sm:-m-6 lg:-m-8">
-        <div className="bg-white rounded-md shadow-sm overflow-hidden flex flex-col min-h-[80vh]">
+      <div className="flex flex-col bg-[#f4f7fb] min-h-[calc(100vh-4rem)] p-4 -m-4 sm:-m-6 lg:-m-8">
+        <div className="bg-white rounded-md shadow-sm flex flex-col min-h-[80vh]">
           <MrpTabBar tabs={crmTabs} />
           
           <div className="px-4 pb-4 flex-1 flex flex-col">
             <MrpExportBar createLabel="Create customer" />
             
-            <div className="flex-1 min-h-0 mt-4 overflow-hidden">
+            <div className="flex-1 mt-4">
               {isLoading ? (
                 <div className="p-8 text-center text-gray-500">Loading customers...</div>
               ) : (
-                <MrpDataTable columns={columns} data={customers} />
+                <div className="flex flex-col gap-4">
+                  <MrpDataTable 
+                    columns={columns} 
+                    data={customers} 
+                    onRowClick={(row: any) => router.push(`/dashboard/mrp/crm/customers/${row.customer_number || row.id}`)}
+                  />
+                  {customers.length >= limit && (
+                    <div className="text-center py-4">
+                      <Button variant="link" onClick={() => setLimit(l => l + 50)} className="text-blue-600 text-[11px]">Load more</Button>
+                    </div>
+                  )}
+                </div>
               )}
             </div>
           </div>

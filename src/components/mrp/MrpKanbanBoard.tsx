@@ -24,7 +24,7 @@ export function MrpKanbanBoard({ columns, onItemClick }: MrpKanbanBoardProps) {
   return (
     <div className="flex h-full gap-2.5 overflow-x-auto pb-4">
       {columns.map((column) => (
-        <div key={column.id} className="flex flex-col flex-shrink-0 w-64 bg-[#f1f5f9] rounded-sm border border-gray-200">
+        <div key={column.id} className="flex flex-col flex-1 min-w-[200px] bg-[#f1f5f9] rounded-sm border border-gray-200">
           {/* Column Header matching MRPeasy chevron design */}
           <div className="p-2.5 border-b border-gray-200 bg-[#e2e8f0] flex flex-col justify-between min-h-[50px]">
             <h3 className="font-semibold text-xs text-gray-800 leading-tight">{column.title}</h3>

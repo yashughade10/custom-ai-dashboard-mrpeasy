@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { mrpApi } from "@/services/mrpApi";
 import { MrpTabBar } from "@/components/mrp/MrpTabBar";
@@ -58,10 +59,12 @@ export default function CRMPage() {
   const [selectedUser, setSelectedUser] = useState("all");
   const [viewMode, setViewMode] = useState<"kanban" | "table">("kanban");
   const [showSearchInput, setShowSearchInput] = useState(false);
+  const [limit, setLimit] = useState(100);
+  const router = useRouter();
 
   const { data: response, isLoading } = useQuery({
-    queryKey: ["mrpCustomerOrders", pipelineMode, searchQuery, selectedUser],
-    queryFn: mrpApi.getCustomerOrders,
+    queryKey: ["mrpCustomerOrders", pipelineMode, searchQuery, selectedUser, limit],
+    queryFn: () => mrpApi.getCustomerOrders(1, limit),
   });
 
   const orders = response?.data || [];
@@ -89,8 +92,8 @@ export default function CRMPage() {
 
   return (
     <RouteGuard module="crm" fallback={<div>Access Denied</div>}>
-      <div className="flex flex-col h-full bg-[#f4f7fb] min-h-[calc(100vh-4rem)] p-4 -m-4 sm:-m-6 lg:-m-8">
-        <div className="bg-white rounded-md shadow-sm overflow-hidden flex flex-col min-h-[80vh]">
+      <div className="flex flex-col bg-[#f4f7fb] min-h-[calc(100vh-4rem)] p-4 -m-4 sm:-m-6 lg:-m-8">
+        <div className="bg-white rounded-md shadow-sm flex flex-col min-h-[80vh]">
           <MrpTabBar tabs={crmTabs} />
           
           <div className="px-4 py-3 border-b border-gray-100 flex flex-wrap items-center justify-between gap-3 bg-white">
@@ -197,7 +200,7 @@ export default function CRMPage() {
               {isLoading ? (
                 <div className="p-8 text-center text-gray-500">Loading orders...</div>
               ) : viewMode === "kanban" ? (
-                <MrpKanbanBoard columns={columns} />
+                <MrpKanbanBoard columns={columns} onItemClick={(item) => router.push("/dashboard/mrp/crm/customer-orders/" + item.id)} />
               ) : (
                 <div className="overflow-x-auto border border-gray-200 rounded-sm">
                   <table className="w-full text-xs text-left">
@@ -212,7 +215,11 @@ export default function CRMPage() {
                     </thead>
                     <tbody className="divide-y divide-gray-100">
                       {orders.map((o: any) => (
-                        <tr key={o.order_number} className="hover:bg-gray-50">
+                        <tr 
+                          key={o.order_number} 
+                          className="hover:bg-gray-50 cursor-pointer"
+                          onClick={() => router.push("/dashboard/mrp/crm/customer-orders/" + o.order_number)}
+                        >
                           <td className="px-4 py-2 font-medium text-blue-600">{o.order_number}</td>
                           <td className="px-4 py-2 text-gray-500">{o.customer_number || '-'}</td>
                           <td className="px-4 py-2 font-medium text-gray-900">{o.customer_name}</td>
@@ -228,6 +235,11 @@ export default function CRMPage() {
                       ))}
                     </tbody>
                   </table>
+                  {orders.length >= limit && (
+                    <div className="text-center py-4 bg-white">
+                      <Button variant="link" onClick={() => setLimit(l => l + 50)} className="text-blue-600 text-[11px]">Load more</Button>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
