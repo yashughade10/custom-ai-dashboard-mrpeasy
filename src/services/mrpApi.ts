@@ -65,5 +65,17 @@ export const mrpApi = {
     const res = await fetch(`${API_BASE}/mrp/production/bom`);
     if (!res.ok) throw new Error("Failed to fetch BOMs");
     return res.json();
+  },
+
+  getProductGroups: async () => {
+    const res = await fetch(`${API_BASE}/mrp/stock/groups`);
+    if (!res.ok) throw new Error("Failed to fetch product groups");
+    return res.json();
+  },
+
+  getAssignees: async () => {
+    const res = await fetch(`${API_BASE}/mrp/production/assignees`);
+    if (!res.ok) throw new Error("Failed to fetch assignees");
+    return res.json();
   }
 };

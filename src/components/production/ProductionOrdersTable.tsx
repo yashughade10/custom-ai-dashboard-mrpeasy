@@ -1,460 +1,229 @@
 "use client";
 
 import { useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import {
-  fetchProductionOrders,
-  createProductionOrder,
-  updateProductionOrder,
-  startProductionOrder,
-  completeProductionOrder,
-  consumeMaterial,
-  fetchProducts,
-} from "@/services/api";
-import { useWarehouses } from "@/hooks/use-inventory";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
-import ProductionOrderForm, { type ProductionOrderFormData } from "./ProductionOrderForm";
-import MaterialConsumptionForm from "./MaterialConsumptionForm";
-import {
-  Plus,
-  MoreHorizontal,
-  Pencil,
-  Trash2,
-  Loader2,
-  Play,
-  CheckCircle2,
-  Package,
-  ChevronLeft,
-  ChevronRight,
-  Factory,
-} from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { mrpApi } from "@/services/mrpApi";
+import { Plus, Download, Flag, Edit2, Search, Settings2, CalendarDays } from "lucide-react";
 import { toast } from "sonner";
 
-const statusConfig: Record<string, { label: string; color: string }> = {
-  pending: { label: "Pending", color: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400" },
-  in_progress: { label: "In Progress", color: "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400" },
-  completed: { label: "Completed", color: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400" },
-  cancelled: { label: "Cancelled", color: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400" },
-};
-
-const priorityConfig: Record<string, { label: string; color: string }> = {
-  low: { label: "Low", color: "bg-gray-100 text-gray-700 dark:bg-gray-800/40 dark:text-gray-400" },
-  medium: { label: "Medium", color: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400" },
-  high: { label: "High", color: "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400" },
-  urgent: { label: "Urgent", color: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400" },
-};
-
 export default function ProductionOrdersTable({ onOpenCreate }: { onOpenCreate?: (fn: (defaults?: any) => void) => void }) {
-  const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState("");
-  const [priorityFilter, setPriorityFilter] = useState("");
-
-  // Create / Edit
-  const [dialogOpen, setDialogOpen] = useState(false);
-  const [editingOrder, setEditingOrder] = useState<any>(null);
-  const [newOrderDefaults, setNewOrderDefaults] = useState<any>(null);
-
-  // Delete
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [deletingOrderId, setDeletingOrderId] = useState<string | null>(null);
-
-  // Material consumption
-  const [consumeDialogOpen, setConsumeDialogOpen] = useState(false);
-  const [consumingOrder, setConsumingOrder] = useState<any>(null);
-
-  // Data fetching
-  const { data: ordersData, isLoading, isFetching } = useQuery({
-    queryKey: ["production-orders"],
-    queryFn: fetchProductionOrders,
+  
+  // Data fetching using the correct MRP backend endpoint
+  const { data: ordersData, isLoading } = useQuery({
+    queryKey: ["mrp-manufacturing-orders"],
+    queryFn: () => mrpApi.getManufacturingOrders(1, 100),
   });
-
-  const { data: productsData } = useQuery({
-    queryKey: ["products-all"],
-    queryFn: () => fetchProducts({ page: 1 }),
-  });
-
-  const { data: warehouses = [] } = useWarehouses();
 
   const allOrders = ordersData?.data || [];
-  const products = productsData?.data || [];
 
-  // Client-side filtering
   const filteredOrders = allOrders.filter((o: any) => {
-    const productName = products.find((p: any) => p.id === o.product_id)?.name || "";
-    const matchesSearch =
-      !search ||
-      o.po_number?.toLowerCase().includes(search.toLowerCase()) ||
-      productName.toLowerCase().includes(search.toLowerCase());
-    const matchesStatus = !statusFilter || o.status === statusFilter;
-    const matchesPriority = !priorityFilter || o.priority === priorityFilter;
-    return matchesSearch && matchesStatus && matchesPriority;
+    return !search || 
+           o.mo_number?.toLowerCase().includes(search.toLowerCase()) || 
+           o.part_no?.toLowerCase().includes(search.toLowerCase());
   });
 
-  // Mutations
-  const createMutation = useMutation({
-    mutationFn: (data: Record<string, any>) => createProductionOrder(data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["production-orders"] });
-      closeDialog();
-      toast.success("Production order created");
-    },
-    onError: (err: any) => toast.error(err.message || "Failed to create order"),
-  });
+  // Pull global totals natively from the real DB summary
+  const summary = ordersData?.summary || {};
+  const totalQuantity = parseFloat(summary.total_quantity) || 0;
+  const totalCost = parseFloat(summary.total_cost) || 0;
+  const totalPlanned = parseFloat(summary.total_planned) || 0;
+  const totalActual = parseFloat(summary.total_actual) || 0;
 
-  const updateMutation = useMutation({
-    mutationFn: ({ id, data }: { id: string; data: Record<string, any> }) => updateProductionOrder(id, data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["production-orders"] });
-      closeDialog();
-      toast.success("Production order updated");
-    },
-    onError: (err: any) => toast.error(err.message || "Failed to update order"),
-  });
-
-  const startMutation = useMutation({
-    mutationFn: (id: string) => startProductionOrder(id),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["production-orders"] });
-      toast.success("Production started");
-    },
-    onError: (err: any) => toast.error(err.message || "Failed to start production"),
-  });
-
-  const completeMutation = useMutation({
-    mutationFn: ({ id, warehouse_id }: { id: string; warehouse_id: string }) => completeProductionOrder(id, { warehouse_id }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["production-orders"] });
-      setCompletingOrder(null);
-      setCompleteDialogOpen(false);
-      toast.success("Production completed");
-    },
-    onError: (err: any) => toast.error(err.message || "Failed to complete production"),
-  });
-
-  const consumeMutation = useMutation({
-    mutationFn: ({ orderId, data }: { orderId: string; data: Record<string, any> }) => consumeMaterial(orderId, data),
-    onSuccess: () => {
-      setConsumeDialogOpen(false);
-      setConsumingOrder(null);
-      toast.success("Material consumption logged");
-    },
-    onError: (err: any) => toast.error(err.message || "Failed to log consumption"),
-  });
-
-  // Completion Dialog
-  const [completeDialogOpen, setCompleteDialogOpen] = useState(false);
-  const [completingOrder, setCompletingOrder] = useState<any>(null);
-  const [completionWarehouseId, setCompletionWarehouseId] = useState("");
-
-  // Dialog handlers
-  const openCreateDialog = (defaults?: any) => {
-    setEditingOrder(null);
-    setNewOrderDefaults(defaults || null);
-    setDialogOpen(true);
+  const formatDate = (d: string) => {
+    if (!d) return "";
+    const date = new Date(d);
+    return date.toLocaleString('en-GB', {day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit'});
   };
 
-  if (onOpenCreate) onOpenCreate(openCreateDialog);
-
-  const openEditDialog = (order: any) => {
-    setEditingOrder(order);
-    setDialogOpen(true);
-  };
-
-  const closeDialog = () => {
-    setDialogOpen(false);
-    setEditingOrder(null);
-  };
-
-  const handleFormSubmit = (formData: ProductionOrderFormData) => {
-    const payload = {
-      po_number: formData.po_number.trim(),
-      product_id: parseInt(formData.product_id),
-      bom_id: formData.bom_id ? parseInt(formData.bom_id) : null,
-      quantity: parseFloat(formData.quantity),
-      priority: formData.priority,
-      start_date: formData.start_date || null,
-      due_date: formData.due_date || null,
-      notes: formData.notes?.trim() || null,
-      created_by: 1, // TODO: replace with authenticated user id
-    };
-
-    if (editingOrder) {
-      updateMutation.mutate({ id: editingOrder.id.toString(), data: payload });
-    } else {
-      createMutation.mutate(payload);
-    }
-  };
-
-  const isMutating = createMutation.isPending || updateMutation.isPending;
-
-  const getProductName = (productId: number) => {
-    const p = products.find((p: any) => p.id === productId);
-    return p?.name || `Product #${productId}`;
+  const formatShortDate = (d: string) => {
+    if (!d) return "";
+    const date = new Date(d);
+    return date.toLocaleDateString('en-GB', {day:'2-digit', month:'2-digit', year:'numeric'});
   };
 
   return (
-    <div className="space-y-4">
-      {/* Filters */}
-      <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center flex-wrap">
-        <Input
-          placeholder="Search PO# or product..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="w-full sm:w-[250px]"
-        />
-        <select
-          className="flex h-9 items-center rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-ring"
-          value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value)}
-        >
-          <option value="">All Statuses</option>
-          <option value="pending">Pending</option>
-          <option value="in_progress">In Progress</option>
-          <option value="completed">Completed</option>
-          <option value="cancelled">Cancelled</option>
-        </select>
-        <select
-          className="flex h-9 items-center rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-ring"
-          value={priorityFilter}
-          onChange={(e) => setPriorityFilter(e.target.value)}
-        >
-          <option value="">All Priorities</option>
-          <option value="low">Low</option>
-          <option value="medium">Medium</option>
-          <option value="high">High</option>
-          <option value="urgent">Urgent</option>
-        </select>
+    <div className="w-full bg-white text-[12px] text-gray-800">
+      <div className="overflow-hidden w-full">
+        <table className="w-full border-collapse table-auto">
+          <thead>
+            {/* Main Header */}
+            <tr className="text-left font-medium text-gray-700 bg-white">
+              <th className="font-medium p-1 w-6 text-center text-gray-400 font-bold">+</th>
+              <th className="font-medium p-1 leading-tight">Group number</th>
+              <th className="font-medium p-1 leading-tight flex items-center gap-1">Number <span className="text-gray-400">↓</span></th>
+              <th className="font-medium p-1 leading-tight">Group name</th>
+              <th className="font-medium p-1 leading-tight">Part No.</th>
+              <th className="font-medium p-1 leading-tight">Part description</th>
+              <th className="font-medium p-1 leading-tight">Quantity</th>
+              <th className="font-medium p-1 leading-tight">Status</th>
+              <th className="font-medium p-1 leading-tight">Parts status</th>
+              <th className="font-medium p-1 leading-tight">Due date</th>
+              <th className="font-medium p-1 leading-tight">Start</th>
+              <th className="font-medium p-1 leading-tight">Finish</th>
+              <th className="font-medium p-1 leading-tight">Assigned to</th>
+              <th className="font-medium p-1 leading-tight">Type</th>
+              <th className="font-medium p-1 leading-tight">Created</th>
+              <th className="font-medium p-1 leading-tight text-right">Total cost</th>
+              <th className="font-medium p-1 leading-tight text-right">Unit cost</th>
+              <th className="font-medium p-1 leading-tight text-right">Planned time, h</th>
+              <th className="font-medium p-1 leading-tight text-right">Actual time, h</th>
+              <th className="font-medium p-1 leading-tight">Supplier 1</th>
+              <th className="font-medium p-1 leading-tight">Supplier 2</th>
+              <th className="font-medium p-1 w-16 text-center">
+                <div className="flex items-center justify-end gap-3 text-gray-500 pr-2">
+                  <Settings2 className="w-3.5 h-3.5 cursor-pointer" />
+                  <Plus className="w-3.5 h-3.5 cursor-pointer" />
+                  <Flag className="w-3.5 h-3.5 cursor-pointer" />
+                </div>
+              </th>
+            </tr>
+            {/* Filter Row */}
+            <tr className="bg-white border-t border-gray-100">
+              <td className="p-1.5 text-center align-top border-b border-gray-100">
+                <input type="checkbox" className="w-3.5 h-3.5 rounded-sm border-gray-300 accent-blue-600 mt-1" />
+              </td>
+              <td className="p-1.5 align-top border-b border-gray-100"><input type="text" className="w-full h-[26px] bg-[#F3F4F6] border-none rounded-sm px-2 focus:ring-1 focus:ring-blue-500 outline-none text-[11px]" /></td>
+              <td className="p-1.5 align-top border-b border-gray-100"><input type="text" className="w-full h-[26px] bg-[#F3F4F6] border-none rounded-sm px-2 focus:ring-1 focus:ring-blue-500 outline-none text-[11px]" value={search} onChange={(e) => setSearch(e.target.value)} /></td>
+              <td className="p-1.5 align-top border-b border-gray-100"><input type="text" className="w-full h-[26px] bg-[#F3F4F6] border-none rounded-sm px-2 focus:ring-1 focus:ring-blue-500 outline-none text-[11px]" /></td>
+              <td className="p-1.5 align-top border-b border-gray-100"><input type="text" className="w-full h-[26px] bg-[#F3F4F6] border-none rounded-sm px-2 focus:ring-1 focus:ring-blue-500 outline-none text-[11px]" /></td>
+              <td className="p-1.5 align-top border-b border-gray-100"><input type="text" className="w-full h-[26px] bg-[#F3F4F6] border-none rounded-sm px-2 focus:ring-1 focus:ring-blue-500 outline-none text-[11px]" /></td>
+              <td className="p-1.5 align-top border-b border-gray-100 space-y-1 w-20">
+                <input type="text" placeholder="min" className="w-full h-[26px] bg-[#F3F4F6] border-none rounded-sm px-2 focus:ring-1 focus:ring-blue-500 outline-none text-[11px] placeholder-gray-400" />
+                <input type="text" placeholder="max" className="w-full h-[26px] bg-[#F3F4F6] border-none rounded-sm px-2 focus:ring-1 focus:ring-blue-500 outline-none text-[11px] placeholder-gray-400" />
+              </td>
+              <td className="p-1.5 align-top border-b border-gray-100 w-24">
+                <select className="w-full h-[26px] bg-[#F3F4F6] border-none rounded-sm px-2 focus:ring-1 focus:ring-blue-500 outline-none text-[11px] appearance-none text-gray-500">
+                  <option></option>
+                </select>
+              </td>
+              <td className="p-1.5 align-top border-b border-gray-100 w-28">
+                <select className="w-full h-[26px] bg-[#F3F4F6] border-none rounded-sm px-2 focus:ring-1 focus:ring-blue-500 outline-none text-[11px] appearance-none text-gray-500">
+                  <option></option>
+                </select>
+              </td>
+              <td className="p-1.5 align-top border-b border-gray-100 space-y-1 w-[120px]">
+                <div className="relative"><input type="text" placeholder="min" className="w-full h-[26px] bg-[#F3F4F6] border-none rounded-sm pl-2 pr-6 focus:ring-1 focus:ring-blue-500 outline-none text-[11px] placeholder-gray-400" /><CalendarDays className="w-3.5 h-3.5 absolute right-1.5 top-1.5 text-gray-400 pointer-events-none" /></div>
+                <div className="relative"><input type="text" placeholder="max" className="w-full h-[26px] bg-[#F3F4F6] border-none rounded-sm pl-2 pr-6 focus:ring-1 focus:ring-blue-500 outline-none text-[11px] placeholder-gray-400" /><CalendarDays className="w-3.5 h-3.5 absolute right-1.5 top-1.5 text-gray-400 pointer-events-none" /></div>
+              </td>
+              <td className="p-1.5 align-top border-b border-gray-100 space-y-1 w-[120px]">
+                <div className="relative"><input type="text" placeholder="min" className="w-full h-[26px] bg-[#F3F4F6] border-none rounded-sm pl-2 pr-6 focus:ring-1 focus:ring-blue-500 outline-none text-[11px] placeholder-gray-400" /><CalendarDays className="w-3.5 h-3.5 absolute right-1.5 top-1.5 text-gray-400 pointer-events-none" /></div>
+                <div className="relative"><input type="text" placeholder="max" className="w-full h-[26px] bg-[#F3F4F6] border-none rounded-sm pl-2 pr-6 focus:ring-1 focus:ring-blue-500 outline-none text-[11px] placeholder-gray-400" /><CalendarDays className="w-3.5 h-3.5 absolute right-1.5 top-1.5 text-gray-400 pointer-events-none" /></div>
+              </td>
+              <td className="p-1.5 align-top border-b border-gray-100 space-y-1 w-[120px]">
+                <div className="relative"><input type="text" placeholder="min" className="w-full h-[26px] bg-[#F3F4F6] border-none rounded-sm pl-2 pr-6 focus:ring-1 focus:ring-blue-500 outline-none text-[11px] placeholder-gray-400" /><CalendarDays className="w-3.5 h-3.5 absolute right-1.5 top-1.5 text-gray-400 pointer-events-none" /></div>
+                <div className="relative"><input type="text" placeholder="max" className="w-full h-[26px] bg-[#F3F4F6] border-none rounded-sm pl-2 pr-6 focus:ring-1 focus:ring-blue-500 outline-none text-[11px] placeholder-gray-400" /><CalendarDays className="w-3.5 h-3.5 absolute right-1.5 top-1.5 text-gray-400 pointer-events-none" /></div>
+              </td>
+              <td className="p-1.5 align-top border-b border-gray-100 w-24">
+                <select className="w-full h-[26px] bg-[#F3F4F6] border-none rounded-sm px-2 focus:ring-1 focus:ring-blue-500 outline-none text-[11px] appearance-none text-gray-500">
+                  <option></option>
+                </select>
+              </td>
+              <td className="p-1.5 align-top border-b border-gray-100"><input type="text" className="w-full h-[26px] bg-[#F3F4F6] border-none rounded-sm px-2 focus:ring-1 focus:ring-blue-500 outline-none text-[11px]" /></td>
+              <td className="p-1.5 align-top border-b border-gray-100 space-y-1 w-[120px]">
+                <div className="relative"><input type="text" placeholder="min" className="w-full h-[26px] bg-[#F3F4F6] border-none rounded-sm pl-2 pr-6 focus:ring-1 focus:ring-blue-500 outline-none text-[11px] placeholder-gray-400" /><CalendarDays className="w-3.5 h-3.5 absolute right-1.5 top-1.5 text-gray-400 pointer-events-none" /></div>
+                <div className="relative"><input type="text" placeholder="max" className="w-full h-[26px] bg-[#F3F4F6] border-none rounded-sm pl-2 pr-6 focus:ring-1 focus:ring-blue-500 outline-none text-[11px] placeholder-gray-400" /><CalendarDays className="w-3.5 h-3.5 absolute right-1.5 top-1.5 text-gray-400 pointer-events-none" /></div>
+              </td>
+              <td className="p-1.5 align-top border-b border-gray-100 space-y-1 w-24">
+                <input type="text" placeholder="min" className="w-full h-[26px] bg-[#F3F4F6] border-none rounded-sm px-2 focus:ring-1 focus:ring-blue-500 outline-none text-[11px] placeholder-gray-400 text-right" />
+                <input type="text" placeholder="max" className="w-full h-[26px] bg-[#F3F4F6] border-none rounded-sm px-2 focus:ring-1 focus:ring-blue-500 outline-none text-[11px] placeholder-gray-400 text-right" />
+              </td>
+              <td className="p-1.5 align-top border-b border-gray-100 space-y-1 w-20">
+                <input type="text" placeholder="min" className="w-full h-[26px] bg-[#F3F4F6] border-none rounded-sm px-2 focus:ring-1 focus:ring-blue-500 outline-none text-[11px] placeholder-gray-400 text-right" />
+                <input type="text" placeholder="max" className="w-full h-[26px] bg-[#F3F4F6] border-none rounded-sm px-2 focus:ring-1 focus:ring-blue-500 outline-none text-[11px] placeholder-gray-400 text-right" />
+              </td>
+              <td className="p-1.5 align-top border-b border-gray-100 space-y-1 w-20">
+                <input type="text" placeholder="min" className="w-full h-[26px] bg-[#F3F4F6] border-none rounded-sm px-2 focus:ring-1 focus:ring-blue-500 outline-none text-[11px] placeholder-gray-400 text-right" />
+                <input type="text" placeholder="max" className="w-full h-[26px] bg-[#F3F4F6] border-none rounded-sm px-2 focus:ring-1 focus:ring-blue-500 outline-none text-[11px] placeholder-gray-400 text-right" />
+              </td>
+              <td className="p-1.5 align-top border-b border-gray-100 space-y-1 w-20">
+                <input type="text" placeholder="min" className="w-full h-[26px] bg-[#F3F4F6] border-none rounded-sm px-2 focus:ring-1 focus:ring-blue-500 outline-none text-[11px] placeholder-gray-400 text-right" />
+                <input type="text" placeholder="max" className="w-full h-[26px] bg-[#F3F4F6] border-none rounded-sm px-2 focus:ring-1 focus:ring-blue-500 outline-none text-[11px] placeholder-gray-400 text-right" />
+              </td>
+              <td className="p-1.5 align-top border-b border-gray-100"><input type="text" className="w-full h-[26px] bg-[#F3F4F6] border-none rounded-sm px-2 focus:ring-1 focus:ring-blue-500 outline-none text-[11px]" /></td>
+              <td className="p-1.5 align-top border-b border-gray-100"><input type="text" className="w-full h-[26px] bg-[#F3F4F6] border-none rounded-sm px-2 focus:ring-1 focus:ring-blue-500 outline-none text-[11px]" /></td>
+              <td className="p-1.5 align-top border-b border-gray-100 text-center">
+                <div className="flex items-center justify-end gap-2 pr-2 text-blue-600 font-medium pt-1">
+                  <button className="hover:underline">Search</button>
+                  <button className="text-gray-400 hover:underline">Clear</button>
+                </div>
+              </td>
+            </tr>
+            {/* Totals Row */}
+            <tr className="bg-white font-bold border-b border-gray-100">
+              <td colSpan={6} className="p-2 text-right pr-6">Total:</td>
+              <td className="p-2">{totalQuantity.toLocaleString()}</td>
+              <td colSpan={8}></td>
+              <td className="p-2 text-right">${totalCost.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+              <td className="p-2 text-right"></td>
+              <td className="p-2 text-right">{totalPlanned.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+              <td className="p-2 text-right">{totalActual.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+              <td colSpan={3}></td>
+            </tr>
+          </thead>
+          <tbody>
+            {isLoading ? (
+              <tr>
+                <td colSpan={22} className="text-center py-12 text-gray-500">Loading...</td>
+              </tr>
+            ) : filteredOrders.map((order: any, i: number) => {
+              const isRed = order.parts_status === "Not booked";
+              const isOrange = order.parts_status === "Requested";
+              const rowTextColor = isRed ? "text-red-500" : (isOrange ? "text-orange-500" : "text-gray-800");
+
+              return (
+                <tr key={order.id || i} className={`hover:bg-gray-50 border-b border-gray-100 ${rowTextColor}`}>
+                  <td className="p-1 text-center text-gray-400">{i + 1}</td>
+                  <td className="p-1">{order.group_number}</td>
+                  <td className="p-1">{order.mo_number}</td>
+                  <td className="p-1">{order.group_name}</td>
+                  <td className="p-1">{order.part_no}</td>
+                  <td className="p-1">{order.part_description}</td>
+                  <td className="p-1">{order.quantity} pcs</td>
+                  <td className="p-1">
+                    <span>{order.status}</span>
+                  </td>
+                  <td className="p-1">
+                    {order.parts_status === "Not booked" ? (
+                      <span className="bg-[#FFE5E5] text-red-600 px-1.5 py-0.5 rounded-sm font-medium text-[11px]">Not booked</span>
+                    ) : order.parts_status === "Requested" ? (
+                      <span className="bg-[#FFF0E0] text-orange-600 px-1.5 py-0.5 rounded-sm font-medium text-[11px]">Requested</span>
+                    ) : (
+                      <span>{order.parts_status || "Received"}</span>
+                    )}
+                  </td>
+                  <td className="p-1">{formatDate(order.due_date)}</td>
+                  <td className="p-1">{formatDate(order.start_datetime)}</td>
+                  <td className="p-1">{formatDate(order.finish_datetime)}</td>
+                  <td className="p-1">{order.assigned_to}</td>
+                  <td className="p-1">{order.type}</td>
+                  <td className="p-1">{formatShortDate(order.created_date)}</td>
+                  <td className="p-1 text-right">${parseFloat(order.total_cost || 0).toFixed(2)}</td>
+                  <td className="p-1 text-right">${parseFloat(order.unit_cost || 0).toFixed(2)}</td>
+                  <td className="p-1 text-right">{parseFloat(order.planned_time_h || 0).toFixed(2)}</td>
+                  <td className="p-1 text-right">{order.actual_time_h ? parseFloat(order.actual_time_h).toFixed(2) : ""}</td>
+                  <td className="p-1"></td>
+                  <td className="p-1"></td>
+                  <td className="p-1 text-right">
+                    <div className="flex items-center justify-end gap-3 pr-2">
+                      <Edit2 className="h-3.5 w-3.5 text-gray-400 hover:text-gray-600 cursor-pointer" />
+                      {isRed && <Flag className="h-3.5 w-3.5 text-red-500 cursor-pointer" />}
+                      {!isRed && <Flag className="h-3.5 w-3.5 text-gray-200 hover:text-gray-400 cursor-pointer" />}
+                      <input type="checkbox" className="w-3.5 h-3.5 rounded-sm border-gray-300 accent-blue-600 cursor-pointer" />
+                    </div>
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
       </div>
-
-      {/* Table */}
-      <div className="border rounded-lg overflow-hidden">
-        <Table>
-          <TableHeader>
-            <TableRow className="bg-muted/50">
-              <TableHead className="w-[120px]">PO Number</TableHead>
-              <TableHead>Product</TableHead>
-              <TableHead className="text-right">Quantity</TableHead>
-              <TableHead className="text-center">Status</TableHead>
-              <TableHead className="text-center">Priority</TableHead>
-              <TableHead>Start Date</TableHead>
-              <TableHead>Due Date</TableHead>
-              <TableHead className="w-[50px]"></TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {(isLoading || isFetching) ? (
-              <TableRow>
-                <TableCell colSpan={8} className="text-center py-12">
-                  <Loader2 className="h-6 w-6 animate-spin mx-auto mb-2" />
-                  Loading production orders...
-                </TableCell>
-              </TableRow>
-            ) : filteredOrders.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={8} className="text-center py-12 text-muted-foreground">
-                  <Factory className="h-8 w-8 mx-auto mb-2 opacity-40" />
-                  No production orders found.
-                </TableCell>
-              </TableRow>
-            ) : (
-              filteredOrders.map((order: any) => {
-                const status = statusConfig[order.status] || statusConfig.pending;
-                const priority = priorityConfig[order.priority] || priorityConfig.medium;
-
-                return (
-                  <TableRow key={order.id} className="group">
-                    <TableCell className="font-mono text-xs">{order.po_number}</TableCell>
-                    <TableCell className="font-medium">{getProductName(order.product_id)}</TableCell>
-                    <TableCell className="text-right">{parseFloat(order.quantity).toFixed(0)}</TableCell>
-                    <TableCell className="text-center">
-                      <Badge className={`text-xs capitalize ${status.color}`}>
-                        {status.label}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-center">
-                      <Badge variant="outline" className={`text-xs capitalize ${priority.color}`}>
-                        {priority.label}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-sm text-muted-foreground">
-                      {order.start_date ? new Date(order.start_date).toLocaleDateString() : "-"}
-                    </TableCell>
-                    <TableCell className="text-sm text-muted-foreground">
-                      {order.due_date ? new Date(order.due_date).toLocaleDateString() : "-"}
-                    </TableCell>
-                    <TableCell>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon" className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <MoreHorizontal className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => openEditDialog(order)}>
-                            <Pencil className="h-4 w-4 mr-2" /> Edit
-                          </DropdownMenuItem>
-                          {order.status === "pending" && (
-                            <DropdownMenuItem onClick={() => startMutation.mutate(order.id.toString())}>
-                              <Play className="h-4 w-4 mr-2" /> Start Production
-                            </DropdownMenuItem>
-                          )}
-                          {order.status === "in_progress" && (
-                            <>
-                              <DropdownMenuItem onClick={() => { setCompletingOrder(order); setCompleteDialogOpen(true); }}>
-                                <CheckCircle2 className="h-4 w-4 mr-2" /> Complete
-                              </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => { setConsumingOrder(order); setConsumeDialogOpen(true); }}>
-                                <Package className="h-4 w-4 mr-2" /> Log Material
-                              </DropdownMenuItem>
-                            </>
-                          )}
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem
-                            className="text-red-600 focus:text-red-600"
-                            onClick={() => { setDeletingOrderId(order.id.toString()); setDeleteDialogOpen(true); }}
-                          >
-                            <Trash2 className="h-4 w-4 mr-2" /> Delete
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </TableCell>
-                  </TableRow>
-                );
-              })
-            )}
-          </TableBody>
-        </Table>
+      
+      <div className="flex justify-center mt-6 pb-6">
+        <button className="text-blue-600 font-medium text-[13px] hover:underline bg-transparent border-none">
+          Load more
+        </button>
       </div>
-
-      {/* Create / Edit Dialog */}
-      <Dialog open={dialogOpen} onOpenChange={(v) => { if (!v) closeDialog(); }}>
-        <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>{editingOrder ? "Edit Production Order" : "Create Production Order"}</DialogTitle>
-            <DialogDescription>
-              {editingOrder ? "Update the production order details." : "Fill in the details to create a new production order."}
-            </DialogDescription>
-          </DialogHeader>
-          <ProductionOrderForm
-            key={editingOrder?.id || "new"}
-            initialData={
-              editingOrder
-                ? {
-                    po_number: editingOrder.po_number || "",
-                    product_id: editingOrder.product_id?.toString() || "",
-                    bom_id: editingOrder.bom_id?.toString() || "",
-                    quantity: editingOrder.quantity?.toString() || "",
-                    priority: editingOrder.priority || "medium",
-                    start_date: editingOrder.start_date ? new Date(editingOrder.start_date).toISOString().split("T")[0] : "",
-                    due_date: editingOrder.due_date ? new Date(editingOrder.due_date).toISOString().split("T")[0] : "",
-                    notes: editingOrder.notes || "",
-                  }
-                : newOrderDefaults
-            }
-            onSubmit={handleFormSubmit}
-            onCancel={closeDialog}
-            isSubmitting={isMutating}
-            submitLabel={editingOrder ? "Save Changes" : "Create Order"}
-          />
-        </DialogContent>
-      </Dialog>
-
-      {/* Material Consumption Dialog */}
-      <Dialog open={consumeDialogOpen} onOpenChange={(v) => { if (!v) { setConsumeDialogOpen(false); setConsumingOrder(null); } }}>
-        <DialogContent className="max-w-sm">
-          <DialogHeader>
-            <DialogTitle>Log Material Consumption</DialogTitle>
-          </DialogHeader>
-          {consumingOrder && (
-            <MaterialConsumptionForm
-              key={consumingOrder.id}
-              orderId={consumingOrder.id.toString()}
-              poNumber={consumingOrder.po_number}
-              onSubmit={(data) => consumeMutation.mutate({ orderId: consumingOrder.id.toString(), data })}
-              onCancel={() => { setConsumeDialogOpen(false); setConsumingOrder(null); }}
-              isSubmitting={consumeMutation.isPending}
-            />
-          )}
-        </DialogContent>
-      </Dialog>
-
-      {/* Completion Dialog */}
-      <Dialog open={completeDialogOpen} onOpenChange={(v) => { if (!v) { setCompleteDialogOpen(false); setCompletingOrder(null); setCompletionWarehouseId(""); } }}>
-        <DialogContent className="max-w-sm">
-          <DialogHeader>
-            <DialogTitle>Complete Production Order</DialogTitle>
-            <DialogDescription>
-              Receive the manufactured goods into a warehouse.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4 py-2">
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Warehouse</label>
-              <Select value={completionWarehouseId} onValueChange={setCompletionWarehouseId}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select a warehouse..." />
-                </SelectTrigger>
-                <SelectContent>
-                  {warehouses.map((w: any) => (
-                    <SelectItem key={w.id} value={w.id.toString()}>
-                      {w.name} {w.is_default ? "(Default)" : ""}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => { setCompleteDialogOpen(false); setCompletingOrder(null); setCompletionWarehouseId(""); }}>Cancel</Button>
-            <Button
-              disabled={!completionWarehouseId || completeMutation.isPending}
-              onClick={() => {
-                if (completingOrder && completionWarehouseId) {
-                  completeMutation.mutate({ id: completingOrder.id.toString(), warehouse_id: completionWarehouseId });
-                }
-              }}
-            >
-              {completeMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Complete Order
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Delete Confirmation */}
-      <Dialog open={deleteDialogOpen} onOpenChange={(v) => { if (!v) { setDeleteDialogOpen(false); setDeletingOrderId(null); } }}>
-        <DialogContent className="max-w-sm">
-          <DialogHeader>
-            <DialogTitle>Delete Production Order?</DialogTitle>
-          </DialogHeader>
-          <p className="text-sm text-muted-foreground">This action cannot be undone. Are you sure you want to permanently delete this production order?</p>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => { setDeleteDialogOpen(false); setDeletingOrderId(null); }}>Cancel</Button>
-            <Button
-              variant="destructive"
-              onClick={() => {
-                if (deletingOrderId) {
-                  updateProductionOrder(deletingOrderId, { status: "cancelled" }).then(() => {
-                    queryClient.invalidateQueries({ queryKey: ["production-orders"] });
-                    setDeleteDialogOpen(false);
-                    setDeletingOrderId(null);
-                    toast.success("Production order cancelled");
-                  }).catch(() => toast.error("Failed to cancel order"));
-                }
-              }}
-            >
-              Delete
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }
