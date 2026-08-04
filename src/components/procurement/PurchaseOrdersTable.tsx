@@ -6,6 +6,7 @@ import { mrpApi } from "@/services/mrpApi";
 import { CalendarDays, Plus, Settings2, Flag, Edit2, ChevronDown, Loader2, Save, X } from "lucide-react";
 import { MrpExportBar } from "@/components/mrp/MrpExportBar";
 import { toast } from "sonner";
+import { useRouter } from "next/navigation";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 
@@ -69,6 +70,8 @@ const emptyFilters = {
 };
 
 export default function PurchaseOrdersTable() {
+  const router = useRouter();
+  const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(50);
   
   const [filters, setFilters] = useState({
@@ -447,7 +450,8 @@ export default function PurchaseOrdersTable() {
       
       <div className="print:hidden">
         <MrpExportBar 
-          createLabel="Create PO" 
+          createLabel="Create PO"
+          onCreate={() => router.push("/dashboard/mrp/procurement/create")} 
           onDownloadPDF={handleDownloadPDF} 
           onDownloadCSV={handleDownloadCSV} 
         />

@@ -69,6 +69,26 @@ export const mrpApi = {
     return res.json();
   },
 
+  addVendor: async (data: any) => {
+    const res = await fetch(`${API_BASE}/mrp/procurement/vendors`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    });
+    if (!res.ok) throw new Error("Failed to add vendor");
+    return res.json();
+  },
+
+  createPurchaseOrder: async (data: any) => {
+    const res = await fetch(`${API_BASE}/mrp/procurement/purchase-orders`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    });
+    if (!res.ok) throw new Error("Failed to create purchase order");
+    return res.json();
+  },
+
   getManufacturingOrders: async (page = 1, limit = 50) => {
     const res = await fetch(`${API_BASE}/mrp/production/manufacturing-orders?page=${page}&limit=${limit}`);
     if (!res.ok) throw new Error("Failed to fetch manufacturing orders");
