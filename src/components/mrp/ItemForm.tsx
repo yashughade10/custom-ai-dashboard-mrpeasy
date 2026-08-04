@@ -14,7 +14,7 @@ interface ItemFormProps {
   isEdit?: boolean;
 }
 
-function SearchableSelect({ options, value, onChange, placeholder, disabled }: any) {
+export function SearchableSelect({ options, value, onChange, placeholder, disabled, onAddOption, addNewLabel }: any) {
   const [isOpen, setIsOpen] = useState(false);
   const [search, setSearch] = useState("");
   
@@ -46,6 +46,18 @@ function SearchableSelect({ options, value, onChange, placeholder, disabled }: a
       />
       {isOpen && (
         <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-auto">
+          {onAddOption && search.trim() && !options.find((o:any) => o.label.toLowerCase() === search.trim().toLowerCase()) && (
+            <div 
+              className="p-2 text-sm font-semibold text-blue-600 hover:bg-[#f0f7ff] cursor-pointer"
+              onMouseDown={(e) => {
+                e.preventDefault();
+                onAddOption(search.trim());
+                setIsOpen(false);
+              }}
+            >
+              {addNewLabel || `Add "${search}"`}
+            </div>
+          )}
           {filteredOptions.length === 0 ? (
             <div className="p-2 text-sm text-gray-500">No results found.</div>
           ) : (
@@ -68,6 +80,18 @@ function SearchableSelect({ options, value, onChange, placeholder, disabled }: a
     </div>
   );
 }
+
+// MRPeasy style field row
+export const FieldRow = ({ label, children, required = false }: any) => (
+  <div className="flex flex-col sm:flex-row sm:items-center py-2 gap-2 sm:gap-4 border-b border-gray-100 last:border-0">
+    <div className="sm:w-1/3 text-right text-sm text-gray-600">
+      {label} {required && <span className="text-red-500">*</span>}
+    </div>
+    <div className="sm:w-2/3">
+      {children}
+    </div>
+  </div>
+);
 
 export function ItemForm({ initialData, isEdit }: ItemFormProps) {
   const router = useRouter();
@@ -170,17 +194,7 @@ export function ItemForm({ initialData, isEdit }: ItemFormProps) {
     }
   };
 
-  // MRPeasy style field row
-  const FieldRow = ({ label, children, required = false }: any) => (
-    <div className="flex flex-col sm:flex-row sm:items-center py-2 gap-2 sm:gap-4 border-b border-gray-100 last:border-0">
-      <div className="sm:w-1/3 text-right text-sm text-gray-600">
-        {label} {required && <span className="text-red-500">*</span>}
-      </div>
-      <div className="sm:w-2/3">
-        {children}
-      </div>
-    </div>
-  );
+
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="bg-white rounded shadow-sm border border-gray-200">
