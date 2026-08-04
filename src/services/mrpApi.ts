@@ -108,6 +108,93 @@ export const mrpApi = {
     if (!res.ok) throw new Error("Failed to fetch product groups");
     return res.json();
   },
+  createProductGroup: async (data: any) => {
+    const res = await fetch(`${API_BASE}/mrp/stock/groups`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    });
+    if (!res.ok) throw new Error("Failed to create product group");
+    return res.json();
+  },
+  updateProductGroup: async (id: string | number, data: any) => {
+    const res = await fetch(`${API_BASE}/mrp/stock/groups/${id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    });
+    if (!res.ok) throw new Error("Failed to update product group");
+    return res.json();
+  },
+  deleteProductGroup: async (id: string | number) => {
+    const res = await fetch(`${API_BASE}/mrp/stock/groups/${id}`, {
+      method: "DELETE",
+    });
+    if (!res.ok) throw new Error("Failed to delete product group");
+    return res.json();
+  },
+
+  getUoms: async () => {
+    const res = await fetch(`${API_BASE}/mrp/stock/uoms`);
+    if (!res.ok) throw new Error("Failed to fetch UOMs");
+    return res.json();
+  },
+  createUom: async (data: any) => {
+    const res = await fetch(`${API_BASE}/mrp/stock/uoms`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    });
+    if (!res.ok) throw new Error("Failed to create UOM");
+    return res.json();
+  },
+  updateUom: async (id: string | number, data: any) => {
+    const res = await fetch(`${API_BASE}/mrp/stock/uoms/${id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    });
+    if (!res.ok) throw new Error("Failed to update UOM");
+    return res.json();
+  },
+  deleteUom: async (id: string | number) => {
+    const res = await fetch(`${API_BASE}/mrp/stock/uoms/${id}`, {
+      method: "DELETE",
+    });
+    if (!res.ok) throw new Error("Failed to delete UOM");
+    return res.json();
+  },
+
+  getStorageLocations: async () => {
+    const res = await fetch(`${API_BASE}/mrp/stock/locations`);
+    if (!res.ok) throw new Error("Failed to fetch storage locations");
+    return res.json();
+  },
+  createStorageLocation: async (data: any) => {
+    const res = await fetch(`${API_BASE}/mrp/stock/locations`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    });
+    if (!res.ok) throw new Error("Failed to create storage location");
+    return res.json();
+  },
+  updateStorageLocation: async (id: string | number, data: any) => {
+    const res = await fetch(`${API_BASE}/mrp/stock/locations/${id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    });
+    if (!res.ok) throw new Error("Failed to update storage location");
+    return res.json();
+  },
+  deleteStorageLocation: async (id: string | number) => {
+    const res = await fetch(`${API_BASE}/mrp/stock/locations/${id}`, {
+      method: "DELETE",
+    });
+    if (!res.ok) throw new Error("Failed to delete storage location");
+    return res.json();
+  },
 
   getAssignees: async () => {
     const res = await fetch(`${API_BASE}/mrp/production/assignees`);

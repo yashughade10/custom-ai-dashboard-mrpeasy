@@ -73,6 +73,8 @@ export function ItemForm({ initialData, isEdit }: ItemFormProps) {
   const router = useRouter();
   const [items, setItems] = useState<any[]>([]);
   const [groups, setGroups] = useState<any[]>([]);
+  const [uoms, setUoms] = useState<any[]>([]);
+  const [locations, setLocations] = useState<any[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const { register, handleSubmit, control, setValue, reset, watch } = useForm({
@@ -117,6 +119,12 @@ export function ItemForm({ initialData, isEdit }: ItemFormProps) {
         }
         const groupsRes = await mrpApi.getProductGroups();
         if (groupsRes.success) setGroups(groupsRes.data);
+
+        const uomsRes = await mrpApi.getUoms();
+        if (uomsRes.success) setUoms(uomsRes.data);
+
+        const locsRes = await mrpApi.getStorageLocations();
+        if (locsRes.success) setLocations(locsRes.data);
       } catch (err) {
         console.error("Failed to load reference data", err);
       }
@@ -226,7 +234,12 @@ export function ItemForm({ initialData, isEdit }: ItemFormProps) {
           </FieldRow>
 
           <FieldRow label="Unit of measurement">
-            <Input {...register("uom")} className="bg-[#eef2f5] border-transparent" />
+            <SearchableSelect
+              placeholder="Type to search UOM..."
+              options={uoms.map(u => ({ value: u.name, label: u.name }))}
+              value={watch("uom")}
+              onChange={(val: string) => setValue("uom", val)}
+            />
           </FieldRow>
 
           <FieldRow label="This is a procured item">
@@ -306,7 +319,12 @@ export function ItemForm({ initialData, isEdit }: ItemFormProps) {
         {/* Right Column */}
         <div className="flex-1 max-w-lg">
           <FieldRow label="Default storage location">
-            <Input {...register("default_storage_location")} className="bg-[#eef2f5] border-transparent" />
+            <SearchableSelect
+              placeholder="Type to search storage location..."
+              options={locations.map(l => ({ value: l.name, label: l.name }))}
+              value={watch("default_storage_location")}
+              onChange={(val: string) => setValue("default_storage_location", val)}
+            />
           </FieldRow>
 
           <FieldRow label="Reorder point">
