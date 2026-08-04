@@ -43,9 +43,23 @@ export const mrpApi = {
     return res.json();
   },
 
-  getPurchaseOrders: async (page = 1, limit = 50) => {
-    const res = await fetch(`${API_BASE}/mrp/procurement/purchase-orders?page=${page}&limit=${limit}`);
+  getPurchaseOrders: async (page = 1, limit = 50, filters = {}) => {
+    const searchParams = new URLSearchParams({
+      page: page.toString(),
+      limit: limit.toString(),
+      ...filters
+    });
+    const res = await fetch(`${API_BASE}/mrp/procurement/purchase-orders?${searchParams.toString()}`);
     if (!res.ok) throw new Error("Failed to fetch purchase orders");
+    return res.json();
+  },
+
+  exportPurchaseOrders: async (filters = {}) => {
+    const searchParams = new URLSearchParams({
+      ...filters
+    });
+    const res = await fetch(`${API_BASE}/mrp/procurement/purchase-orders/export?${searchParams.toString()}`);
+    if (!res.ok) throw new Error("Failed to export purchase orders");
     return res.json();
   },
 
