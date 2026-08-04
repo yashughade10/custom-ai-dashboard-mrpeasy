@@ -185,6 +185,7 @@ export default function PurchaseOrdersTable() {
 
   const deleteSavedSearch = (name: string, e: React.MouseEvent) => {
     e.stopPropagation();
+    if (!window.confirm("Are you sure you want to delete this saved search?")) return;
     const newSearches = savedSearches.filter(s => s.name !== name);
     setSavedSearches(newSearches);
     localStorage.setItem('mrp_saved_searches', JSON.stringify(newSearches));
@@ -541,7 +542,7 @@ export default function PurchaseOrdersTable() {
                   <Save className="w-3.5 h-3.5" />
                 </div>
                 {showSaveMenu && (
-                  <div className="absolute left-1/2 -translate-x-1/2 top-full mt-1 bg-white border border-gray-200 shadow-lg rounded-sm w-48 z-50 text-left font-normal flex flex-col p-2 gap-1">
+                  <div className="absolute left-0 top-full mt-1 bg-white border border-gray-200 shadow-lg rounded-sm w-48 z-50 text-left font-normal flex flex-col p-2 gap-1">
                     <button 
                       onClick={() => { setShowSaveModal(true); setShowSaveMenu(false); }}
                       className="w-full text-center bg-[#1d5ab0] text-white py-1.5 rounded-sm hover:bg-[#15468d] text-[12px] font-medium border-none cursor-pointer"
