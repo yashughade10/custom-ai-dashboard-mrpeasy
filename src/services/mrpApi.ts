@@ -13,6 +13,32 @@ export const mrpApi = {
     return res.json();
   },
 
+  getItemById: async (id: string) => {
+    const res = await fetch(`${API_BASE}/mrp/stock/items/${id}`);
+    if (!res.ok) throw new Error("Failed to fetch item");
+    return res.json();
+  },
+
+  createItem: async (data: any) => {
+    const res = await fetch(`${API_BASE}/mrp/stock/items`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data)
+    });
+    if (!res.ok) throw new Error("Failed to create item");
+    return res.json();
+  },
+
+  updateItem: async (id: string, data: any) => {
+    const res = await fetch(`${API_BASE}/mrp/stock/items/${id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data)
+    });
+    if (!res.ok) throw new Error("Failed to update item");
+    return res.json();
+  },
+
   getCustomers: async (page = 1, limit = 50) => {
     const res = await fetch(`${API_BASE}/mrp/crm/customers?page=${page}&limit=${limit}`);
     if (!res.ok) throw new Error("Failed to fetch customers");

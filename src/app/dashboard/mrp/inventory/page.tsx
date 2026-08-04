@@ -6,6 +6,7 @@ import { MrpTabBar } from "@/components/mrp/MrpTabBar";
 import { MrpDataTable, Column } from "@/components/mrp/MrpDataTable";
 import { MrpExportBar } from "@/components/mrp/MrpExportBar";
 import { RouteGuard } from "@/components/auth/RouteGuard";
+import { useRouter } from "next/navigation";
 
 const stockTabs = [
   { name: "Items", href: "/dashboard/mrp/inventory" },
@@ -41,6 +42,7 @@ export default function StockItemsPage() {
   ];
 
   const items = response?.data || [];
+  const router = useRouter();
 
   return (
     <RouteGuard module="inventory" fallback={<div>Access Denied</div>}>
@@ -49,12 +51,19 @@ export default function StockItemsPage() {
           <MrpTabBar tabs={stockTabs} />
           
           <div className="px-4 pb-4 flex-1">
-            <MrpExportBar createLabel="Create item" />
+            <MrpExportBar 
+              createLabel="Create item" 
+              onCreate={() => router.push("/dashboard/mrp/inventory/new")}
+            />
             
             {isLoading ? (
               <div className="p-8 text-center text-gray-500">Loading items...</div>
             ) : (
-              <MrpDataTable columns={columns} data={items} />
+              <MrpDataTable 
+                columns={columns} 
+                data={items} 
+                onRowClick={(row: any) => router.push(`/dashboard/mrp/inventory/${row.id}`)}
+              />
             )}
             
             <div className="mt-4 flex justify-center">
