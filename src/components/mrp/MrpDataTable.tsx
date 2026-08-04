@@ -18,6 +18,23 @@ interface MrpDataTableProps<T> {
 }
 
 export function MrpDataTable<T>({ columns, data, onRowClick, className }: MrpDataTableProps<T>) {
+  const [filters, setFilters] = React.useState<Record<string, string>>({});
+
+  const handleFilterChange = (key: string, value: string) => {
+    setFilters(prev => ({ ...prev, [key]: value }));
+  };
+
+  const filteredData = React.useMemo(() => {
+    return data.filter(row => {
+      return Object.entries(filters).every(([key, query]) => {
+        if (!query) return true;
+        const val = (row as any)[key];
+        if (val == null) return false;
+        return String(val).toLowerCase().includes(query.toLowerCase());
+      });
+    });
+  }, [data, filters]);
+
   return (
     <div className={cn("w-full overflow-auto bg-white border border-gray-200 shadow-sm", className)}>
       <table className="w-full text-sm text-left">
@@ -45,6 +62,8 @@ export function MrpDataTable<T>({ columns, data, onRowClick, className }: MrpDat
                       type="text"
                       className="w-full h-7 px-2 text-xs border border-gray-300 rounded-sm focus:outline-none focus:border-blue-500"
                       placeholder={`Search ${col.header}...`}
+                      value={filters[col.accessorKey as string] || ""}
+                      onChange={(e) => handleFilterChange(col.accessorKey as string, e.target.value)}
                     />
                   </div>
                 ) : null}
@@ -53,14 +72,14 @@ export function MrpDataTable<T>({ columns, data, onRowClick, className }: MrpDat
           </tr>
         </thead>
         <tbody>
-          {data.length === 0 ? (
+          {filteredData.length === 0 ? (
             <tr>
               <td colSpan={columns.length + 1} className="px-4 py-8 text-center text-gray-500">
                 No data available
               </td>
             </tr>
           ) : (
-            data.map((row, rowIdx) => (
+            filteredData.map((row, rowIdx) => (
               <tr
                 key={rowIdx}
                 onClick={() => onRowClick?.(row)}

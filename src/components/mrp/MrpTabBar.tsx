@@ -9,6 +9,7 @@ import { mrpApi } from "@/services/mrpApi";
 interface Tab {
   name: string;
   href: string;
+  isActiveOverride?: boolean;
 }
 
 interface MrpTabBarProps {
@@ -30,7 +31,7 @@ export function MrpTabBar({ tabs }: MrpTabBarProps) {
   return (
     <div className="flex border-b border-gray-200 mb-4 bg-white">
       {tabs.map((tab) => {
-        const isActive = pathname === tab.href;
+        const isActive = tab.isActiveOverride !== undefined ? tab.isActiveOverride : pathname === tab.href;
         
         let tabName = tab.name;
         // Dynamically update BOM and Routings names with real counts if they match the original format
