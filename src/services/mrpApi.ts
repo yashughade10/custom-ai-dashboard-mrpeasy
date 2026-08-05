@@ -90,6 +90,17 @@ export const mrpApi = {
     return res.json();
   },
 
+  getRequirements: async (page = 1, limit = 50, filters = {}) => {
+    const searchParams = new URLSearchParams({
+      page: page.toString(),
+      limit: limit.toString(),
+      ...filters
+    });
+    const res = await fetch(`${API_BASE}/mrp/procurement/requirements?${searchParams.toString()}`);
+    if (!res.ok) throw new Error("Failed to fetch requirements");
+    return res.json();
+  },
+
   getPurchaseOrder: async (poNumber: string) => {
     try {
       const response = await fetch(`${API_BASE}/mrp/procurement/purchase-orders/${poNumber}`);
