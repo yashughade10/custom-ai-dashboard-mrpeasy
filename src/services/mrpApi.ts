@@ -446,5 +446,23 @@ export const mrpApi = {
     });
     if (!res.ok) throw new Error("Failed to delete BOM");
     return res.json();
+  },
+
+  getForecasts: async (filters: any = {}) => {
+    // Filter out empty strings from filters
+    const validFilters = Object.fromEntries(
+      Object.entries(filters).filter(([_, v]) => v !== "")
+    );
+    const searchParams = new URLSearchParams(validFilters as any);
+    const res = await fetch(`${API_BASE}/mrp/procurement/forecasting?${searchParams.toString()}`);
+    if (!res.ok) throw new Error("Failed to fetch forecasts");
+    return res.json();
+  },
+
+  createForecast: async (data: any) => {
+    console.log("Mocking create forecast with data:", data);
+    // Simulate API delay
+    await new Promise(resolve => setTimeout(resolve, 500));
+    return { success: true, data: { ...data, id: Date.now().toString() } };
   }
 };
