@@ -301,6 +301,87 @@ export const mrpApi = {
     return res.json();
   },
 
+  getInventorySnapshot: async (params?: { 
+    location?: string;
+    page?: number;
+    limit?: number;
+    qtyMin?: string;
+    qtyMax?: string;
+    costMin?: string;
+    costMax?: string;
+    partNo?: string;
+    groupNo?: string;
+    groupName?: string;
+    partDesc?: string;
+  }) => {
+    let url = `${API_BASE}/mrp/stock/inventory?`;
+    if (params) {
+      const searchParams = new URLSearchParams();
+      Object.entries(params).forEach(([key, value]) => {
+        if (value !== undefined && value !== '') {
+          searchParams.append(key, String(value));
+        }
+      });
+      url += searchParams.toString();
+    }
+    const res = await fetch(url);
+    if (!res.ok) throw new Error("Failed to fetch inventory snapshot");
+    return res.json();
+  },
+
+  getLots: async (page = 1, limit = 50, search = "") => {
+    let url = `${API_BASE}/mrp/stock/lots?page=${page}&limit=${limit}`;
+    if (search) {
+      url += `&search=${encodeURIComponent(search)}`;
+    }
+    const res = await fetch(url);
+    if (!res.ok) throw new Error("Failed to fetch stock lots");
+    return res.json();
+  },
+
+  deleteLot: async (id: string | number) => {
+    const res = await fetch(`${API_BASE}/mrp/stock/lots/${id}`, {
+      method: "DELETE"
+    });
+    if (!res.ok) throw new Error("Failed to delete stock lot");
+    return res.json();
+  },
+  
+  updatePhysicalQuantity: async (data: { part_no: string, new_quantity: number, location?: string }) => {
+    const res = await fetch(`${API_BASE}/mrp/stock/inventory/adjust`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    });
+    if (!res.ok) throw new Error("Failed to update physical quantity");
+    return res.json();
+  },
+
+  getWriteoffs: async (page = 1, limit = 50, search = "") => {
+    const searchParams = new URLSearchParams({
+      page: page.toString(),
+      limit: limit.toString(),
+      search: search
+    });
+    const res = await fetch(`${API_BASE}/mrp/stock/writeoffs?${searchParams.toString()}`);
+    if (!res.ok) throw new Error("Failed to fetch write-offs");
+    return res.json();
+  },
+
+  getWriteoffDetails: async (writeoff_number: string) => {
+    const res = await fetch(`${API_BASE}/mrp/stock/writeoffs/${writeoff_number}`);
+    if (!res.ok) throw new Error("Failed to fetch write-off details");
+    return res.json();
+  },
+
+  deleteWriteoff: async (writeoff_number: string) => {
+    const res = await fetch(`${API_BASE}/mrp/stock/writeoffs/${writeoff_number}`, {
+      method: "DELETE",
+    });
+    if (!res.ok) throw new Error("Failed to delete write-off");
+    return res.json();
+  },
+
   getAssignees: async () => {
     const res = await fetch(`${API_BASE}/mrp/production/assignees`);
     if (!res.ok) throw new Error("Failed to fetch assignees");
