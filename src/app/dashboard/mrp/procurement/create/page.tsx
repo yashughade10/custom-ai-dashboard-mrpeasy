@@ -14,6 +14,10 @@ function CreatePurchaseOrderContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const copyFrom = searchParams.get('copyFrom');
+  const prefillVendor = searchParams.get('vendor');
+  const prefillItem = searchParams.get('item');
+  const prefillQty = searchParams.get('qty');
+  const prefillPrice = searchParams.get('price');
   
   const [vendors, setVendors] = useState<any[]>([]);
   const [productGroups, setProductGroups] = useState<any[]>([]);
@@ -246,7 +250,61 @@ function CreatePurchaseOrderContent() {
   useEffect(() => {
     const init = async () => {
       setLoading(true);
-      await Promise.all([fetchVendors(), fetchReferenceData()]);
+      
+      let fetchedGroups: any[] = [];
+      let fetchedItems: any[] = [];
+      
+      try {
+        const res = await mrpApi.getVendors();
+        if (res.success) setVendors(res.data);
+      } catch (error) {
+        console.error("Failed to fetch vendors", error);
+      }
+      
+      try {
+        const [groupsRes, itemsRes] = await Promise.all([
+          mrpApi.getProductGroups(),
+          mrpApi.getItems(1, 5000)
+        ]);
+        if (groupsRes.success) {
+          setProductGroups(groupsRes.data);
+          fetchedGroups = groupsRes.data;
+        }
+        if (itemsRes.success) {
+          setAllItems(itemsRes.data);
+          fetchedItems = itemsRes.data;
+        }
+      } catch (error) {
+        console.error("Failed to fetch reference data", error);
+      }
+
+      if (prefillVendor) {
+        setFormData(prev => ({
+          ...prev,
+          vendor_number: prefillVendor
+        }));
+      }
+
+      if (prefillItem && fetchedItems.length > 0) {
+        const matchedItem = fetchedItems.find((m: any) => m.part_no === prefillItem || m.part_number === prefillItem);
+        if (matchedItem) {
+          const qty = parseFloat(prefillQty || '1') || 1;
+          const prc = parseFloat(prefillPrice || matchedItem.cost || matchedItem.purchase_price || 0) || 0;
+          setLineItems([{
+            id: '1',
+            productGroup: String(matchedItem.group_number || ''),
+            item: String(matchedItem.id),
+            vendorPartNo: matchedItem.vendor_part_no || '',
+            orderedQuantity: String(qty),
+            price: prc.toFixed(2),
+            subtotal: (qty * prc).toFixed(2),
+            expectedQuantity: '',
+            expectedDate: '',
+            arrivalDate: '',
+            freeText: ''
+          }]);
+        }
+      }
 
       if (copyFrom) {
         try {
@@ -291,7 +349,7 @@ function CreatePurchaseOrderContent() {
       setLoading(false);
     };
     init();
-  }, [copyFrom]);
+  }, [copyFrom, prefillVendor, prefillItem, prefillQty, prefillPrice]);
 
   const handleAddVendor = async (name: string) => {
     if (!name.trim()) {

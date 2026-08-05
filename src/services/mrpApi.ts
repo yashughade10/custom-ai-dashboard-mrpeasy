@@ -7,8 +7,13 @@ export const mrpApi = {
     return res.json();
   },
   
-  getItems: async (page = 1, limit = 50) => {
-    const res = await fetch(`${API_BASE}/mrp/stock/items?page=${page}&limit=${limit}`);
+  getItems: async (page = 1, limit = 50, filters = {}) => {
+    const searchParams = new URLSearchParams({
+      page: page.toString(),
+      limit: limit.toString(),
+      ...filters
+    });
+    const res = await fetch(`${API_BASE}/mrp/stock/items?${searchParams.toString()}`);
     if (!res.ok) throw new Error("Failed to fetch items");
     return res.json();
   },
