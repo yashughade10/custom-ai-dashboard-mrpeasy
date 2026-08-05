@@ -3,10 +3,11 @@
 import { useState, useEffect } from "react";
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import { mrpApi } from "@/services/mrpApi";
-import { CalendarDays, Plus, Settings2, Flag, Edit2, ChevronDown, Loader2, Save, X } from "lucide-react";
+import { CalendarDays, Plus, Settings2, Flag, Edit2, ChevronDown, Loader2, Save, X, BarChart2 } from "lucide-react";
 import { MrpExportBar } from "@/components/mrp/MrpExportBar";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 
@@ -534,7 +535,15 @@ export default function PurchaseOrdersTable() {
                   </div>
                 )}
               </th>
-              <th className="print:hidden font-medium p-2 w-8 text-center text-gray-400 font-bold border-b border-gray-300">+</th>
+              <th className="print:hidden font-medium p-2 w-8 text-center text-gray-400 font-bold border-b border-gray-300 relative">
+                <button 
+                  onClick={() => router.push('/dashboard/mrp/procurement/create')}
+                  title="Create new PO"
+                  className="w-5 h-5 flex items-center justify-center text-gray-400 hover:text-blue-600 rounded mx-auto border-none cursor-pointer bg-transparent"
+                >
+                  <Plus className="w-4 h-4" />
+                </button>
+              </th>
             </tr>
             {/* Filter Row */}
             <tr className="print:hidden bg-white border-b border-gray-300">
@@ -997,7 +1006,13 @@ export default function PurchaseOrdersTable() {
               <tr key={order.id || i} className="hover:bg-gray-50 border-b border-gray-200 cursor-pointer text-gray-600">
                 <td className="p-2 text-center text-gray-400 border-r border-gray-200">{i + 1}</td>
                 {visibleCols.total && <td className="p-2 border-r border-gray-200 whitespace-nowrap text-right font-medium">${formatCurrency(order.total || 0)}</td>}
-                {visibleCols.po_number && <td className="p-2 border-r border-gray-200 whitespace-nowrap">{order.po_number}</td>}
+                {visibleCols.po_number && (
+                  <td className="p-2 border-r border-gray-200 whitespace-nowrap">
+                    <Link href={`/dashboard/mrp/procurement/${order.po_number}`} className="text-[#1e5aa0] hover:underline font-medium">
+                      {order.po_number}
+                    </Link>
+                  </td>
+                )}
                 {visibleCols.status && <td className="p-2 border-r border-gray-200 whitespace-nowrap">{order.status}</td>}
                 {visibleCols.created_date && <td className="p-2 border-r border-gray-200 whitespace-nowrap">{formatShortDate(order.created_date)}</td>}
                 {visibleCols.expected_date && <td className="p-2 border-r border-gray-200 whitespace-nowrap">{formatShortDate(order.expected_date)}</td>}
@@ -1032,9 +1047,23 @@ export default function PurchaseOrdersTable() {
                 {visibleCols.notes && <td className="p-2 border-r border-gray-200 whitespace-nowrap">{order.notes}</td>}
                 {visibleCols.account && <td className="p-2 border-r border-gray-200 whitespace-nowrap">{order.account}</td>}
                 <td className="p-2 border-r border-gray-200 text-center">
-                  <Edit2 className="h-3.5 w-3.5 text-gray-400 hover:text-gray-600 mx-auto cursor-pointer" />
+                  <button 
+                    onClick={(e) => { e.stopPropagation(); router.push(`/dashboard/mrp/procurement/${order.po_number}`); }}
+                    className="bg-transparent border-none p-0 cursor-pointer flex items-center justify-center mx-auto"
+                    title="Edit PO"
+                  >
+                    <Edit2 className="h-3.5 w-3.5 text-gray-400 hover:text-[#1e5aa0]" />
+                  </button>
                 </td>
-                <td className="p-2 text-center"></td>
+                <td className="p-2 text-center">
+                  <button 
+                    onClick={(e) => { e.stopPropagation(); router.push(`/dashboard/mrp/procurement/${order.po_number}/reports`); }}
+                    className="bg-transparent border-none p-0 cursor-pointer flex items-center justify-center mx-auto"
+                    title="Reports"
+                  >
+                    <BarChart2 className="h-3.5 w-3.5 text-gray-400 hover:text-[#1e5aa0]" />
+                  </button>
+                </td>
               </tr>
             ))}
           </tbody>

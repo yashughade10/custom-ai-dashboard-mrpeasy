@@ -114,7 +114,7 @@ function DashboardPage() {
 
       <div className="mt-8">
         <Dialog>
-          <DialogTrigger asChild>
+          <DialogTrigger>
             <Button variant="outline" className="text-blue-600 border-blue-600 font-medium">
               + Customize dashboard
             </Button>

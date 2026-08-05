@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import React, { useState, useEffect, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { mrpApi } from "@/services/mrpApi";
 import { SearchableSelect, FieldRow } from "@/components/mrp/ItemForm";
 import { VendorTableSelect } from "@/components/procurement/VendorTableSelect";
@@ -10,8 +10,10 @@ import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 
-export default function CreatePurchaseOrderPage() {
+function CreatePurchaseOrderContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const copyFrom = searchParams.get('copyFrom');
   
   const [vendors, setVendors] = useState<any[]>([]);
   const [productGroups, setProductGroups] = useState<any[]>([]);
@@ -245,10 +247,51 @@ export default function CreatePurchaseOrderPage() {
     const init = async () => {
       setLoading(true);
       await Promise.all([fetchVendors(), fetchReferenceData()]);
+
+      if (copyFrom) {
+        try {
+          const res = await mrpApi.getPurchaseOrder(copyFrom);
+          if (res) {
+             const { order, items } = res;
+             if (order) {
+               setFormData(prev => ({
+                  ...prev,
+                  vendor_number: order.vendor_number || "",
+                  vendor_name: order.vendor_name || "",
+                  currency: order.currency || "$",
+                  po_free_text: order.po_free_text || "",
+                  bwe_job_id: order.bwe_job_id || "",
+                  po_emailed: order.po_emailed || "",
+                  attention: order.attention || "",
+               }));
+             }
+             if (items && items.length > 0) {
+               const mappedItems = items.map((it: any, index: number) => ({
+                 id: String(Date.now() + index),
+                 productGroup: it.group_number ? String(it.group_number) : '',
+                 item: it.item_id ? String(it.item_id) : '',
+                 vendorPartNo: it.vendor_part_no || '',
+                 orderedQuantity: it.quantity ? String(it.quantity) : '',
+                 price: it.price ? String(it.price) : '0.00',
+                 subtotal: it.subtotal ? String(it.subtotal) : '0.00',
+                 expectedQuantity: it.expected_quantity ? String(it.expected_quantity) : '',
+                 expectedDate: it.expected_date ? new Date(it.expected_date).toISOString().slice(0, 10) : '',
+                 arrivalDate: it.arrival_date ? new Date(it.arrival_date).toISOString().slice(0, 10) : '',
+                 freeText: it.free_text || ''
+               }));
+               setLineItems(mappedItems);
+             }
+          }
+        } catch (error) {
+          console.error("Failed to fetch PO to copy:", error);
+          toast.error("Failed to load PO data for copying");
+        }
+      }
+
       setLoading(false);
     };
     init();
-  }, []);
+  }, [copyFrom]);
 
   const handleAddVendor = async (name: string) => {
     if (!name.trim()) {
@@ -934,5 +977,13 @@ export default function CreatePurchaseOrderPage() {
       )}
 
     </div>
+  );
+}
+
+export default function CreatePurchaseOrderPage() {
+  return (
+    <Suspense fallback={<div className="p-8 text-gray-500 text-[13px]">Loading form...</div>}>
+      <CreatePurchaseOrderContent />
+    </Suspense>
   );
 }

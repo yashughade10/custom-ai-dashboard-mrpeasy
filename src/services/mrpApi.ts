@@ -80,6 +80,29 @@ export const mrpApi = {
     return res.json();
   },
 
+  getPurchaseOrder: async (poNumber: string) => {
+    try {
+      const response = await fetch(`${API_BASE}/mrp/procurement/purchase-orders/${poNumber}`);
+      if (!response.ok) throw new Error("Failed to fetch purchase order");
+      const data = await response.json();
+      return data.data; // Should contain { order, items }
+    } catch (error) {
+      console.error("Error fetching purchase order:", error);
+      throw error;
+    }
+  },
+
+  getPurchaseOrderItems: async (page = 1, limit = 50, filters = {}) => {
+    const searchParams = new URLSearchParams({
+      page: page.toString(),
+      limit: limit.toString(),
+      ...filters
+    });
+    const res = await fetch(`${API_BASE}/mrp/procurement/purchase-orders/items?${searchParams.toString()}`);
+    if (!res.ok) throw new Error("Failed to fetch purchase order items");
+    return res.json();
+  },
+
   exportPurchaseOrders: async (filters = {}) => {
     const searchParams = new URLSearchParams({
       ...filters
@@ -102,6 +125,54 @@ export const mrpApi = {
       body: JSON.stringify(data),
     });
     if (!res.ok) throw new Error("Failed to add vendor");
+    return res.json();
+  },
+
+  getVendor: async (vendorNumber: string) => {
+    const res = await fetch(`${API_BASE}/mrp/procurement/vendors/${vendorNumber}`);
+    if (!res.ok) throw new Error("Failed to fetch vendor");
+    return res.json();
+  },
+
+  updateVendor: async ({ vendorNumber, data }: { vendorNumber: string, data: any }) => {
+    const res = await fetch(`${API_BASE}/mrp/procurement/vendors/${vendorNumber}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    });
+    if (!res.ok) throw new Error("Failed to update vendor");
+    return res.json();
+  },
+
+  getVendorContacts: async (vendorNumber: string) => {
+    const res = await fetch(`${API_BASE}/mrp/procurement/vendors/${vendorNumber}/contacts`);
+    if (!res.ok) throw new Error("Failed to fetch vendor contacts");
+    return res.json();
+  },
+
+  addVendorContact: async ({ vendorNumber, data }: { vendorNumber: string, data: any }) => {
+    const res = await fetch(`${API_BASE}/mrp/procurement/vendors/${vendorNumber}/contacts`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    });
+    if (!res.ok) throw new Error("Failed to add vendor contact");
+    return res.json();
+  },
+
+  getVendorNotes: async (vendorNumber: string) => {
+    const res = await fetch(`${API_BASE}/mrp/procurement/vendors/${vendorNumber}/notes`);
+    if (!res.ok) throw new Error("Failed to fetch vendor notes");
+    return res.json();
+  },
+
+  addVendorNote: async ({ vendorNumber, data }: { vendorNumber: string, data: any }) => {
+    const res = await fetch(`${API_BASE}/mrp/procurement/vendors/${vendorNumber}/notes`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    });
+    if (!res.ok) throw new Error("Failed to add vendor note");
     return res.json();
   },
 
