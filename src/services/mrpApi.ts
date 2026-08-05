@@ -287,6 +287,53 @@ export const mrpApi = {
     return res.json();
   },
 
+  getInventorySnapshot: async (filters: any = {}) => {
+    const searchParams = new URLSearchParams();
+    Object.entries(filters).forEach(([key, value]) => {
+      if (value !== undefined && value !== "" && value !== null) {
+        searchParams.append(key, String(value));
+      }
+    });
+    const res = await fetch(`${API_BASE}/mrp/stock/inventory?${searchParams.toString()}`);
+    if (!res.ok) throw new Error("Failed to fetch inventory snapshot");
+    return res.json();
+  },
+  
+  updatePhysicalQuantity: async (data: { part_no: string, new_quantity: number, location?: string }) => {
+    const res = await fetch(`${API_BASE}/mrp/stock/inventory/adjust`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    });
+    if (!res.ok) throw new Error("Failed to update physical quantity");
+    return res.json();
+  },
+
+  getWriteoffs: async (page = 1, limit = 50, search = "") => {
+    const searchParams = new URLSearchParams({
+      page: page.toString(),
+      limit: limit.toString(),
+      search: search
+    });
+    const res = await fetch(`${API_BASE}/mrp/stock/writeoffs?${searchParams.toString()}`);
+    if (!res.ok) throw new Error("Failed to fetch write-offs");
+    return res.json();
+  },
+
+  getWriteoffDetails: async (writeoff_number: string) => {
+    const res = await fetch(`${API_BASE}/mrp/stock/writeoffs/${writeoff_number}`);
+    if (!res.ok) throw new Error("Failed to fetch write-off details");
+    return res.json();
+  },
+
+  deleteWriteoff: async (writeoff_number: string) => {
+    const res = await fetch(`${API_BASE}/mrp/stock/writeoffs/${writeoff_number}`, {
+      method: "DELETE",
+    });
+    if (!res.ok) throw new Error("Failed to delete write-off");
+    return res.json();
+  },
+
   getAssignees: async () => {
     const res = await fetch(`${API_BASE}/mrp/production/assignees`);
     if (!res.ok) throw new Error("Failed to fetch assignees");
