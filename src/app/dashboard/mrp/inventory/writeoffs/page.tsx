@@ -29,15 +29,19 @@ export default function WriteoffsPage() {
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
   const limit = 50;
+  
+  const [filters, setFilters] = useState<Record<string, string>>({});
+  const [rangeFilters, setRangeFilters] = useState<Record<string, { min?: string; max?: string }>>({});
 
   const { data, isLoading } = useQuery({
-    queryKey: ["mrpWriteoffs", page, search],
-    queryFn: () => mrpApi.getWriteoffs(page, limit, search),
+    queryKey: ["mrpWriteoffs", page, search, filters, rangeFilters],
+    queryFn: () => mrpApi.getWriteoffs(page, limit, search, filters, rangeFilters),
   });
 
   const writeoffs = data?.data || [];
   const totalCount = data?.totalCount || 0;
   const totalPages = data?.totalPages || 1;
+  const totals = data?.totals;
 
   const columns = [
     { 
@@ -108,10 +112,22 @@ export default function WriteoffsPage() {
                 data={writeoffs}
                 columns={columns}
                 isLoading={isLoading}
-                totals={{
-                  quantity: data?.totalQty ? Number(data.totalQty).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 4 }) : '',
-                  cost: data?.totalCost ? `$${Number(data.totalCost).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 4 })}` : ''
-                }}
+                onFilterChange={(f, rf) => { setFilters(f); setRangeFilters(rf); }}
+                totals={(() => {
+                  const tableTotals = totals ? {
+                    quantity: (
+                      <div className="flex flex-col gap-0.5 text-xs text-left text-gray-700">
+                        <span>{Number(totals.total_quantity || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                      </div>
+                    ),
+                    cost: (
+                      <div className="flex flex-col gap-0.5 text-xs text-left text-gray-700">
+                        <span>${Number(totals.total_cost || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                      </div>
+                    )
+                  } : undefined;
+                  return tableTotals;
+                })()}
               />
 
               {totalPages > 1 && (

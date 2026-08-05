@@ -17,24 +17,31 @@ interface MrpDataTableProps<T> {
   onRowClick?: (row: T) => void;
   className?: string;
   totals?: Record<string, React.ReactNode>;
+  onFilterChange?: (filters: Record<string, string>, rangeFilters: Record<string, { min?: string; max?: string }>) => void;
 }
 
-export function MrpDataTable<T>({ columns, data, onRowClick, className, totals }: MrpDataTableProps<T>) {
+export function MrpDataTable<T>({ columns, data, onRowClick, className, totals, onFilterChange }: MrpDataTableProps<T>) {
   const [filters, setFilters] = React.useState<Record<string, string>>({});
   const [rangeFilters, setRangeFilters] = React.useState<Record<string, { min?: string; max?: string }>>({});
 
   const handleFilterChange = (key: string, value: string) => {
-    setFilters(prev => ({ ...prev, [key]: value }));
+    const newFilters = { ...filters, [key]: value };
+    setFilters(newFilters);
+    if (onFilterChange) onFilterChange(newFilters, rangeFilters);
   };
 
   const handleRangeFilterChange = (key: string, field: 'min' | 'max', value: string) => {
-    setRangeFilters(prev => ({
-      ...prev,
-      [key]: { ...prev[key], [field]: value }
-    }));
+    const newRangeFilters = {
+      ...rangeFilters,
+      [key]: { ...rangeFilters[key], [field]: value }
+    };
+    setRangeFilters(newRangeFilters);
+    if (onFilterChange) onFilterChange(filters, newRangeFilters);
   };
 
   const filteredData = React.useMemo(() => {
+    if (onFilterChange) return data; // Skip local filtering if handled by parent
+
     return data.filter(row => {
       // Check text filters
       const passesText = Object.entries(filters).every(([key, query]) => {
@@ -74,7 +81,7 @@ export function MrpDataTable<T>({ columns, data, onRowClick, className, totals }
 
       return passesRange;
     });
-  }, [data, filters, rangeFilters]);
+  }, [data, filters, rangeFilters, onFilterChange]);
 
   return (
     <div className={cn("w-full overflow-auto bg-white border border-gray-200 shadow-sm", className)}>

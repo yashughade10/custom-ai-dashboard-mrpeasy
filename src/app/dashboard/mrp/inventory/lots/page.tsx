@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { mrpApi } from "@/services/mrpApi";
 import { MrpTabBar } from "@/components/mrp/MrpTabBar";
@@ -24,10 +25,12 @@ const stockTabs = [
 export default function StockLotsPage() {
   const router = useRouter();
   const queryClient = useQueryClient();
+  const [filters, setFilters] = useState<Record<string, string>>({});
+  const [rangeFilters, setRangeFilters] = useState<Record<string, { min?: string; max?: string }>>({});
 
   const { data: response, isLoading } = useQuery({
-    queryKey: ["mrpLots"],
-    queryFn: () => mrpApi.getLots(1, 100),
+    queryKey: ["mrpLots", filters, rangeFilters],
+    queryFn: () => mrpApi.getLots(1, 100, "", filters, rangeFilters),
   });
 
   const deleteMutation = useMutation({
@@ -133,6 +136,7 @@ export default function StockLotsPage() {
                 data={lots} 
                 columns={columns} 
                 totals={tableTotals}
+                onFilterChange={(f, rf) => { setFilters(f); setRangeFilters(rf); }}
               />
             )}
           </div>
