@@ -63,8 +63,13 @@ export const mrpApi = {
     return res.json();
   },
 
-  getInvoices: async (page = 1, limit = 50) => {
-    const res = await fetch(`${API_BASE}/mrp/crm/invoices?page=${page}&limit=${limit}`);
+  getInvoices: async (page = 1, limit = 50, filters = {}) => {
+    const searchParams = new URLSearchParams({
+      page: page.toString(),
+      limit: limit.toString(),
+      ...filters
+    });
+    const res = await fetch(`${API_BASE}/mrp/crm/invoices?${searchParams.toString()}`);
     if (!res.ok) throw new Error("Failed to fetch invoices");
     return res.json();
   },
@@ -109,6 +114,15 @@ export const mrpApi = {
     });
     const res = await fetch(`${API_BASE}/mrp/procurement/purchase-orders/export?${searchParams.toString()}`);
     if (!res.ok) throw new Error("Failed to export purchase orders");
+    return res.json();
+  },
+
+  exportInvoices: async (filters = {}) => {
+    const searchParams = new URLSearchParams({
+      ...filters
+    });
+    const res = await fetch(`${API_BASE}/mrp/crm/invoices/export?${searchParams.toString()}`);
+    if (!res.ok) throw new Error("Failed to export invoices");
     return res.json();
   },
 

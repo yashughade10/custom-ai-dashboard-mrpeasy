@@ -190,7 +190,7 @@ export default function InvoicesTable() {
   const fetchAllData = async () => {
     try {
       toast.loading("Fetching all data...", { id: "export" });
-      const response = await mrpApi.exportPurchaseOrders(activeFilters);
+      const response = await mrpApi.getPurchaseOrders(1, 10000, activeFilters);
       if (!response.data || response.data.length === 0) {
         toast.dismiss("export");
         toast.error("No data to export");
