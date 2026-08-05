@@ -419,6 +419,8 @@ export default function PurchaseOrdersTable() {
   const orders = response?.data || [];
   const pagination = response?.pagination;
   const hasMore = pagination ? pagination.total > orders.length : false;
+  
+  const currencyTotals = response?.currency_summary || {};
 
   const formatShortDate = (d: string) => {
     if (!d) return "";
@@ -974,17 +976,17 @@ export default function PurchaseOrdersTable() {
                 {ALL_COLUMNS.map(col => {
                   if (!visibleCols[col.id]) return null;
                   
-                  if (col.id === 'total') return <td key={col.id} className="p-2 text-right border-r border-gray-300 text-gray-800">${formatCurrency(response?.summary?.total_cost || 0)}</td>;
-                  if (col.id === 'tax') return <td key={col.id} className="p-2 text-right border-r border-gray-300 text-gray-800">${formatCurrency(response?.summary?.total_tax || 0)}</td>;
-                  if (col.id === 'total_including_tax') return <td key={col.id} className="p-2 text-right border-r border-gray-300 text-gray-800">${formatCurrency(response?.summary?.total_including_tax || 0)}</td>;
-                  if (col.id === 'paid') return <td key={col.id} className="p-2 text-right border-r border-gray-300 text-gray-800">${formatCurrency(response?.summary?.total_paid || 0)}</td>;
-                  if (col.id === 'unpaid') return <td key={col.id} className="p-2 text-right border-r border-gray-300 text-gray-800">${formatCurrency(response?.summary?.total_unpaid || 0)}</td>;
-                  
-                  if (col.id === 'total_in_currency') return <td key={col.id} className="p-2 text-right border-r border-gray-300 text-gray-800">${formatCurrency(response?.summary?.total_in_currency || 0)}</td>;
-                  if (col.id === 'tax_in_currency') return <td key={col.id} className="p-2 text-right border-r border-gray-300 text-gray-800">${formatCurrency(response?.summary?.tax_in_currency || 0)}</td>;
-                  if (col.id === 'total_including_tax_in_currency') return <td key={col.id} className="p-2 text-right border-r border-gray-300 text-gray-800">${formatCurrency(response?.summary?.total_including_tax_in_currency || 0)}</td>;
-                  if (col.id === 'paid_in_currency') return <td key={col.id} className="p-2 text-right border-r border-gray-300 text-gray-800">${formatCurrency(response?.summary?.paid_in_currency || 0)}</td>;
-                  if (col.id === 'unpaid_in_currency') return <td key={col.id} className="p-2 text-right border-r border-gray-300 text-gray-800">${formatCurrency(response?.summary?.unpaid_in_currency || 0)}</td>;
+                  if (['total', 'tax', 'total_including_tax', 'paid', 'unpaid', 'total_in_currency', 'tax_in_currency', 'total_including_tax_in_currency', 'paid_in_currency', 'unpaid_in_currency'].includes(col.id)) {
+                    return (
+                      <td key={col.id} className="p-2 text-right border-r border-gray-300 text-gray-800">
+                        {Object.keys(currencyTotals).map(curr => (
+                          <div key={curr} className="whitespace-nowrap leading-tight">
+                            {curr} {formatCurrency(currencyTotals[curr][col.id])}
+                          </div>
+                        ))}
+                      </td>
+                    );
+                  }
                   
                   return <td key={col.id} className="p-2 border-r border-gray-300"></td>;
                 })}
@@ -1005,7 +1007,7 @@ export default function PurchaseOrdersTable() {
             ) : orders.map((order: any, i: number) => (
               <tr key={order.id || i} className="hover:bg-gray-50 border-b border-gray-200 cursor-pointer text-gray-600">
                 <td className="p-2 text-center text-gray-400 border-r border-gray-200">{i + 1}</td>
-                {visibleCols.total && <td className="p-2 border-r border-gray-200 whitespace-nowrap text-right font-medium">${formatCurrency(order.total || 0)}</td>}
+                {visibleCols.total && <td className="p-2 border-r border-gray-200 whitespace-nowrap text-right font-medium">{order.currency || '$'} {formatCurrency(order.total || 0)}</td>}
                 {visibleCols.po_number && (
                   <td className="p-2 border-r border-gray-200 whitespace-nowrap">
                     <Link href={`/dashboard/mrp/procurement/${order.po_number}`} className="text-[#1e5aa0] hover:underline font-medium">
@@ -1018,16 +1020,16 @@ export default function PurchaseOrdersTable() {
                 {visibleCols.expected_date && <td className="p-2 border-r border-gray-200 whitespace-nowrap">{formatShortDate(order.expected_date)}</td>}
                 {visibleCols.vendor_number && <td className="p-2 border-r border-gray-200 whitespace-nowrap">{order.vendor_number}</td>}
                 {visibleCols.vendor_name && <td className="p-2 border-r border-gray-200 whitespace-nowrap">{order.vendor_name}</td>}
-                {visibleCols.tax && <td className="p-2 border-r border-gray-200 whitespace-nowrap text-right font-medium">${formatCurrency(order.tax || 0)}</td>}
-                {visibleCols.total_including_tax && <td className="p-2 border-r border-gray-200 whitespace-nowrap text-right font-medium">${formatCurrency(order.total_including_tax || 0)}</td>}
-                {visibleCols.paid && <td className="p-2 border-r border-gray-200 whitespace-nowrap text-right font-medium">${formatCurrency(order.paid || 0)}</td>}
-                {visibleCols.unpaid && <td className="p-2 border-r border-gray-200 whitespace-nowrap text-right font-medium">${formatCurrency(order.unpaid || 0)}</td>}
+                {visibleCols.tax && <td className="p-2 border-r border-gray-200 whitespace-nowrap text-right font-medium">{order.currency || '$'} {formatCurrency(order.tax || 0)}</td>}
+                {visibleCols.total_including_tax && <td className="p-2 border-r border-gray-200 whitespace-nowrap text-right font-medium">{order.currency || '$'} {formatCurrency(order.total_including_tax || 0)}</td>}
+                {visibleCols.paid && <td className="p-2 border-r border-gray-200 whitespace-nowrap text-right font-medium">{order.currency || '$'} {formatCurrency(order.paid || 0)}</td>}
+                {visibleCols.unpaid && <td className="p-2 border-r border-gray-200 whitespace-nowrap text-right font-medium">{order.currency || '$'} {formatCurrency(order.unpaid || 0)}</td>}
                 {visibleCols.currency && <td className="p-2 border-r border-gray-200 whitespace-nowrap text-center">{order.currency}</td>}
-                {visibleCols.total_in_currency && <td className="p-2 border-r border-gray-200 whitespace-nowrap text-right font-medium">{order.currency} {formatCurrency(order.total_in_currency || 0)}</td>}
-                {visibleCols.tax_in_currency && <td className="p-2 border-r border-gray-200 whitespace-nowrap text-right font-medium">{order.currency} {formatCurrency(order.tax_in_currency || 0)}</td>}
-                {visibleCols.total_including_tax_in_currency && <td className="p-2 border-r border-gray-200 whitespace-nowrap text-right font-medium">{order.currency} {formatCurrency(order.total_including_tax_in_currency || 0)}</td>}
-                {visibleCols.paid_in_currency && <td className="p-2 border-r border-gray-200 whitespace-nowrap text-right font-medium">{order.currency} {formatCurrency(order.paid_in_currency || 0)}</td>}
-                {visibleCols.unpaid_in_currency && <td className="p-2 border-r border-gray-200 whitespace-nowrap text-right font-medium">{order.currency} {formatCurrency(order.unpaid_in_currency || 0)}</td>}
+                {visibleCols.total_in_currency && <td className="p-2 border-r border-gray-200 whitespace-nowrap text-right font-medium">{order.currency || '$'} {formatCurrency(order.total_in_currency || 0)}</td>}
+                {visibleCols.tax_in_currency && <td className="p-2 border-r border-gray-200 whitespace-nowrap text-right font-medium">{order.currency || '$'} {formatCurrency(order.tax_in_currency || 0)}</td>}
+                {visibleCols.total_including_tax_in_currency && <td className="p-2 border-r border-gray-200 whitespace-nowrap text-right font-medium">{order.currency || '$'} {formatCurrency(order.total_including_tax_in_currency || 0)}</td>}
+                {visibleCols.paid_in_currency && <td className="p-2 border-r border-gray-200 whitespace-nowrap text-right font-medium">{order.currency || '$'} {formatCurrency(order.paid_in_currency || 0)}</td>}
+                {visibleCols.unpaid_in_currency && <td className="p-2 border-r border-gray-200 whitespace-nowrap text-right font-medium">{order.currency || '$'} {formatCurrency(order.unpaid_in_currency || 0)}</td>}
                 {visibleCols.invoice_status && <td className="p-2 border-r border-gray-200 whitespace-nowrap">{getStatusBadge(order.invoice_status)}</td>}
                 {visibleCols.payment_status && <td className="p-2 border-r border-gray-200 whitespace-nowrap">{getStatusBadge(order.payment_status)}</td>}
                 {visibleCols.created_by && <td className="p-2 border-r border-gray-200 whitespace-nowrap">{order.created_by}</td>}

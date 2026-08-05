@@ -85,7 +85,7 @@ export const mrpApi = {
       const response = await fetch(`${API_BASE}/mrp/procurement/purchase-orders/${poNumber}`);
       if (!response.ok) throw new Error("Failed to fetch purchase order");
       const data = await response.json();
-      return data.data; // Should contain { order, items }
+      return { order: data.data, items: data.data.items || [] };
     } catch (error) {
       console.error("Error fetching purchase order:", error);
       throw error;
