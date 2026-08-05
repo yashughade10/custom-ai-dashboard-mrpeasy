@@ -287,15 +287,49 @@ export const mrpApi = {
     return res.json();
   },
 
-  getInventorySnapshot: async (filters: any = {}) => {
-    const searchParams = new URLSearchParams();
-    Object.entries(filters).forEach(([key, value]) => {
-      if (value !== undefined && value !== "" && value !== null) {
-        searchParams.append(key, String(value));
-      }
-    });
-    const res = await fetch(`${API_BASE}/mrp/stock/inventory?${searchParams.toString()}`);
+  getInventorySnapshot: async (params?: { 
+    location?: string;
+    page?: number;
+    limit?: number;
+    qtyMin?: string;
+    qtyMax?: string;
+    costMin?: string;
+    costMax?: string;
+    partNo?: string;
+    groupNo?: string;
+    groupName?: string;
+    partDesc?: string;
+  }) => {
+    let url = `${API_BASE}/mrp/stock/inventory?`;
+    if (params) {
+      const searchParams = new URLSearchParams();
+      Object.entries(params).forEach(([key, value]) => {
+        if (value !== undefined && value !== '') {
+          searchParams.append(key, String(value));
+        }
+      });
+      url += searchParams.toString();
+    }
+    const res = await fetch(url);
     if (!res.ok) throw new Error("Failed to fetch inventory snapshot");
+    return res.json();
+  },
+
+  getLots: async (page = 1, limit = 50, search = "") => {
+    let url = `${API_BASE}/mrp/stock/lots?page=${page}&limit=${limit}`;
+    if (search) {
+      url += `&search=${encodeURIComponent(search)}`;
+    }
+    const res = await fetch(url);
+    if (!res.ok) throw new Error("Failed to fetch stock lots");
+    return res.json();
+  },
+
+  deleteLot: async (id: string | number) => {
+    const res = await fetch(`${API_BASE}/mrp/stock/lots/${id}`, {
+      method: "DELETE"
+    });
+    if (!res.ok) throw new Error("Failed to delete stock lot");
     return res.json();
   },
   
