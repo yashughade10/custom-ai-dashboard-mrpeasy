@@ -129,6 +129,16 @@ export const mrpApi = {
     return res.json();
   },
 
+  getMaterialsShippedStatistics: async (filters = {}) => {
+    const searchParams = new URLSearchParams({
+      ...filters
+    });
+    const res = await fetch(`${API_BASE}/mrp/procurement/statistics/materials-shipped?${searchParams.toString()}`);
+    if (!res.ok) throw new Error("Failed to fetch materials shipped statistics");
+    return res.json();
+  },
+
+
   getPurchaseOrder: async (poNumber: string) => {
     try {
       const response = await fetch(`${API_BASE}/mrp/procurement/purchase-orders/${poNumber}`);
