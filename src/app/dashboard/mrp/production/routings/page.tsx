@@ -1,16 +1,16 @@
 "use client";
 
 import { useState } from "react";
-import BomsTable from "@/components/production/BomsTable";
+import RoutingsTable from "@/components/production/RoutingsTable";
 import { Plus, Download, Filter } from "lucide-react";
 import { RouteGuard } from "@/components/auth/RouteGuard";
 import { MrpTabBar } from "@/components/mrp/MrpTabBar";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { SearchableSelect } from "@/components/ui/searchable-select";
 import { useQuery } from "@tanstack/react-query";
 import { mrpApi } from "@/services/mrpApi";
-import { BomForm } from "@/components/production/BomForm";
+import { RoutingForm } from "@/components/production/RoutingForm";
 
 const productionTabs = [
   { name: "Manufacturing orders", href: "/dashboard/mrp/production" },
@@ -22,9 +22,9 @@ const productionTabs = [
   { name: "Statistics", href: "/dashboard/mrp/production/statistics" },
 ];
 
-function BomsPage() {
+function RoutingsPage() {
   const [isFormOpen, setIsFormOpen] = useState(false);
-  const [editingBomId, setEditingBomId] = useState<string | undefined>();
+  const [editingRoutingId, setEditingRoutingId] = useState<string | undefined>();
   
   // Dialog state
   const [showSelectProduct, setShowSelectProduct] = useState(false);
@@ -45,12 +45,12 @@ function BomsPage() {
 
   const groupOptions = (productGroupsData?.data || []).map((g: any) => ({
     label: g.group_name || g.name || "Unnamed Group",
-    value: g.id?.toString() || g.group_number || g.name || Math.random().toString(),
+    value: g.group_number || g.id?.toString() || g.name || Math.random().toString(),
   }));
 
   const productOptions = (itemsData?.data || []).map((item: any) => ({
     label: item.part_description || item.name || item.part_number || "Unnamed Product",
-    value: item.id?.toString() || item.part_number || Math.random().toString(),
+    value: item.part_number || item.part_no || item.id?.toString() || Math.random().toString(),
   }));
 
   const handleCreateClick = () => {
@@ -61,18 +61,18 @@ function BomsPage() {
 
   const handleProceedCreate = () => {
     setShowSelectProduct(false);
-    setEditingBomId(undefined);
+    setEditingRoutingId(undefined);
     setIsFormOpen(true);
   };
 
   const handleEditClick = (id: string) => {
-    setEditingBomId(id);
+    setEditingRoutingId(id);
     setIsFormOpen(true);
   };
 
   const handleCloseForm = () => {
     setIsFormOpen(false);
-    setEditingBomId(undefined);
+    setEditingRoutingId(undefined);
   };
 
   return (
@@ -81,9 +81,9 @@ function BomsPage() {
         <MrpTabBar tabs={productionTabs} />
         
         {isFormOpen ? (
-          <BomForm 
+          <RoutingForm 
             initialProductId={selectedProductId}
-            editingBomId={editingBomId}
+            editingRoutingId={editingRoutingId}
             onBack={handleCloseForm}
             onSaved={handleCloseForm}
           />
@@ -91,7 +91,7 @@ function BomsPage() {
           <>
             <div className="px-4 py-3 border-b border-gray-100 flex flex-wrap items-center justify-between gap-3 bg-white">
               <div className="flex items-center gap-6">
-                <h1 className="text-xl font-bold text-gray-900">BOM</h1>
+                <h1 className="text-xl font-bold text-gray-900">Routings</h1>
                 <Button 
                   size="sm" 
                   className="bg-blue-600 hover:bg-blue-700 text-white gap-1.5 font-medium px-3 h-8 rounded-sm"
@@ -113,7 +113,7 @@ function BomsPage() {
 
             <div className="px-4 py-3 flex-1 flex flex-col overflow-hidden">
               <div className="flex-1 overflow-x-auto min-h-0 border border-gray-200 rounded-sm shadow-sm">
-                <BomsTable onEdit={handleEditClick} />
+                <RoutingsTable onEdit={handleEditClick} />
               </div>
             </div>
           </>
@@ -165,10 +165,10 @@ function BomsPage() {
   );
 }
 
-export default function BomsPageGuarded() {
+export default function RoutingsPageGuarded() {
   return (
     <RouteGuard module="production">
-      <BomsPage />
+      <RoutingsPage />
     </RouteGuard>
   );
 }

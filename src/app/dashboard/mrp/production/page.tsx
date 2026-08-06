@@ -7,6 +7,7 @@ import { Plus, Download } from "lucide-react";
 import { RouteGuard } from "@/components/auth/RouteGuard";
 import { MrpTabBar } from "@/components/mrp/MrpTabBar";
 import { Button } from "@/components/ui/button";
+import { useSearchParams } from "next/navigation";
 
 const productionTabs = [
   { name: "Manufacturing orders", href: "/dashboard/mrp/production" },
@@ -19,7 +20,8 @@ const productionTabs = [
 ];
 
 function ManufacturingOrdersPage() {
-  const [isCreating, setIsCreating] = useState(false);
+  const searchParams = useSearchParams();
+  const [isCreating, setIsCreating] = useState(searchParams.get("create") === "true");
 
   return (
     <div className="flex flex-col bg-[#f4f7fb] min-h-[calc(100vh-4rem)] p-4 -m-4 sm:-m-6 lg:-m-8">

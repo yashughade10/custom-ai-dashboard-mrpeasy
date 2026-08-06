@@ -15,6 +15,7 @@ interface SearchableSelectProps {
   onAddOption?: (val: string) => void;
   placeholder?: string;
   addNewLabel?: string;
+  isLoading?: boolean;
 }
 
 export function SearchableSelect({
@@ -24,6 +25,7 @@ export function SearchableSelect({
   onAddOption,
   placeholder = "Select...",
   addNewLabel = "Add a new option",
+  isLoading = false,
 }: SearchableSelectProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [search, setSearch] = useState("");
@@ -41,7 +43,7 @@ export function SearchableSelect({
   }, []);
 
   const filteredOptions = options.filter(opt => 
-    opt.label.toLowerCase().includes(search.toLowerCase())
+    (opt.label || "").toLowerCase().includes(search.toLowerCase())
   );
 
   const selectedOption = options.find(opt => opt.value === value);
@@ -72,35 +74,44 @@ export function SearchableSelect({
             />
           </div>
 
-          {onAddOption && (
-            <div 
-              className="p-2 text-sm font-semibold text-gray-900 cursor-pointer hover:bg-gray-100"
-              onClick={() => {
-                onAddOption(search);
-                setIsOpen(false);
-                setSearch("");
-              }}
-            >
-              {addNewLabel}
+          {isLoading ? (
+            <div className="p-4 text-sm text-gray-500 flex items-center justify-center gap-2">
+              <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+              Loading...
             </div>
-          )}
-
-          {filteredOptions.length === 0 ? (
-            <div className="p-2 text-sm text-gray-500 text-center">No results found</div>
           ) : (
-            filteredOptions.map((opt, i) => (
-              <div 
-                key={i}
-                className="p-2 text-sm text-gray-800 cursor-pointer hover:bg-gray-100"
-                onClick={() => {
-                  onChange(opt.value);
-                  setIsOpen(false);
-                  setSearch("");
-                }}
-              >
-                {opt.label}
-              </div>
-            ))
+            <>
+              {onAddOption && (
+                <div 
+                  className="p-2 text-sm font-semibold text-gray-900 cursor-pointer hover:bg-gray-100"
+                  onClick={() => {
+                    onAddOption(search);
+                    setIsOpen(false);
+                    setSearch("");
+                  }}
+                >
+                  {addNewLabel}
+                </div>
+              )}
+
+              {filteredOptions.length === 0 ? (
+                <div className="p-2 text-sm text-gray-500 text-center">No results found</div>
+              ) : (
+                filteredOptions.map((opt, i) => (
+                  <div 
+                    key={i}
+                    className="p-2 text-sm text-gray-800 cursor-pointer hover:bg-gray-100"
+                    onClick={() => {
+                      onChange(opt.value);
+                      setIsOpen(false);
+                      setSearch("");
+                    }}
+                  >
+                    {opt.label}
+                  </div>
+                ))
+              )}
+            </>
           )}
         </div>
       )}

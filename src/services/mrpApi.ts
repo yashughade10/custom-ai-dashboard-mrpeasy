@@ -44,6 +44,34 @@ export const mrpApi = {
     return res.json();
   },
 
+  getStockMovement: async (startDate: string, endDate: string) => {
+    const res = await fetch(`${API_BASE}/mrp/stock/movement?startDate=${startDate}&endDate=${endDate}`);
+    if (!res.ok) throw new Error("Failed to fetch stock movement report");
+    return res.json();
+  },
+
+  getStockAging: async (page = 1, limit = 50, filters = {}) => {
+    const searchParams = new URLSearchParams({
+      page: page.toString(),
+      limit: limit.toString(),
+      filters: JSON.stringify(filters)
+    });
+    const res = await fetch(`${API_BASE}/mrp/stock/aging?${searchParams.toString()}`);
+    if (!res.ok) throw new Error("Failed to fetch stock aging report");
+    return res.json();
+  },
+
+  getCriticalOnHand: async (page = 1, limit = 50, filters = {}) => {
+    const searchParams = new URLSearchParams({
+      page: page.toString(),
+      limit: limit.toString(),
+      filters: JSON.stringify(filters)
+    });
+    const res = await fetch(`${API_BASE}/mrp/stock/critical?${searchParams.toString()}`);
+    if (!res.ok) throw new Error("Failed to fetch critical stock");
+    return res.json();
+  },
+
   getCustomers: async (page = 1, limit = 50) => {
     const res = await fetch(`${API_BASE}/mrp/crm/customers?page=${page}&limit=${limit}`);
     if (!res.ok) throw new Error("Failed to fetch customers");
@@ -373,6 +401,32 @@ export const mrpApi = {
     return res.json();
   },
 
+  getLotById: async (id: string) => {
+    const res = await fetch(`${API_BASE}/mrp/stock/lots/${id}`);
+    if (!res.ok) throw new Error("Failed to fetch stock lot");
+    return res.json();
+  },
+
+  createLot: async (data: any) => {
+    const res = await fetch(`${API_BASE}/mrp/stock/lots`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data)
+    });
+    if (!res.ok) throw new Error("Failed to create lot");
+    return res.json();
+  },
+
+  updateLot: async (id: string, data: any) => {
+    const res = await fetch(`${API_BASE}/mrp/stock/lots/${id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data)
+    });
+    if (!res.ok) throw new Error("Failed to update lot");
+    return res.json();
+  },
+
   deleteLot: async (id: string | number) => {
     const res = await fetch(`${API_BASE}/mrp/stock/lots/${id}`, {
       method: "DELETE"
@@ -565,6 +619,90 @@ export const mrpApi = {
       method: "DELETE"
     });
     if (!res.ok) throw new Error("Failed to delete BOM");
+    return res.json();
+  },
+
+  getRoutings: async (page = 1, limit = 50, filters = {}) => {
+    const searchParams = new URLSearchParams({
+      page: page.toString(),
+      limit: limit.toString(),
+      ...filters
+    });
+    const res = await fetch(`${API_BASE}/mrp/production/routings?${searchParams.toString()}`);
+    if (!res.ok) throw new Error("Failed to fetch routings");
+    return res.json();
+  },
+
+  getRoutingById: async (id: string) => {
+    const res = await fetch(`${API_BASE}/mrp/production/routings/${id}`);
+    if (!res.ok) throw new Error("Failed to fetch routing");
+    return res.json();
+  },
+
+  createRouting: async (data: any) => {
+    const res = await fetch(`${API_BASE}/mrp/production/routings`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data)
+    });
+    if (!res.ok) throw new Error("Failed to create routing");
+    return res.json();
+  },
+
+  updateRouting: async (id: string, data: any) => {
+    const res = await fetch(`${API_BASE}/mrp/production/routings/${id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data)
+    });
+    if (!res.ok) throw new Error("Failed to update routing");
+    return res.json();
+  },
+
+  deleteRouting: async (id: string) => {
+    const res = await fetch(`${API_BASE}/mrp/production/routings/${id}`, {
+      method: "DELETE"
+    });
+    if (!res.ok) throw new Error("Failed to delete routing");
+    return res.json();
+  },
+
+  getManufacturingCosts: async (page = 1, limit = 50, filters: { fromDate?: string, toDate?: string } = {}) => {
+    const searchParams = new URLSearchParams({
+      page: page.toString(),
+      limit: limit.toString(),
+      ...filters
+    });
+    const res = await fetch(`${API_BASE}/mrp/production/statistics/costs?${searchParams.toString()}`);
+    if (!res.ok) throw new Error("Failed to fetch manufacturing costs");
+    return res.json();
+  },
+
+  getCostsByProduct: async (page = 1, limit = 50, filters = {}) => {
+    const searchParams = new URLSearchParams({ page: page.toString(), limit: limit.toString(), ...filters });
+    const res = await fetch(`${API_BASE}/mrp/production/statistics/costs-by-product?${searchParams.toString()}`);
+    if (!res.ok) throw new Error("Failed to fetch costs by product");
+    return res.json();
+  },
+
+  getManufacturingEfficiency: async (page = 1, limit = 50, filters = {}) => {
+    const searchParams = new URLSearchParams({ page: page.toString(), limit: limit.toString(), ...filters });
+    const res = await fetch(`${API_BASE}/mrp/production/statistics/efficiency?${searchParams.toString()}`);
+    if (!res.ok) throw new Error("Failed to fetch efficiency");
+    return res.json();
+  },
+
+  getShortages: async (page = 1, limit = 50, filters = {}) => {
+    const searchParams = new URLSearchParams({ page: page.toString(), limit: limit.toString(), ...filters });
+    const res = await fetch(`${API_BASE}/mrp/production/statistics/shortages?${searchParams.toString()}`);
+    if (!res.ok) throw new Error("Failed to fetch shortages");
+    return res.json();
+  },
+
+  getRevenueAndProfit: async (page = 1, limit = 50, filters = {}) => {
+    const searchParams = new URLSearchParams({ page: page.toString(), limit: limit.toString(), ...filters });
+    const res = await fetch(`${API_BASE}/mrp/production/statistics/revenue?${searchParams.toString()}`);
+    if (!res.ok) throw new Error("Failed to fetch revenue");
     return res.json();
   },
 
