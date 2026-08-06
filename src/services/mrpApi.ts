@@ -44,6 +44,23 @@ export const mrpApi = {
     return res.json();
   },
 
+  getStockMovement: async (startDate: string, endDate: string) => {
+    const res = await fetch(`${API_BASE}/mrp/stock/movement?startDate=${startDate}&endDate=${endDate}`);
+    if (!res.ok) throw new Error("Failed to fetch stock movement report");
+    return res.json();
+  },
+
+  getStockAging: async (page = 1, limit = 50, filters = {}) => {
+    const searchParams = new URLSearchParams({
+      page: page.toString(),
+      limit: limit.toString(),
+      filters: JSON.stringify(filters)
+    });
+    const res = await fetch(`${API_BASE}/mrp/stock/aging?${searchParams.toString()}`);
+    if (!res.ok) throw new Error("Failed to fetch stock aging report");
+    return res.json();
+  },
+
   getCustomers: async (page = 1, limit = 50) => {
     const res = await fetch(`${API_BASE}/mrp/crm/customers?page=${page}&limit=${limit}`);
     if (!res.ok) throw new Error("Failed to fetch customers");
