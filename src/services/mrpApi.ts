@@ -429,9 +429,105 @@ export const mrpApi = {
     const res = await fetch(`${API_BASE}/mrp/stock/inventory/adjust`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(data),
+      body: JSON.stringify(data)
     });
-    if (!res.ok) throw new Error("Failed to update physical quantity");
+    if (!res.ok) throw new Error("Failed to adjust physical quantity");
+    return res.json();
+  },
+  
+  // ==========================================
+  // SHIPMENTS
+  // ==========================================
+  getShipments: async (page = 1, limit = 50, search = "", filters: any = {}, rangeFilters: any = {}) => {
+    let url = `${API_BASE}/mrp/stock/shipments?page=${page}&limit=${limit}`;
+    if (search) url += `&search=${encodeURIComponent(search)}`;
+    const filterParams = new URLSearchParams();
+    if (Object.keys(filters).length > 0) filterParams.append('filters', JSON.stringify(filters));
+    if (Object.keys(rangeFilters).length > 0) filterParams.append('rangeFilters', JSON.stringify(rangeFilters));
+    const filterStr = filterParams.toString();
+    if (filterStr) url += `&${filterStr}`;
+    const res = await fetch(url);
+    if (!res.ok) throw new Error("Failed to fetch shipments");
+    return res.json();
+  },
+
+  getShipmentById: async (id: string) => {
+    const res = await fetch(`${API_BASE}/mrp/stock/shipments/${id}`);
+    if (!res.ok) throw new Error("Failed to fetch shipment");
+    return res.json();
+  },
+
+  createShipment: async (data: any) => {
+    const res = await fetch(`${API_BASE}/mrp/stock/shipments`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data)
+    });
+    if (!res.ok) throw new Error("Failed to create shipment");
+    return res.json();
+  },
+
+  updateShipment: async (id: string, data: any) => {
+    const res = await fetch(`${API_BASE}/mrp/stock/shipments/${id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data)
+    });
+    if (!res.ok) throw new Error("Failed to update shipment");
+    return res.json();
+  },
+
+  deleteShipment: async (id: string | number) => {
+    const res = await fetch(`${API_BASE}/mrp/stock/shipments/${id}`, { method: "DELETE" });
+    if (!res.ok) throw new Error("Failed to delete shipment");
+    return res.json();
+  },
+
+  // ==========================================
+  // SHIPMENT ITEMS
+  // ==========================================
+  getShipmentItems: async (page = 1, limit = 50, search = "", filters: any = {}, rangeFilters: any = {}) => {
+    let url = `${API_BASE}/mrp/stock/shipment-items?page=${page}&limit=${limit}`;
+    if (search) url += `&search=${encodeURIComponent(search)}`;
+    const filterParams = new URLSearchParams();
+    if (Object.keys(filters).length > 0) filterParams.append('filters', JSON.stringify(filters));
+    if (Object.keys(rangeFilters).length > 0) filterParams.append('rangeFilters', JSON.stringify(rangeFilters));
+    const filterStr = filterParams.toString();
+    if (filterStr) url += `&${filterStr}`;
+    const res = await fetch(url);
+    if (!res.ok) throw new Error("Failed to fetch shipment items");
+    return res.json();
+  },
+
+  getShipmentItemById: async (id: string) => {
+    const res = await fetch(`${API_BASE}/mrp/stock/shipment-items/${id}`);
+    if (!res.ok) throw new Error("Failed to fetch shipment item");
+    return res.json();
+  },
+
+  createShipmentItem: async (data: any) => {
+    const res = await fetch(`${API_BASE}/mrp/stock/shipment-items`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data)
+    });
+    if (!res.ok) throw new Error("Failed to create shipment item");
+    return res.json();
+  },
+
+  updateShipmentItem: async (id: string, data: any) => {
+    const res = await fetch(`${API_BASE}/mrp/stock/shipment-items/${id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data)
+    });
+    if (!res.ok) throw new Error("Failed to update shipment item");
+    return res.json();
+  },
+
+  deleteShipmentItem: async (id: string | number) => {
+    const res = await fetch(`${API_BASE}/mrp/stock/shipment-items/${id}`, { method: "DELETE" });
+    if (!res.ok) throw new Error("Failed to delete shipment item");
     return res.json();
   },
 
