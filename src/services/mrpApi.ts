@@ -61,6 +61,17 @@ export const mrpApi = {
     return res.json();
   },
 
+  getCriticalOnHand: async (page = 1, limit = 50, filters = {}) => {
+    const searchParams = new URLSearchParams({
+      page: page.toString(),
+      limit: limit.toString(),
+      filters: JSON.stringify(filters)
+    });
+    const res = await fetch(`${API_BASE}/mrp/stock/critical?${searchParams.toString()}`);
+    if (!res.ok) throw new Error("Failed to fetch critical stock");
+    return res.json();
+  },
+
   getCustomers: async (page = 1, limit = 50) => {
     const res = await fetch(`${API_BASE}/mrp/crm/customers?page=${page}&limit=${limit}`);
     if (!res.ok) throw new Error("Failed to fetch customers");
@@ -377,6 +388,32 @@ export const mrpApi = {
 
     const res = await fetch(url);
     if (!res.ok) throw new Error("Failed to fetch stock lots");
+    return res.json();
+  },
+
+  getLotById: async (id: string) => {
+    const res = await fetch(`${API_BASE}/mrp/stock/lots/${id}`);
+    if (!res.ok) throw new Error("Failed to fetch stock lot");
+    return res.json();
+  },
+
+  createLot: async (data: any) => {
+    const res = await fetch(`${API_BASE}/mrp/stock/lots`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data)
+    });
+    if (!res.ok) throw new Error("Failed to create lot");
+    return res.json();
+  },
+
+  updateLot: async (id: string, data: any) => {
+    const res = await fetch(`${API_BASE}/mrp/stock/lots/${id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data)
+    });
+    if (!res.ok) throw new Error("Failed to update lot");
     return res.json();
   },
 

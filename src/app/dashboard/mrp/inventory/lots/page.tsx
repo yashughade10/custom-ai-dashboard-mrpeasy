@@ -9,6 +9,7 @@ import { RouteGuard } from "@/components/auth/RouteGuard";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Trash2, Download, Upload } from "lucide-react";
 import { toast } from "sonner";
+import Link from "next/link";
 
 const stockTabs = [
   { name: "Items", href: "/dashboard/mrp/inventory" },
@@ -56,7 +57,17 @@ export default function StockLotsPage() {
   const totals = response?.totals;
 
   const columns: Column<any>[] = [
-    { header: "Lot", accessorKey: "lot_number", sortable: true, searchable: true },
+    { 
+      header: "Lot", 
+      accessorKey: "lot_number", 
+      sortable: true, 
+      searchable: true,
+      cell: (r) => (
+        <Link href={`/dashboard/mrp/inventory/lots/${r.id}`} className="text-[#1a73e8] hover:underline">
+          {r.lot_number}
+        </Link>
+      )
+    },
     { header: "Storage location", accessorKey: "storage_location", searchable: true },
     { header: "Part No.", accessorKey: "part_no", searchable: true },
     { header: "Part description", accessorKey: "part_description", searchable: true },
@@ -73,6 +84,7 @@ export default function StockLotsPage() {
       cell: (row) => (
         <button
           onClick={(e) => {
+            e.preventDefault();
             e.stopPropagation();
             if (confirm("Are you sure you want to delete this lot?")) {
               deleteMutation.mutate(row.id);
@@ -119,9 +131,11 @@ export default function StockLotsPage() {
             <div className="flex items-center justify-between my-4">
               <h1 className="text-2xl text-[#1a2b49]">Stock lots</h1>
               <div className="flex items-center gap-2">
-                <button className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded hover:bg-blue-700">
-                  + Create
-                </button>
+                <Link href="/dashboard/mrp/inventory/lots/new">
+                  <button className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded hover:bg-blue-700">
+                    + Create
+                  </button>
+                </Link>
                 <button className="flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 text-sm font-medium rounded border border-gray-200 hover:bg-gray-200">
                   <Download className="w-4 h-4" /> PDF
                 </button>
