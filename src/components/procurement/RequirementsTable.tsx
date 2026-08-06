@@ -355,7 +355,19 @@ export default function RequirementsTable() {
               <tr><td colSpan={ALL_COLUMNS.length + 2} className="p-8 text-center text-gray-500">Loading...</td></tr>
             ) : items.length === 0 ? (
               <tr><td colSpan={ALL_COLUMNS.length + 2} className="p-8 text-center text-gray-500">No items found</td></tr>
-            ) : items.map((item: any, index: number) => {
+            ) : (
+              <>
+                <tr className="bg-white font-semibold text-gray-900 border-b border-gray-200">
+                  <td className="p-2 border-r border-gray-200 text-center">Total:</td>
+                  {ALL_COLUMNS.map(col => visibleCols[col.id] && (
+                    <td key={`total-${col.id}`} className="p-2 border-r border-gray-200">
+                      {col.id === 'quantity' && (response?.meta?.sum_quantity || 0)}
+                      {col.id === 'subtotal' && formatCurrency(response?.meta?.sum_subtotal || 0)}
+                    </td>
+                  ))}
+                  <td className="p-2 text-center"></td>
+                </tr>
+                {items.map((item: any, index: number) => {
               return (
                 <tr key={item.id || index} className="border-b border-gray-100 hover:bg-gray-50">
                   <td className="p-2 border-r border-gray-200 text-center text-gray-400">{index + 1}</td>
@@ -429,6 +441,8 @@ export default function RequirementsTable() {
                 </tr>
               );
             })}
+            </>
+          )}
           </tbody>
         </table>
         {hasMore && (
