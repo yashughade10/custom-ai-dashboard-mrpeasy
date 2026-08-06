@@ -558,6 +558,90 @@ export const mrpApi = {
     return res.json();
   },
 
+  getRoutings: async (page = 1, limit = 50, filters = {}) => {
+    const searchParams = new URLSearchParams({
+      page: page.toString(),
+      limit: limit.toString(),
+      ...filters
+    });
+    const res = await fetch(`${API_BASE}/mrp/production/routings?${searchParams.toString()}`);
+    if (!res.ok) throw new Error("Failed to fetch routings");
+    return res.json();
+  },
+
+  getRoutingById: async (id: string) => {
+    const res = await fetch(`${API_BASE}/mrp/production/routings/${id}`);
+    if (!res.ok) throw new Error("Failed to fetch routing");
+    return res.json();
+  },
+
+  createRouting: async (data: any) => {
+    const res = await fetch(`${API_BASE}/mrp/production/routings`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data)
+    });
+    if (!res.ok) throw new Error("Failed to create routing");
+    return res.json();
+  },
+
+  updateRouting: async (id: string, data: any) => {
+    const res = await fetch(`${API_BASE}/mrp/production/routings/${id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data)
+    });
+    if (!res.ok) throw new Error("Failed to update routing");
+    return res.json();
+  },
+
+  deleteRouting: async (id: string) => {
+    const res = await fetch(`${API_BASE}/mrp/production/routings/${id}`, {
+      method: "DELETE"
+    });
+    if (!res.ok) throw new Error("Failed to delete routing");
+    return res.json();
+  },
+
+  getManufacturingCosts: async (page = 1, limit = 50, filters: { fromDate?: string, toDate?: string } = {}) => {
+    const searchParams = new URLSearchParams({
+      page: page.toString(),
+      limit: limit.toString(),
+      ...filters
+    });
+    const res = await fetch(`${API_BASE}/mrp/production/statistics/costs?${searchParams.toString()}`);
+    if (!res.ok) throw new Error("Failed to fetch manufacturing costs");
+    return res.json();
+  },
+
+  getCostsByProduct: async (page = 1, limit = 50, filters = {}) => {
+    const searchParams = new URLSearchParams({ page: page.toString(), limit: limit.toString(), ...filters });
+    const res = await fetch(`${API_BASE}/mrp/production/statistics/costs-by-product?${searchParams.toString()}`);
+    if (!res.ok) throw new Error("Failed to fetch costs by product");
+    return res.json();
+  },
+
+  getManufacturingEfficiency: async (page = 1, limit = 50, filters = {}) => {
+    const searchParams = new URLSearchParams({ page: page.toString(), limit: limit.toString(), ...filters });
+    const res = await fetch(`${API_BASE}/mrp/production/statistics/efficiency?${searchParams.toString()}`);
+    if (!res.ok) throw new Error("Failed to fetch efficiency");
+    return res.json();
+  },
+
+  getShortages: async (page = 1, limit = 50, filters = {}) => {
+    const searchParams = new URLSearchParams({ page: page.toString(), limit: limit.toString(), ...filters });
+    const res = await fetch(`${API_BASE}/mrp/production/statistics/shortages?${searchParams.toString()}`);
+    if (!res.ok) throw new Error("Failed to fetch shortages");
+    return res.json();
+  },
+
+  getRevenueAndProfit: async (page = 1, limit = 50, filters = {}) => {
+    const searchParams = new URLSearchParams({ page: page.toString(), limit: limit.toString(), ...filters });
+    const res = await fetch(`${API_BASE}/mrp/production/statistics/revenue?${searchParams.toString()}`);
+    if (!res.ok) throw new Error("Failed to fetch revenue");
+    return res.json();
+  },
+
   getForecasts: async (filters: any = {}) => {
     // Filter out empty strings from filters
     const validFilters = Object.fromEntries(

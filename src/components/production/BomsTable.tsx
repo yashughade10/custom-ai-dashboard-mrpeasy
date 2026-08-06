@@ -25,7 +25,7 @@ export default function BomsTable({ onEdit }: BomsTableProps) {
     fetchNextPage
   } = useInfiniteQuery({
     queryKey: ["mrp-boms", filters],
-    queryFn: ({ pageParam = 1 }) => mrpApi.getBoms(pageParam, 50, filters),
+    queryFn: ({ pageParam = 1 }) => mrpApi.getBoms(pageParam, 20, filters),
     getNextPageParam: (lastPage) => {
       if (lastPage.pagination && lastPage.pagination.page < lastPage.pagination.totalPages) {
         return lastPage.pagination.page + 1;
