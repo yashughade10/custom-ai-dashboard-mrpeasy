@@ -7,6 +7,7 @@ import { MrpTabBar } from "@/components/mrp/MrpTabBar";
 import { MrpDataTable } from "@/components/mrp/MrpDataTable";
 import type { Column } from "@/components/mrp/MrpDataTable";
 import Link from "next/link";
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
 
 const stockTabs = [
   { name: "Items", href: "/dashboard/mrp/inventory" },
@@ -27,6 +28,14 @@ export default function StatisticsPage() {
     queryKey: ["mrpStockAging", filters],
     queryFn: () => mrpApi.getStockAging(1, 100, filters),
   });
+
+  const data = response?.data || [];
+  
+  // Prepare top 10 data for chart
+  const chartData = data.slice(0, 10).map((item: any) => ({
+    name: item.part_no,
+    days: item.unused_days
+  }));
 
   const columns: Column<any>[] = [
     { header: "Part No.", accessorKey: "part_no", sortable: true, searchable: true },
@@ -66,14 +75,36 @@ export default function StatisticsPage() {
           </div>
         </div>
 
-        <div className="flex-1 overflow-auto">
-          <MrpDataTable 
-            columns={columns} 
-            data={response?.data || []} 
-            searchPlaceholder="Search part number..."
-            isLoading={isLoading}
-            onFilterChange={setFilters}
-          />
+        <div className="flex-1 overflow-auto flex flex-col">
+          {chartData.length > 0 && (
+            <div className="p-4 border-b border-gray-100 bg-gray-50/50">
+              <h3 className="text-sm font-medium text-gray-700 mb-4">Top 10 Aging Items (Days)</h3>
+              <div className="h-48 w-full max-w-4xl">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={chartData} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
+                    <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#6b7280' }} />
+                    <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#6b7280' }} />
+                    <Tooltip 
+                      cursor={{ fill: '#f3f4f6' }}
+                      contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                    />
+                    <Bar dataKey="days" fill="#ef4444" radius={[4, 4, 0, 0]} barSize={40} name="Unused Days" />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+          )}
+
+          <div className="flex-1">
+            <MrpDataTable 
+              columns={columns} 
+              data={data} 
+              searchPlaceholder="Search part number..."
+              isLoading={isLoading}
+              onFilterChange={setFilters}
+            />
+          </div>
         </div>
       </div>
     </div>

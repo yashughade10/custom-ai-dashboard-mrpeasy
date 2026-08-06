@@ -6,7 +6,7 @@ import { mrpApi } from "@/services/mrpApi";
 import { MrpTabBar } from "@/components/mrp/MrpTabBar";
 import { MrpDataTable, Column } from "@/components/mrp/MrpDataTable";
 import { RouteGuard } from "@/components/auth/RouteGuard";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Trash2, Download, Upload } from "lucide-react";
 import { toast } from "sonner";
 
@@ -24,8 +24,16 @@ const stockTabs = [
 
 export default function StockLotsPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const queryClient = useQueryClient();
-  const [filters, setFilters] = useState<Record<string, string>>({});
+  
+  const [filters, setFilters] = useState<Record<string, string>>(() => {
+    const initialFilters: Record<string, string> = {};
+    searchParams.forEach((value, key) => {
+      initialFilters[key] = value;
+    });
+    return initialFilters;
+  });
   const [rangeFilters, setRangeFilters] = useState<Record<string, { min?: string; max?: string }>>({});
 
   const { data: response, isLoading } = useQuery({
