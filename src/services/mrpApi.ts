@@ -345,11 +345,19 @@ export const mrpApi = {
     return res.json();
   },
 
-  getLots: async (page = 1, limit = 50, search = "") => {
+  getLots: async (page = 1, limit = 50, search = "", filters = {}, rangeFilters = {}) => {
     let url = `${API_BASE}/mrp/stock/lots?page=${page}&limit=${limit}`;
     if (search) {
       url += `&search=${encodeURIComponent(search)}`;
     }
+    
+    // Add column filters
+    const filterParams = new URLSearchParams();
+    if (Object.keys(filters).length > 0) filterParams.append('filters', JSON.stringify(filters));
+    if (Object.keys(rangeFilters).length > 0) filterParams.append('rangeFilters', JSON.stringify(rangeFilters));
+    const filterStr = filterParams.toString();
+    if (filterStr) url += `&${filterStr}`;
+
     const res = await fetch(url);
     if (!res.ok) throw new Error("Failed to fetch stock lots");
     return res.json();
@@ -373,12 +381,17 @@ export const mrpApi = {
     return res.json();
   },
 
-  getWriteoffs: async (page = 1, limit = 50, search = "") => {
+  getWriteoffs: async (page = 1, limit = 50, search = "", filters = {}, rangeFilters = {}) => {
     const searchParams = new URLSearchParams({
       page: page.toString(),
       limit: limit.toString(),
       search: search
     });
+    
+    // Add column filters
+    if (Object.keys(filters).length > 0) searchParams.append('filters', JSON.stringify(filters));
+    if (Object.keys(rangeFilters).length > 0) searchParams.append('rangeFilters', JSON.stringify(rangeFilters));
+
     const res = await fetch(`${API_BASE}/mrp/stock/writeoffs?${searchParams.toString()}`);
     if (!res.ok) throw new Error("Failed to fetch write-offs");
     return res.json();
