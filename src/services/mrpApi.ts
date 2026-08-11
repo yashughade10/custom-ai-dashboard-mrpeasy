@@ -78,9 +78,21 @@ export const mrpApi = {
     return res.json();
   },
 
+  getTodayContacts: async (page = 1, limit = 50) => {
+    const res = await fetch(`${API_BASE}/mrp/crm/today-contacts?page=${page}&limit=${limit}`);
+    if (!res.ok) throw new Error("Failed to fetch today's contacts");
+    return res.json();
+  },
+
   getCustomerById: async (id: string) => {
     const res = await fetch(`${API_BASE}/mrp/crm/customers/${id}`);
     if (!res.ok) throw new Error("Failed to fetch customer");
+    return res.json();
+  },
+
+  getCustomerStatistics: async (page = 1, limit = 100) => {
+    const res = await fetch(`${API_BASE}/mrp/crm/customer-statistics?page=${page}&limit=${limit}`);
+    if (!res.ok) throw new Error("Failed to fetch customer statistics");
     return res.json();
   },
 

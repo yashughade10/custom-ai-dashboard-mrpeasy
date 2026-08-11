@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { mrpApi } from "@/services/mrpApi";
 import { MrpTabBar } from "@/components/mrp/MrpTabBar";
@@ -26,6 +26,7 @@ export default function CustomersPage() {
   const { data: response, isLoading } = useQuery({
     queryKey: ["mrpCustomers", limit],
     queryFn: () => mrpApi.getCustomers(1, limit),
+    placeholderData: keepPreviousData,
   });
 
   const customers = response?.data || [];

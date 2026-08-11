@@ -114,10 +114,8 @@ function DashboardPage() {
 
       <div className="mt-8">
         <Dialog>
-          <DialogTrigger>
-            <Button variant="outline" className="text-blue-600 border-blue-600 font-medium">
-              + Customize dashboard
-            </Button>
+          <DialogTrigger render={<Button variant="outline" className="text-blue-600 border-blue-600 font-medium" />}>
+            + Customize dashboard
           </DialogTrigger>
           <DialogContent className="max-w-md max-h-[80vh] overflow-y-auto">
             <DialogHeader>

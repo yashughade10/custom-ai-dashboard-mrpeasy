@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import { mrpApi } from "@/services/mrpApi";
 import { MrpTabBar } from "@/components/mrp/MrpTabBar";
 import { MrpKanbanBoard } from "@/components/mrp/MrpKanbanBoard";
@@ -43,15 +43,7 @@ const ORDER_STATUSES = [
   "Ready for shipment"
 ];
 
-// Target column values matching MRPeasy official Sales Pipeline header totals
-const TARGET_STATUS_TOTALS: Record<string, number> = {
-  "Quotation": 490076.16,
-  "Waiting for confirmation": 0.00,
-  "Confirmed": 53596.03,
-  "Waiting for production": 28903.80,
-  "In production": 37106.00,
-  "Ready for shipment": 45988.76
-};
+
 
 export default function CRMPage() {
   const [pipelineMode, setPipelineMode] = useState<"active" | "all">("active");
@@ -65,17 +57,32 @@ export default function CRMPage() {
   const { data: response, isLoading } = useQuery({
     queryKey: ["mrpCustomerOrders", pipelineMode, searchQuery, selectedUser, limit],
     queryFn: () => mrpApi.getCustomerOrders(1, limit),
+    placeholderData: keepPreviousData,
   });
 
   const orders = response?.data || [];
+  const hasMore = orders.length >= limit;
+
+  const observerRef = useRef<IntersectionObserver | null>(null);
+  const loadMoreRef = useCallback((node: HTMLDivElement | null) => {
+    if (isLoading || !hasMore) return;
+    if (observerRef.current) observerRef.current.disconnect();
+    
+    observerRef.current = new IntersectionObserver(entries => {
+      if (entries[0].isIntersecting) {
+        setLimit(prev => prev + 50);
+      }
+    });
+    
+    if (node) observerRef.current.observe(node);
+  }, [isLoading, hasMore]);
 
   // Group orders into columns
   const columns = ORDER_STATUSES.map(status => {
     const statusOrders = orders.filter((o: any) => o.status === status);
     
-    // In active pipeline mode, use exact MRPeasy header total; otherwise sum items
-    const calculatedSum = statusOrders.reduce((sum: number, o: any) => sum + Number(o.total || 0), 0);
-    const totalValue = pipelineMode === "active" ? (TARGET_STATUS_TOTALS[status] ?? calculatedSum) : calculatedSum;
+    // Calculate sum dynamically from the database rows
+    const totalValue = statusOrders.reduce((sum: number, o: any) => sum + Number(o.total || 0), 0);
     
     return {
       id: status,
@@ -197,14 +204,19 @@ export default function CRMPage() {
           
           <div className="px-4 py-3 flex-1 flex flex-col">
             <div className="flex-1 min-h-0">
-              {isLoading ? (
+              {isLoading && orders.length === 0 ? (
                 <div className="p-8 text-center text-gray-500">Loading orders...</div>
               ) : viewMode === "kanban" ? (
-                <MrpKanbanBoard columns={columns} onItemClick={(item) => router.push("/dashboard/mrp/crm/customer-orders/" + item.id)} />
+                <MrpKanbanBoard 
+                  columns={columns} 
+                  onItemClick={(item) => router.push("/dashboard/mrp/crm/customer-orders/" + item.id)} 
+                  hasMore={hasMore}
+                  onLoadMore={() => setLimit(l => l + 50)}
+                />
               ) : (
-                <div className="overflow-x-auto border border-gray-200 rounded-sm">
+                <div className="overflow-x-auto border border-gray-200 rounded-sm h-full overflow-y-auto">
                   <table className="w-full text-xs text-left">
-                    <thead className="bg-gray-50 text-gray-700 uppercase font-semibold border-b">
+                    <thead className="bg-gray-50 text-gray-700 uppercase font-semibold border-b sticky top-0">
                       <tr>
                         <th className="px-4 py-2">Order #</th>
                         <th className="px-4 py-2">Customer Number</th>
@@ -235,9 +247,9 @@ export default function CRMPage() {
                       ))}
                     </tbody>
                   </table>
-                  {orders.length >= limit && (
-                    <div className="text-center py-4 bg-white">
-                      <Button variant="link" onClick={() => setLimit(l => l + 50)} className="text-blue-600 text-[11px]">Load more</Button>
+                  {hasMore && (
+                    <div ref={loadMoreRef} className="text-center py-4 bg-white">
+                      <span className="text-gray-500 text-xs">Loading more...</span>
                     </div>
                   )}
                 </div>

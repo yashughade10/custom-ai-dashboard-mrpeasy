@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useRef } from "react";
 import { cn } from "@/lib/utils";
 
 interface KanbanColumn {
@@ -18,12 +18,33 @@ interface KanbanItem {
 interface MrpKanbanBoardProps {
   columns: KanbanColumn[];
   onItemClick?: (item: KanbanItem) => void;
+  onLoadMore?: () => void;
+  hasMore?: boolean;
 }
 
-export function MrpKanbanBoard({ columns, onItemClick }: MrpKanbanBoardProps) {
+export function MrpKanbanBoard({ columns, onItemClick, onLoadMore, hasMore }: MrpKanbanBoardProps) {
+  const loadMoreRefs = useRef<(HTMLDivElement | null)[]>([]);
+
+  useEffect(() => {
+    if (!hasMore || !onLoadMore) return;
+
+    const observer = new IntersectionObserver((entries) => {
+      if (entries.some((entry) => entry.isIntersecting)) {
+        onLoadMore();
+      }
+    });
+
+    loadMoreRefs.current.forEach((ref) => {
+      if (ref) observer.observe(ref);
+    });
+
+    return () => {
+      observer.disconnect();
+    };
+  }, [hasMore, onLoadMore, columns]);
   return (
     <div className="flex h-full gap-2.5 overflow-x-auto pb-4">
-      {columns.map((column) => (
+      {columns.map((column, index) => (
         <div key={column.id} className="flex flex-col flex-1 min-w-[200px] bg-[#f1f5f9] rounded-sm border border-gray-200">
           {/* Column Header matching MRPeasy chevron design */}
           <div className="p-2.5 border-b border-gray-200 bg-[#e2e8f0] flex flex-col justify-between min-h-[50px]">
@@ -62,6 +83,16 @@ export function MrpKanbanBoard({ columns, onItemClick }: MrpKanbanBoardProps) {
             {column.items.length === 0 && (
               <div className="text-center p-4 text-xs text-gray-400 border border-dashed border-gray-300 rounded-sm bg-white/50">
                 No orders
+              </div>
+            )}
+            {hasMore && (
+              <div
+                ref={(el) => {
+                  loadMoreRefs.current[index] = el;
+                }}
+                className="py-2 text-center text-[10px] text-gray-400"
+              >
+                Loading more...
               </div>
             )}
           </div>

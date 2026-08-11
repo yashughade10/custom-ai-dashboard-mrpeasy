@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Download, Search, Calendar as CalendarIcon, ArrowUp } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import { mrpApi } from "@/services/mrpApi";
 
 const crmTabs = [
@@ -23,8 +23,9 @@ export default function StatisticsPage() {
   const [limit, setLimit] = useState(100);
 
   const { data: response, isLoading } = useQuery({
-    queryKey: ["mrpCustomers", limit],
-    queryFn: () => mrpApi.getCustomers(1, limit),
+    queryKey: ["mrpCustomerStatistics", limit],
+    queryFn: () => mrpApi.getCustomerStatistics(1, limit),
+    placeholderData: keepPreviousData,
   });
 
   const customers = response?.data || [];

@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import { useQuery, keepPreviousData } from "@tanstack/react-query";
+import { mrpApi } from "@/services/mrpApi";
 import { MrpTabBar } from "@/components/mrp/MrpTabBar";
 import { RouteGuard } from "@/components/auth/RouteGuard";
 import { Button } from "@/components/ui/button";
@@ -20,27 +22,16 @@ const crmTabs = [
 
 export default function TodayContactsPage() {
   const router = useRouter();
+  const [limit, setLimit] = useState(50);
 
-  const today = new Date();
-  const formattedToday = `${String(today.getDate()).padStart(2, '0')}/${String(today.getMonth() + 1).padStart(2, '0')}/${today.getFullYear()}`;
+  const { data: response, isLoading } = useQuery({
+    queryKey: ["mrpTodayContacts", limit],
+    queryFn: () => mrpApi.getTodayContacts(1, limit),
+    placeholderData: keepPreviousData,
+  });
 
-  const allMockData = [
-    { num: "CU00123", name: "PAUL TURNER", status: "Active", next: formattedToday, phone: "+61 123 456 789", email: "paul.turner@example.com" },
-    { num: "CU00320", name: "SHINE STAINLESS MARINE", status: "Active", next: formattedToday, phone: "+61 456 789 012", email: "shine@marine.com" },
-    { num: "CU00793", name: "ALL TRADES TRAILERS", status: "Follow Up", next: formattedToday, phone: "+61 987 654 321", email: "contact@alltrades.com" },
-    { num: "CU04713", name: "NOY INDUSTRIES", status: "Active", next: formattedToday, phone: "+61 234 567 890", email: "info@noyindustries.com" },
-    { num: "CU00842", name: "BUILDMAX PTY LTD", status: "Active", next: formattedToday, phone: "+61 345 678 901", email: "admin@buildmax.com.au" },
-    { num: "CU00911", name: "PRECISION STEELWORKS", status: "Active", next: formattedToday, phone: "+61 456 789 123", email: "sales@precisionsteel.com" },
-    { num: "CU01005", name: "HARBOUR ENGINEERING", status: "Follow Up", next: formattedToday, phone: "+61 567 890 234", email: "harbour@engineering.net" },
-    { num: "CU01140", name: "APEX MANUFACTURING", status: "Active", next: formattedToday, phone: "+61 678 901 345", email: "contact@apex.com" },
-    { num: "CU01288", name: "RIVERFRONT FABRICATION", status: "Active", next: formattedToday, phone: "+61 789 012 456", email: "info@riverfront.com.au" },
-    { num: "CU01399", name: "ECLIPSE METALS", status: "Active", next: formattedToday, phone: "+61 890 123 567", email: "sales@eclipsemetals.com" }
-  ];
-  const [visibleCount, setVisibleCount] = useState(3);
-
-  const handleLoadMore = () => {
-    setVisibleCount(prev => Math.min(prev + 3, allMockData.length));
-  };
+  const contacts = response?.data || [];
+  const hasMore = contacts.length >= limit;
 
   return (
     <RouteGuard module="crm" fallback={<div>Access Denied</div>}>
@@ -126,39 +117,48 @@ export default function TodayContactsPage() {
                     </td>
                   </tr>
 
-                  {/* Mock Data Rows */}
-                  {allMockData.slice(0, visibleCount).map((row, i) => (
-                    <tr key={i} className="hover:bg-gray-50">
-                      <td className="px-3 py-3 text-center">
-                        <input type="checkbox" className="rounded border-gray-300" />
-                      </td>
-                      <td className="px-3 py-3 text-blue-600 cursor-pointer hover:underline">{row.num}</td>
-                      <td className="px-3 py-3">{row.name}</td>
-                      <td className="px-3 py-3">{row.status}</td>
-                      <td className="px-3 py-3">{row.next}</td>
-                      <td className="px-3 py-3">{row.phone}</td>
-                      <td className="px-3 py-3">{row.email}</td>
-                      <td className="px-3 py-3 text-center">
-                        <FileText className="w-3.5 h-3.5 mx-auto text-gray-400" />
-                      </td>
-                      <td className="px-3 py-3 text-right">
-                        <div className="flex gap-1 justify-end">
-                          <button onClick={() => router.push(`/dashboard/mrp/crm/customers/1/contacts/1`)} className="p-1 hover:bg-gray-200 rounded text-blue-600 bg-white border border-gray-200 shadow-sm transition-colors">
-                            <Pencil className="w-3.5 h-3.5" />
-                          </button>
-                          <button className="p-1 hover:bg-gray-200 rounded text-red-600 bg-white border border-gray-200 shadow-sm transition-colors">
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </button>
-                        </div>
-                      </td>
+                  {isLoading && contacts.length === 0 ? (
+                    <tr>
+                      <td colSpan={9} className="text-center py-8 text-gray-500">Loading contacts...</td>
                     </tr>
-                  ))}
+                  ) : contacts.length === 0 ? (
+                    <tr>
+                      <td colSpan={9} className="text-center py-8 text-gray-500">No contacts scheduled for today.</td>
+                    </tr>
+                  ) : (
+                    contacts.map((row: any, i: number) => (
+                      <tr key={i} className="hover:bg-gray-50">
+                        <td className="px-3 py-3 text-center">
+                          <input type="checkbox" className="rounded border-gray-300" />
+                        </td>
+                        <td className="px-3 py-3 text-blue-600 cursor-pointer hover:underline">{row.customer_number}</td>
+                        <td className="px-3 py-3">{row.name}</td>
+                        <td className="px-3 py-3">{row.status}</td>
+                        <td className="px-3 py-3">{new Date(row.next_contact).toLocaleDateString()}</td>
+                        <td className="px-3 py-3">{row.phone}</td>
+                        <td className="px-3 py-3">{row.email}</td>
+                        <td className="px-3 py-3 text-center">
+                          <FileText className="w-3.5 h-3.5 mx-auto text-gray-400" />
+                        </td>
+                        <td className="px-3 py-3 text-right">
+                          <div className="flex gap-1 justify-end">
+                            <button onClick={() => router.push(`/dashboard/mrp/crm/customers/${row.id || row.customer_number}`)} className="p-1 hover:bg-gray-200 rounded text-blue-600 bg-white border border-gray-200 shadow-sm transition-colors">
+                              <Pencil className="w-3.5 h-3.5" />
+                            </button>
+                            <button className="p-1 hover:bg-gray-200 rounded text-red-600 bg-white border border-gray-200 shadow-sm transition-colors">
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))
+                  )}
                   
                 </tbody>
               </table>
-              {visibleCount < allMockData.length && (
+              {hasMore && (
                 <div className="text-center py-4 bg-white">
-                  <Button variant="link" onClick={handleLoadMore} className="text-blue-600 text-[11px]">Load more</Button>
+                  <Button variant="link" onClick={() => setLimit(l => l + 50)} className="text-blue-600 text-[11px]">Load more</Button>
                 </div>
               )}
             </div>
