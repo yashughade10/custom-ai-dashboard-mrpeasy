@@ -111,7 +111,6 @@ export default function WriteoffsPage() {
               <MrpDataTable 
                 data={writeoffs}
                 columns={columns}
-                isLoading={isLoading}
                 onFilterChange={(f, rf) => { setFilters(f); setRangeFilters(rf); }}
                 totals={(() => {
                   const tableTotals = totals ? {

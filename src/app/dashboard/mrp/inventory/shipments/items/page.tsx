@@ -53,7 +53,7 @@ export default function ShipmentItemsPage() {
       filterType: "date",
       cell: (r) => r.delivery_date ? new Date(r.delivery_date).toLocaleDateString() : "" 
     },
-    { header: "Status", accessorKey: "status", filterType: "select" },
+    { header: "Status", accessorKey: "status", searchable: true },
     { header: "Order", accessorKey: "order_number", searchable: true },
     { header: "Customer number", accessorKey: "customer_number", searchable: true },
     { header: "Customer name", accessorKey: "customer_name", searchable: true },

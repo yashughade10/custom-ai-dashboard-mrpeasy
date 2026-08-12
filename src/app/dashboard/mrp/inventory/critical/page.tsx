@@ -90,8 +90,6 @@ export default function CriticalOnHandPage() {
             <MrpDataTable 
               columns={columns} 
               data={response?.data || []} 
-              searchPlaceholder="Search critical items..."
-              isLoading={isLoading}
               onFilterChange={setFilters}
             />
           </div>

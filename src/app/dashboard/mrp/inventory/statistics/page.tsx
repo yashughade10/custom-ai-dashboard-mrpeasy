@@ -100,8 +100,6 @@ export default function StatisticsPage() {
             <MrpDataTable 
               columns={columns} 
               data={data} 
-              searchPlaceholder="Search part number..."
-              isLoading={isLoading}
               onFilterChange={setFilters}
             />
           </div>
