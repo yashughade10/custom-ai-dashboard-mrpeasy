@@ -43,7 +43,8 @@ import {
     PieChart,
     Settings,
     ShieldCheck,
-    History
+    History,
+    Book
 } from "lucide-react"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
@@ -116,6 +117,7 @@ const navItems = [
         icon: Boxes,
         children: [
             { name: "MRP Dashboard", hash: "", href: "/dashboard/mrp/dashboard", icon: LayoutDashboard },
+            { name: "Job Tracking", hash: "jobs", href: "/dashboard/mrp/jobs", icon: FileText },
             { name: "MRP CRM", hash: "crm", href: "/dashboard/mrp/crm", icon: Users2 },
             { name: "MRP Production", hash: "production", href: "/dashboard/mrp/production", icon: Factory },
             { name: "MRP Stock", hash: "stock", href: "/dashboard/mrp/inventory", icon: Package },
@@ -135,6 +137,14 @@ const navItems = [
     //         { name: "Finance", hash: "finance", href: "/dashboard/reports/finance", icon: FileText },
     //     ],
     // },
+    {
+        name: "Documentation",
+        href: "/dashboard/docs",
+        icon: Book,
+        children: [
+            { name: "Guide & Reference", hash: "", href: "/dashboard/docs", icon: Book },
+        ],
+    },
     {
         name: "Administration",
         href: "/dashboard/admin",

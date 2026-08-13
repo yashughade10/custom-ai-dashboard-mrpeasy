@@ -14,6 +14,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const ALL_WIDGETS = [
   { id: "lateCO", label: "Late CO", href: "/dashboard/mrp/crm" },
@@ -70,7 +71,20 @@ function DashboardPage() {
     });
   };
 
-  if (isLoading) return <div>Loading dashboard...</div>;
+  if (isLoading) {
+    return (
+      <div className="flex flex-col h-full bg-[#f4f7fb] p-6 -m-4 sm:-m-6 lg:-m-8 pt-8 min-h-[calc(100vh-4rem)]">
+        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-9 gap-3 mb-4">
+          {Array.from({ length: 18 }).map((_, i) => (
+            <div key={i} className="bg-white rounded-lg p-3 shadow-sm border border-gray-100 flex flex-col items-center justify-center gap-2 h-[80px]">
+              <Skeleton className="h-3 w-16 bg-gray-200" />
+              <Skeleton className="h-6 w-20 bg-gray-200" />
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
   if (error) return <div className="text-red-500">Failed to load dashboard data.</div>;
 
   const data = response?.data || {};
