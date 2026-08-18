@@ -1,5 +1,4 @@
 "use client";
-
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -15,7 +14,7 @@ const jobSchema = z.object({
   title: z.string().min(1, "Title is required"),
   description: z.string().optional(),
   priority: z.enum(["low", "medium", "high", "urgent"]),
-  customer_id: z.coerce.number().optional(),
+  customer_id: z.number().optional(),
 });
 
 type JobFormValues = z.infer<typeof jobSchema>;
@@ -57,7 +56,7 @@ export function JobForm() {
 
       <div className="space-y-2">
         <Label htmlFor="customer_id">Customer ID (Optional)</Label>
-        <Input id="customer_id" type="number" {...register("customer_id")} placeholder="Leave blank if internal" />
+        <Input id="customer_id" type="number" {...register("customer_id", { setValueAs: (v) => v === "" ? undefined : Number(v) })} placeholder="Leave blank if internal" />
       </div>
 
       <div className="space-y-2">

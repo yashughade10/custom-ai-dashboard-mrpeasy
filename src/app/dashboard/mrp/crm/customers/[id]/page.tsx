@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { RouteGuard } from "@/components/auth/RouteGuard";
 import { MrpTabBar } from "@/components/mrp/MrpTabBar";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Download, Trash2, GripVertical, Plus, Pencil } from "lucide-react";
 import { format } from "date-fns";
@@ -152,14 +153,10 @@ export default function CustomerDetailsPage() {
                         </SelectContent>
                       </Select>
                       <div className="space-y-1">
-                        <Input placeholder="First name" className="h-7 text-xs bg-gray-50" />
-                        <Input placeholder="Last name" className="h-7 text-xs bg-gray-50" />
-                        <Input placeholder="Company name" className="h-7 text-xs bg-gray-50" />
-                        <Input defaultValue={customer.address} className="h-7 text-xs bg-gray-50" />
-                        <Input placeholder="Second line of address" className="h-7 text-xs bg-gray-50" />
-                        <Input defaultValue="GEEBUNG" className="h-7 text-xs bg-gray-50" />
-                        <Input defaultValue="QLD" className="h-7 text-xs bg-gray-50" />
-                        <Input defaultValue="4034" className="h-7 text-xs bg-gray-50" />
+                        <Input placeholder="First name" defaultValue={customer.first_name || ""} className="h-7 text-xs bg-gray-50" />
+                        <Input placeholder="Last name" defaultValue={customer.last_name || ""} className="h-7 text-xs bg-gray-50" />
+                        <Input placeholder="Company name" defaultValue={customer.name || ""} className="h-7 text-xs bg-gray-50" />
+                        <Textarea defaultValue={customer.address || ""} placeholder="Full Address" className="min-h-[60px] text-xs bg-gray-50" />
                       </div>
                       <div className="flex gap-1 items-center justify-end text-gray-400 mt-1">
                         <Trash2 className="w-3.5 h-3.5 cursor-pointer hover:text-red-500" />

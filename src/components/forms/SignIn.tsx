@@ -85,7 +85,7 @@ export const SignIn = () => {
                     {/* <p className="text-sm font-medium text-muted-foreground lg:hidden">
                         Vaclift
                     </p> */}
-                    <img src="https://www.vacliftaustralia.com/logo/navlogo.png" alt="logo" className="h-10 sm:h-12 lg:h-[3.6vw]" />
+                    <img src="/bwe-logo.png" alt="logo" className="h-10 sm:h-12 lg:h-[3.6vw]" />
                     <h1 className="text-2xl font-bold tracking-tight">
                         Login to your account
                     </h1>

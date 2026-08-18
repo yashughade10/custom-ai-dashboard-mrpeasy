@@ -112,16 +112,16 @@ const navItems = [
     //     ],
     // },
     {
-        name: "Inventory (MRP Easy)",
+        name: "BWEG",
         href: "/dashboard/mrp/dashboard",
         icon: Boxes,
         children: [
-            { name: "MRP Dashboard", hash: "", href: "/dashboard/mrp/dashboard", icon: LayoutDashboard },
+            { name: "BWEG Dashboard", hash: "", href: "/dashboard/mrp/dashboard", icon: LayoutDashboard },
             { name: "Job Tracking", hash: "jobs", href: "/dashboard/mrp/jobs", icon: FileText },
-            { name: "MRP CRM", hash: "crm", href: "/dashboard/mrp/crm", icon: Users2 },
-            { name: "MRP Production", hash: "production", href: "/dashboard/mrp/production", icon: Factory },
-            { name: "MRP Stock", hash: "stock", href: "/dashboard/mrp/inventory", icon: Package },
-            { name: "MRP Procurement", hash: "procurement", href: "/dashboard/mrp/procurement", icon: ShoppingCart },
+            { name: "BWEG Sales", hash: "crm", href: "/dashboard/mrp/crm", icon: Users2 },
+            { name: "BWEG Production", hash: "production", href: "/dashboard/mrp/production", icon: Factory },
+            { name: "BWEG Stock", hash: "stock", href: "/dashboard/mrp/inventory", icon: Package },
+            { name: "BWEG Purchases", hash: "procurement", href: "/dashboard/mrp/procurement", icon: ShoppingCart },
         ],
     },
     // { name: "Orders", href: "/dashboard/orders", icon: ListOrdered },
@@ -166,7 +166,7 @@ const navItemModuleMap: Record<string, string> = {
     "CRM": "crm",
     "Orders": "orders",
     "Sales": "sales",
-    "Inventory (MRP Easy)": "inventory",
+    "BWEG": "inventory",
     "Production": "production",
     "Procurement": "procurement",
     "Reports": "reports",
@@ -208,7 +208,7 @@ export function AppSidebar() {
         <Sidebar className="border-r-0">
             <SidebarHeader className="px-5 py-[14px]">
                 <Link href="/dashboard" className="flex items-center gap-3">
-                    <img src="https://www.vacliftaustralia.com/logo/navlogo.png" alt="logo" className="h-10 sm:h-12 lg:h-[3.6vw]" />
+                    <img src="/bwe-logo.png" alt="logo" className="h-6 sm:h-8 lg:h-[2vw]" />
                 </Link>
             </SidebarHeader>
             <SidebarContent className="px-2 py-2">

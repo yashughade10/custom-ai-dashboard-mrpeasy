@@ -37,7 +37,7 @@ export default function Home() {
         <div className="grid w-full items-center gap-10 lg:grid-cols-2 lg:gap-14">
           <section className="hidden lg:block">
             <div className="max-w-md">
-              <img src="https://www.vacliftaustralia.com/logo/navlogo.png" alt="logo" className="h-10 sm:h-12 lg:h-[5vw]" />
+              <img src="/bwe-logo.png" alt="logo" className="h-10 sm:h-12 lg:h-[5vw]" />
               <h1 className="mt-2 text-4xl font-semibold tracking-tight">
                 Welcome back
               </h1>
