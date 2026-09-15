@@ -4,10 +4,13 @@ import { MrpTabBar } from "@/components/mrp/MrpTabBar";
 import { RouteGuard } from "@/components/auth/RouteGuard";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Download, FileText, Pencil, Plus } from "lucide-react";
+import { Download, FileText, Pencil, Plus, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { useQuery, keepPreviousData } from "@tanstack/react-query";
+import { mrpApi } from "@/services/mrpApi";
+
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:4000/api";
 
 const crmTabs = [
   { name: "Customer orders", href: "/dashboard/mrp/crm" },
@@ -18,30 +21,47 @@ const crmTabs = [
   { name: "Statistics", href: "/dashboard/mrp/crm/statistics" },
 ];
 
+function formatDate(d: string | null | undefined) {
+  if (!d) return "";
+  const date = new Date(d);
+  if (isNaN(date.getTime())) return String(d);
+  return date.toLocaleDateString("en-AU", { day: "2-digit", month: "2-digit", year: "numeric" });
+}
+
+function fmtMoney(n: any) {
+  return Number(n || 0).toLocaleString("en-AU", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
 export default function InvoicesPage() {
   const router = useRouter();
+  const [page, setPage] = useState(1);
+  const [search, setSearch] = useState("");
 
-  const allMockData = [
-    { num: "1", inv: "I00005", part: "A0000144", desc: "STAINLESS TRIM, MIRROR FINISH", qty: "6 pcs", custNum: "CU00320-def1751329056", custName: "SHINE STAINLESS MARINE", date: "01/07/2025" },
-    { num: "2", inv: "I00005", part: "A0000147", desc: "DOOR WITH 32 OD HOLE", qty: "2 pcs", custNum: "CU00320-def1751329056", custName: "SHINE STAINLESS MARINE", date: "01/07/2025" },
-    { num: "3", inv: "I00005", part: "A0000146", desc: "DOOR WITH 40 OD HOLE", qty: "2 pcs", custNum: "CU00320-def1751329056", custName: "SHINE STAINLESS MARINE", date: "01/07/2025" },
-    { num: "4", inv: "I00010", part: "", desc: "", qty: "12", custNum: "CU00793-def1751577646", custName: "ALL TRADES TRAILERS", date: "01/07/2025", strike: true },
-    { num: "5", inv: "I00010", part: "", desc: "", qty: "1", custNum: "CU00793-def1751577646", custName: "ALL TRADES TRAILERS", date: "01/07/2025", strike: true },
-    { num: "6", inv: "I00011", part: "A0000537", desc: "12G BLACK PLASTIC ADAPTORS", qty: "100", custNum: "CU04713", custName: "NOY INDUSTRIES", date: "04/08/2025" },
-    { num: "7", inv: "I00012", part: "P0000301", desc: "ALUMINIUM EXTRUSION 5M", qty: "45 pcs", custNum: "CU01140", custName: "APEX MANUFACTURING", date: "06/08/2025" },
-    { num: "8", inv: "I00012", part: "P0000302", desc: "ALUMINIUM END CAPS", qty: "90 pcs", custNum: "CU01140", custName: "APEX MANUFACTURING", date: "06/08/2025" },
-    { num: "9", inv: "I00013", part: "W0000992", desc: "WELDING WIRE 0.8MM 5KG", qty: "10 rolls", custNum: "CU01288", custName: "RIVERFRONT FABRICATION", date: "07/08/2025" },
-    { num: "10", inv: "I00014", part: "B0000455", desc: "M8x25 STAINLESS BOLTS", qty: "500", custNum: "CU00911", custName: "PRECISION STEELWORKS", date: "08/08/2025" },
-    { num: "11", inv: "I00014", part: "B0000456", desc: "M8 STAINLESS NUTS", qty: "500", custNum: "CU00911", custName: "PRECISION STEELWORKS", date: "08/08/2025" },
-    { num: "12", inv: "I00014", part: "B0000457", desc: "M8 WASHERS", qty: "1000", custNum: "CU00911", custName: "PRECISION STEELWORKS", date: "08/08/2025" },
-    { num: "13", inv: "I00015", part: "C0000210", desc: "CUSTOM FABRICATED BRACKET", qty: "25", custNum: "CU00842", custName: "BUILDMAX PTY LTD", date: "09/08/2025" },
-    { num: "14", inv: "I00016", part: "T0000881", desc: "TITANIUM TUBING 25MM", qty: "12 m", custNum: "CU01399", custName: "ECLIPSE METALS", date: "10/08/2025" }
-  ];
+  const { data: response, isLoading } = useQuery({
+    queryKey: ["mrpInvoices", page],
+    queryFn: () => mrpApi.getInvoices(page, 50),
+    placeholderData: keepPreviousData,
+  });
 
-  const [visibleCount, setVisibleCount] = useState(6);
+  const invoices: any[] = response?.data || [];
+  const pagination = response?.pagination || {};
+  const currencySummary = response?.currency_summary || {};
 
-  const handleLoadMore = () => {
-    setVisibleCount(prev => Math.min(prev + 6, allMockData.length));
+  const filtered = search
+    ? invoices.filter(inv =>
+        (inv.invoice_number || "").toLowerCase().includes(search.toLowerCase()) ||
+        (inv.customer_name || "").toLowerCase().includes(search.toLowerCase()) ||
+        (inv.customer_number || "").toLowerCase().includes(search.toLowerCase()) ||
+        (inv.status || "").toLowerCase().includes(search.toLowerCase())
+      )
+    : invoices;
+
+  const handleExportCSV = () => {
+    window.open(`${API_BASE}/mrp/crm/invoices/export/csv`, "_blank");
+  };
+
+  const handleExportPDF = () => {
+    window.open(`${API_BASE}/mrp/crm/invoices/export/pdf`, "_blank");
   };
 
   return (
@@ -49,128 +69,150 @@ export default function InvoicesPage() {
       <div className="flex flex-col bg-[#f4f7fb] min-h-[calc(100vh-4rem)] p-4 -m-4 sm:-m-6 lg:-m-8">
         <div className="bg-white rounded-md shadow-sm flex flex-col min-h-[80vh]">
           <MrpTabBar tabs={crmTabs} />
-          
+
           <div className="p-4 sm:p-6 lg:p-8 flex-1">
             {/* Header and Toolbar */}
             <div className="flex justify-between items-end border-b border-gray-200 pb-2 mb-4">
               <div>
                 <div className="flex items-center gap-4 mb-4">
                   <h1 className="text-2xl font-bold text-slate-900">Invoices</h1>
-                  <Button size="sm" onClick={() => router.push('/dashboard/mrp/crm/invoices/new')} className="h-7 px-4 text-xs font-medium bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-1 rounded-sm">
+                  <Button size="sm" className="h-7 px-4 text-xs font-medium bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-1 rounded-sm">
                     <Plus className="w-3.5 h-3.5" />
                     Create
                   </Button>
                 </div>
-                <div className="flex gap-6">
-                  <span className="text-sm font-medium text-gray-500 cursor-pointer">Invoices</span>
-                  <span className="text-sm font-medium text-blue-600 border-b-2 border-blue-600 pb-2 -mb-[9px] cursor-pointer">Items</span>
-                </div>
               </div>
               <div className="flex items-center gap-2 mb-2">
-                <Button variant="outline" size="sm" className="h-7 px-3 text-xs font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 border-gray-200 flex items-center gap-1 rounded-sm">
-                  <Download className="w-3.5 h-3.5" />
-                  PDF
+                <Button
+                  variant="outline" size="sm"
+                  className="h-7 px-3 text-xs font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 border-gray-200 flex items-center gap-1 rounded-sm"
+                  onClick={handleExportPDF}
+                >
+                  <Download className="w-3.5 h-3.5" /> PDF
                 </Button>
-                <Button variant="outline" size="sm" className="h-7 px-3 text-xs font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 border-gray-200 flex items-center gap-1 rounded-sm">
-                  <Download className="w-3.5 h-3.5" />
-                  CSV
+                <Button
+                  variant="outline" size="sm"
+                  className="h-7 px-3 text-xs font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 border-gray-200 flex items-center gap-1 rounded-sm"
+                  onClick={handleExportCSV}
+                >
+                  <Download className="w-3.5 h-3.5" /> CSV
                 </Button>
               </div>
+            </div>
+
+            {/* Summary badges */}
+            {Object.entries(currencySummary).length > 0 && (
+              <div className="flex flex-wrap gap-3 mb-4">
+                {Object.entries(currencySummary).map(([curr, s]: [string, any]) => (
+                  <div key={curr} className="bg-blue-50 border border-blue-100 rounded-md px-3 py-1.5 text-xs">
+                    <span className="font-semibold text-blue-700">{curr}</span>
+                    <span className="text-gray-600 ml-2">Total: {curr === "AUD" ? "$" : curr + " "}{fmtMoney(s.total_including_tax)}</span>
+                    <span className="text-green-600 ml-2">Paid: {fmtMoney(s.paid)}</span>
+                    <span className="text-red-500 ml-2">Unpaid: {fmtMoney(s.unpaid)}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Search */}
+            <div className="mb-3 flex gap-2">
+              <Input
+                placeholder="Search by invoice no., customer, or status..."
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+                className="h-8 text-xs max-w-sm"
+              />
+              {search && (
+                <Button variant="outline" size="sm" className="h-8 text-xs" onClick={() => setSearch("")}>Clear</Button>
+              )}
             </div>
 
             {/* Table */}
-            <div className="overflow-x-auto">
-              <table className="w-full text-[11px] text-left whitespace-nowrap">
-                <thead className="bg-[#f0f4f8] text-gray-700 border-y border-gray-200">
-                  <tr>
-                    <th className="px-2 py-2 font-medium w-8 text-center">+</th>
-                    <th className="px-2 py-2 font-medium">Number</th>
-                    <th className="px-2 py-2 font-medium">Part No.</th>
-                    <th className="px-2 py-2 font-medium">Part description</th>
-                    <th className="px-2 py-2 font-medium w-24">Quantity</th>
-                    <th className="px-2 py-2 font-medium">Customer number</th>
-                    <th className="px-2 py-2 font-medium">Customer name</th>
-                    <th className="px-2 py-2 font-medium">Type</th>
-                    <th className="px-2 py-2 font-medium w-24">Created</th>
-                    <th className="px-2 py-2 font-medium w-8 text-center"><FileText className="w-3.5 h-3.5 mx-auto text-gray-400" /></th>
-                    <th className="px-2 py-2 font-medium w-8 text-center">+</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-100 bg-white">
-                  {/* Filter Row */}
-                  <tr className="bg-[#f9fafb]">
-                    <td className="px-2 py-2 text-center align-top pt-3">
-                      <FileText className="w-3.5 h-3.5 mx-auto text-gray-400" />
-                    </td>
-                    <td className="px-2 py-2 align-top"><Input className="h-7 text-[10px] bg-gray-50" /></td>
-                    <td className="px-2 py-2 align-top"><Input className="h-7 text-[10px] bg-gray-50" /></td>
-                    <td className="px-2 py-2 align-top"><Input className="h-7 text-[10px] bg-gray-50" /></td>
-                    <td className="px-2 py-2 align-top">
-                      <div className="space-y-1">
-                        <Input type="text" placeholder="min" className="h-7 text-[10px] bg-gray-50" />
-                        <Input type="text" placeholder="max" className="h-7 text-[10px] bg-gray-50" />
-                      </div>
-                    </td>
-                    <td className="px-2 py-2 align-top"><Input className="h-7 text-[10px] bg-gray-50" /></td>
-                    <td className="px-2 py-2 align-top"><Input className="h-7 text-[10px] bg-gray-50" /></td>
-                    <td className="px-2 py-2 align-top">
-                      <Select>
-                        <SelectTrigger className="h-7 text-[10px] bg-gray-50"><SelectValue /></SelectTrigger>
-                        <SelectContent></SelectContent>
-                      </Select>
-                    </td>
-                    <td className="px-2 py-2 align-top">
-                      <div className="space-y-1">
-                        <Input type="text" placeholder="min" className="h-7 text-[10px] bg-gray-50" />
-                        <Input type="text" placeholder="max" className="h-7 text-[10px] bg-gray-50" />
-                      </div>
-                    </td>
-                    <td className="px-2 py-2 align-top text-center">
-                      <Button variant="ghost" size="sm" className="h-7 px-2 text-[11px] font-medium text-blue-600 hover:text-blue-800 hover:bg-transparent">Search</Button>
-                    </td>
-                    <td className="px-2 py-2 align-top text-center">
-                      <Button variant="ghost" size="sm" className="h-7 px-2 text-[11px] font-medium text-blue-600 hover:text-blue-800 hover:bg-transparent">Clear</Button>
-                    </td>
-                  </tr>
-
-                  {/* Total Row */}
-                  <tr className="bg-white border-b border-gray-200">
-                    <td colSpan={4} className="px-4 py-3 font-bold text-gray-900 text-right">Total:</td>
-                    <td className="px-2 py-3 font-bold text-gray-900">33,165.18</td>
-                    <td colSpan={6}></td>
-                  </tr>
-
-                  {/* Data Rows */}
-                  {allMockData.slice(0, visibleCount).map((row, i) => (
-                    <tr key={i} className="hover:bg-gray-50 border-b border-gray-100">
-                      <td className="px-2 py-2 text-center text-gray-500">{row.num}</td>
-                      <td className="px-2 py-2">
-                        <span onClick={() => router.push(`/dashboard/mrp/crm/invoices/${row.inv}`)} className="text-blue-600 cursor-pointer hover:underline">{row.inv}</span>
-                      </td>
-                      <td className="px-2 py-2 text-gray-700">{row.part}</td>
-                      <td className="px-2 py-2 text-gray-700">{row.desc}</td>
-                      <td className="px-2 py-2 text-gray-700">{row.qty}</td>
-                      <td className={`px-2 py-2 text-gray-700 ${row.strike ? 'line-through text-gray-400' : ''}`}>{row.custNum}</td>
-                      <td className={`px-2 py-2 text-gray-700 ${row.strike ? 'line-through text-gray-400' : ''}`}>{row.custName}</td>
-                      <td className="px-2 py-2 text-gray-700">Invoice</td>
-                      <td className="px-2 py-2 text-gray-700">{row.date}</td>
-                      <td className="px-2 py-2 text-center"></td>
-                      <td className="px-2 py-2 text-center">
-                        <button onClick={() => router.push(`/dashboard/mrp/crm/invoices/${row.inv}`)} className="p-1 hover:bg-gray-200 rounded text-blue-600 bg-white border border-gray-200 shadow-sm transition-colors">
-                          <Pencil className="w-3.5 h-3.5" />
-                        </button>
-                      </td>
+            {isLoading ? (
+              <div className="flex items-center justify-center py-12 text-gray-500">
+                <Loader2 className="w-5 h-5 animate-spin mr-2" />
+                Loading invoices...
+              </div>
+            ) : (
+              <div className="overflow-x-auto border border-gray-200 rounded-sm shadow-sm">
+                <table className="w-full text-[11px] text-left whitespace-nowrap">
+                  <thead className="bg-[#f0f4f8] text-gray-700 border-y border-gray-200">
+                    <tr>
+                      <th className="px-2 py-2 font-medium w-8 text-center">#</th>
+                      <th className="px-2 py-2 font-medium">Invoice No.</th>
+                      <th className="px-2 py-2 font-medium">Customer No.</th>
+                      <th className="px-2 py-2 font-medium">Customer Name</th>
+                      <th className="px-2 py-2 font-medium">Type</th>
+                      <th className="px-2 py-2 font-medium">Status</th>
+                      <th className="px-2 py-2 font-medium text-right">Total</th>
+                      <th className="px-2 py-2 font-medium text-right">Tax</th>
+                      <th className="px-2 py-2 font-medium text-right">Total incl. Tax</th>
+                      <th className="px-2 py-2 font-medium text-right">Paid</th>
+                      <th className="px-2 py-2 font-medium text-right">Unpaid</th>
+                      <th className="px-2 py-2 font-medium">Currency</th>
+                      <th className="px-2 py-2 font-medium">Created</th>
+                      <th className="px-2 py-2 font-medium">Due Date</th>
+                      <th className="px-2 py-2 font-medium">Xero</th>
+                      <th className="px-2 py-2 font-medium w-10 text-center">
+                        <FileText className="w-3.5 h-3.5 mx-auto text-gray-400" />
+                      </th>
                     </tr>
-                  ))}
-                  
-                </tbody>
-              </table>
-              {visibleCount < allMockData.length && (
-                <div className="text-center py-4">
-                  <Button variant="link" onClick={handleLoadMore} className="text-blue-600 text-[11px]">Load more</Button>
-                </div>
-              )}
-            </div>
+                  </thead>
+                  <tbody className="divide-y divide-gray-100 bg-white">
+                    {filtered.length === 0 ? (
+                      <tr><td colSpan={16} className="px-4 py-8 text-center text-gray-400">No invoices found</td></tr>
+                    ) : (
+                      filtered.map((inv: any, i: number) => (
+                        <tr key={inv.id} className="hover:bg-gray-50 border-b border-gray-100 cursor-pointer" onClick={() => router.push(`/dashboard/mrp/crm/invoices/${inv.invoice_number}`)}>
+                          <td className="px-2 py-2 text-center text-gray-400">{(page - 1) * 50 + i + 1}</td>
+                          <td className="px-2 py-2">
+                            <span className="text-blue-600 hover:underline font-medium">{inv.invoice_number}</span>
+                          </td>
+                          <td className="px-2 py-2 text-gray-600">{inv.customer_number}</td>
+                          <td className="px-2 py-2 text-gray-700 font-medium max-w-[180px] truncate">{inv.customer_name}</td>
+                          <td className="px-2 py-2 text-gray-600">{inv.type}</td>
+                          <td className="px-2 py-2">
+                            <span className={`px-1.5 py-0.5 rounded text-[10px] font-medium ${
+                              inv.status === "Paid" ? "bg-green-100 text-green-700" :
+                              inv.status === "Partially paid" ? "bg-yellow-100 text-yellow-700" :
+                              inv.status === "Voided" ? "bg-gray-100 text-gray-500" :
+                              "bg-red-100 text-red-600"
+                            }`}>{inv.status || "Unpaid"}</span>
+                          </td>
+                          <td className="px-2 py-2 text-right">{fmtMoney(inv.total)}</td>
+                          <td className="px-2 py-2 text-right">{fmtMoney(inv.tax)}</td>
+                          <td className="px-2 py-2 text-right font-medium">{fmtMoney(inv.total_including_tax)}</td>
+                          <td className="px-2 py-2 text-right text-green-700">{fmtMoney(inv.paid)}</td>
+                          <td className="px-2 py-2 text-right text-red-600">{fmtMoney(inv.unpaid)}</td>
+                          <td className="px-2 py-2 text-gray-500">{inv.currency || "AUD"}</td>
+                          <td className="px-2 py-2 text-gray-500">{formatDate(inv.created_date)}</td>
+                          <td className="px-2 py-2 text-gray-500">{formatDate(inv.due_date)}</td>
+                          <td className="px-2 py-2">
+                            <span className={`px-1.5 py-0.5 rounded text-[10px] font-medium ${inv.xero === "Yes" ? "bg-blue-100 text-blue-700" : "bg-gray-100 text-gray-500"}`}>
+                              {inv.xero === "Yes" ? "Synced" : "No"}
+                            </span>
+                          </td>
+                          <td className="px-2 py-2 text-center" onClick={e => { e.stopPropagation(); router.push(`/dashboard/mrp/crm/invoices/${inv.invoice_number}`); }}>
+                            <button className="p-1 hover:bg-gray-200 rounded text-blue-600 bg-white border border-gray-200 shadow-sm transition-colors">
+                              <Pencil className="w-3.5 h-3.5" />
+                            </button>
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            )}
+
+            {/* Pagination */}
+            {pagination.totalPages > 1 && (
+              <div className="flex items-center justify-center gap-3 mt-4">
+                <Button variant="outline" size="sm" onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1} className="h-7 text-xs">← Prev</Button>
+                <span className="text-xs text-gray-500">Page {page} of {pagination.totalPages}</span>
+                <Button variant="outline" size="sm" onClick={() => setPage(p => Math.min(pagination.totalPages, p + 1))} disabled={page >= pagination.totalPages} className="h-7 text-xs">Next →</Button>
+              </div>
+            )}
           </div>
         </div>
       </div>

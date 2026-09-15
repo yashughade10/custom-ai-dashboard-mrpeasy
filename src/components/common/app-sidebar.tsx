@@ -44,7 +44,8 @@ import {
     Settings,
     ShieldCheck,
     History,
-    Book
+    Book,
+    Cloud
 } from "lucide-react"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
@@ -154,6 +155,7 @@ const navItems = [
             { name: "Users", hash: "users", href: "/dashboard/admin/users", icon: Users2 },
             { name: "Audit Log", hash: "audit-log", href: "/dashboard/admin/audit-log", icon: History },
             { name: "Settings", hash: "settings", href: "/dashboard/admin/settings", icon: Settings },
+            { name: "Xero Integration", hash: "xero", href: "/dashboard/admin/settings/xero", icon: Cloud },
         ],
     },
     // { name: "Announcements", href: "/dashboard/announcements", icon: Megaphone },

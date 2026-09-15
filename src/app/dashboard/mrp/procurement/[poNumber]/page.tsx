@@ -206,8 +206,11 @@ export default function PurchaseOrderEditPage() {
       <div className="p-4 border-b border-gray-200">
         <div className="flex justify-between items-start">
           <div>
-            <div className="flex items-center mb-4">
+            <div className="flex items-center mb-4 gap-3">
               <h1 className="text-[22px] font-normal text-gray-800">Purchase order {order.po_number}</h1>
+              <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-800">
+                {order?.xero ? 'Synced to Xero' : 'Not Synced to Xero'}
+              </span>
               <button 
                 onClick={() => router.push(`/dashboard/mrp/procurement/${poNumber}/notes/add`)}
                 className="ml-3 p-1 hover:bg-gray-100 rounded text-blue-600"
@@ -296,9 +299,18 @@ export default function PurchaseOrderEditPage() {
                 <Download className="w-3 h-3 mr-1.5" /> CSV
               </button>
               <button 
-                disabled 
-                title={`Please enter vendor's 'Invoice ID' into PO details, and then you\nwill be able to post it to Xero or it will be posted automatically within 5 minutes.`}
-                className="flex items-center justify-center w-6 h-6 bg-gray-300 text-gray-100 rounded-full text-[8px] font-bold mx-1 cursor-not-allowed opacity-60"
+                title="Push this bill to Xero"
+                className="flex items-center justify-center h-6 px-2 bg-[#13B5EA] hover:bg-[#10a1d1] text-white rounded text-[10px] font-bold mx-1"
+                onClick={async () => {
+                  try {
+                    const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:4001/api";
+                    // Using poNumber or internal id to push
+                    await fetch(`${API_BASE}/xero/push/bill/${order.id || poNumber}`, { method: "POST" });
+                    alert("Pushed to Xero successfully!");
+                  } catch (err) {
+                    alert("Failed to push to Xero.");
+                  }
+                }}
               >
                 XERO
               </button>

@@ -8,6 +8,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
+import { Trash2, Upload, Loader2, Image as ImageIcon } from "lucide-react";
+
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:4000/api";
 
 interface ItemFormProps {
   initialData?: any;
@@ -100,7 +103,8 @@ export function ItemForm({ initialData, isEdit }: ItemFormProps) {
   const [uoms, setUoms] = useState<any[]>([]);
   const [locations, setLocations] = useState<any[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
-
+  const [images, setImages] = useState<any[]>([]);
+  const [isUploading, setIsUploading] = useState(false);
   const { register, handleSubmit, control, setValue, reset, watch } = useForm({
     defaultValues: initialData || {
       part_no: "",
@@ -155,6 +159,65 @@ export function ItemForm({ initialData, isEdit }: ItemFormProps) {
     }
     loadData();
   }, [isEdit]);
+
+  useEffect(() => {
+    if (isEdit && initialData?.id) {
+      fetch(`${API_BASE}/mrp/stock/items/${initialData.id}/images`)
+        .then(res => res.json())
+        .then(data => {
+          if (data.success && data.data) {
+            setImages(data.data);
+          }
+        })
+        .catch(err => console.error("Failed to load images", err));
+    }
+  }, [isEdit, initialData?.id]);
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files || !e.target.files.length) return;
+    const file = e.target.files[0];
+    if (file.size > 2 * 1024 * 1024) {
+      alert("File is too large. Max 2MB.");
+      return;
+    }
+    
+    setIsUploading(true);
+    const formData = new FormData();
+    formData.append("image", file);
+    
+    try {
+      const res = await fetch(`${API_BASE}/mrp/stock/items/${initialData.id}/images`, {
+        method: "POST",
+        body: formData
+      });
+      const data = await res.json();
+      if (data.success && data.data) {
+        setImages(prev => [...prev, data.data]);
+      } else {
+        alert(data.error || "Upload failed");
+      }
+    } catch (err) {
+      alert("Upload failed");
+    } finally {
+      setIsUploading(false);
+      e.target.value = ''; // clear input
+    }
+  };
+
+  const handleDeleteImage = async (imageId: number) => {
+    if (!confirm("Delete this image?")) return;
+    try {
+      const res = await fetch(`${API_BASE}/mrp/stock/items/${initialData.id}/images/${imageId}`, {
+        method: "DELETE"
+      });
+      const data = await res.json();
+      if (data.success) {
+        setImages(prev => prev.filter(img => img.id !== imageId));
+      }
+    } catch (err) {
+      alert("Delete failed");
+    }
+  };
 
   const onSubmit = async (data: any) => {
     setIsSubmitting(true);
@@ -361,6 +424,53 @@ export function ItemForm({ initialData, isEdit }: ItemFormProps) {
               )}
             />
           </FieldRow>
+
+          {isEdit && initialData?.id && (
+            <div className="mt-8 border-t border-gray-100 pt-6">
+              <h3 className="text-sm font-semibold text-gray-700 mb-4 flex items-center gap-2">
+                <ImageIcon className="w-4 h-4 text-gray-500" /> Attached Images
+              </h3>
+              
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-4">
+                {images.map(img => (
+                  <div key={img.id} className="relative group border border-gray-200 rounded-md overflow-hidden bg-gray-50 aspect-square flex items-center justify-center">
+                    <img src={`${API_BASE}/mrp/stock/items/${initialData.id}/images/${img.id}`} alt={img.filename} className="object-cover w-full h-full" />
+                    <button 
+                      type="button"
+                      onClick={() => handleDeleteImage(img.id)}
+                      className="absolute top-1 right-1 p-1.5 bg-white/90 rounded text-red-600 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-white shadow-sm"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                    <div className="absolute bottom-0 inset-x-0 bg-black/50 p-1 text-[10px] text-white truncate px-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                      {img.filename}
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <div className="flex items-center gap-3">
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  size="sm"
+                  className="relative h-8 px-4 text-xs bg-gray-50 hover:bg-gray-100 border-gray-300"
+                  disabled={isUploading}
+                >
+                  {isUploading ? <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" /> : <Upload className="w-3.5 h-3.5 mr-1.5" />}
+                  {isUploading ? "Uploading..." : "Upload Image"}
+                  <input 
+                    type="file" 
+                    accept="image/*" 
+                    onChange={handleImageUpload}
+                    disabled={isUploading}
+                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer disabled:cursor-not-allowed"
+                  />
+                </Button>
+                <span className="text-[10px] text-gray-400">Max 2MB per image (JPEG, PNG, WEBP)</span>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 

@@ -10,6 +10,8 @@ import { RouteGuard } from "@/components/auth/RouteGuard";
 import { MrpDataTable, Column } from "@/components/mrp/MrpDataTable";
 import { Button } from "@/components/ui/button";
 
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:4000/api";
+
 const crmTabs = [
   { name: "Customer orders", href: "/dashboard/mrp/crm" },
   { name: "Customers", href: "/dashboard/mrp/crm/customers" },
@@ -49,7 +51,11 @@ export default function CustomersPage() {
           <MrpTabBar tabs={crmTabs} />
           
           <div className="px-4 pb-4 flex-1 flex flex-col">
-            <MrpExportBar createLabel="Create customer" />
+            <MrpExportBar
+              createLabel="Create customer"
+              onDownloadPDF={() => window.open(`${API_BASE}/mrp/crm/customers/export/pdf`, "_blank")}
+              onDownloadCSV={() => window.open(`${API_BASE}/mrp/crm/customers/export/csv`, "_blank")}
+            />
             
             <div className="flex-1 mt-4">
               {isLoading ? (

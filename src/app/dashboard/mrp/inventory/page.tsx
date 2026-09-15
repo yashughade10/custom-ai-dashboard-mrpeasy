@@ -8,6 +8,8 @@ import { MrpExportBar } from "@/components/mrp/MrpExportBar";
 import { RouteGuard } from "@/components/auth/RouteGuard";
 import { useRouter } from "next/navigation";
 
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:4000/api";
+
 const stockTabs = [
   { name: "Items", href: "/dashboard/mrp/inventory" },
   { name: "Stock settings", href: "/dashboard/mrp/inventory/settings" },
@@ -54,6 +56,8 @@ export default function StockItemsPage() {
             <MrpExportBar 
               createLabel="Create item" 
               onCreate={() => router.push("/dashboard/mrp/inventory/new")}
+              onDownloadPDF={() => window.open(`${API_BASE}/mrp/stock/items/export/pdf`, "_blank")}
+              onDownloadCSV={() => window.open(`${API_BASE}/mrp/stock/items/export/csv`, "_blank")}
             />
             
             {isLoading ? (
