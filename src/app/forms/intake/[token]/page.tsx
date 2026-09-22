@@ -167,6 +167,31 @@ export default function IntakeFormPage() {
                         />
                         <Label htmlFor={field.key} className="font-normal">{field.label}</Label>
                       </div>
+                    ) : field.type === "file" ? (
+                      <div className="space-y-2">
+                        <input
+                          type="file"
+                          id={field.key}
+                          accept="image/*"
+                          className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (!file) return;
+                            const reader = new FileReader();
+                            reader.onload = () => handleFieldChange(field.key, reader.result as string);
+                            reader.readAsDataURL(file);
+                          }}
+                        />
+                        {values[field.key] && (
+                          <div className="mt-2">
+                            <img
+                              src={values[field.key]}
+                              alt="Preview"
+                              className="max-h-40 rounded-md border shadow-sm object-contain"
+                            />
+                          </div>
+                        )}
+                      </div>
                     ) : (
                       <Input
                         id={field.key}

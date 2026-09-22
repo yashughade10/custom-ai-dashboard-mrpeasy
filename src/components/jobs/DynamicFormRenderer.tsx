@@ -121,6 +121,48 @@ export function DynamicFormRenderer({
             </Label>
           </div>
         );
+      case "file":
+        return (
+          <div className="space-y-2">
+            {!readOnly ? (
+              <>
+                <input
+                  type="file"
+                  id={field.key}
+                  accept="image/*"
+                  disabled={readOnly}
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (!file) return;
+                    const reader = new FileReader();
+                    reader.onload = () => handleChange(field.key, reader.result as string);
+                    reader.readAsDataURL(file);
+                  }}
+                  className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer"
+                />
+                {formData[field.key] && (
+                  <div className="mt-2">
+                    <img
+                      src={formData[field.key]}
+                      alt="Preview"
+                      className="max-h-40 rounded-md border shadow-sm object-contain"
+                    />
+                  </div>
+                )}
+              </>
+            ) : (
+              formData[field.key] ? (
+                <img
+                  src={formData[field.key]}
+                  alt={field.label}
+                  className="max-h-48 rounded-md border shadow-sm object-contain"
+                />
+              ) : (
+                <p className="text-sm text-muted-foreground italic">No image uploaded</p>
+              )
+            )}
+          </div>
+        );
       default: // text, number, date, email, phone
         return (
           <Input

@@ -57,7 +57,10 @@ export interface SalesOrder {
   items?: SalesOrderItem[];
   company_name?: string | null;
   contact_name?: string | null;
+  contact?: { id: number; first_name: string; last_name: string; email: string } | null;
   has_stock_available?: boolean;
+  job_id?: number | null;
+  job_number?: string | null;
 }
 
 // ----- Request payloads -----

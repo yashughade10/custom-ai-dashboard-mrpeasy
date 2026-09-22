@@ -34,6 +34,8 @@ export interface Job {
   customer_name?: string;
   customer_number?: string;
   customer_email?: string;
+  sales_order_id?: number | null;
+  sales_order_number?: string | null;
   title: string;
   description: string | null;
   status: JobStatus;
@@ -140,6 +142,8 @@ export interface JobDocument {
   document_type: string | null;
   file_name: string;
   file_url: string | null;
+  mime_type: string | null;
+  file_data: string | null;
   file_size: number | null;
   generated_by: number | null;
   created_at: string;
@@ -284,6 +288,63 @@ export const jobsApi = {
       body: JSON.stringify({ message, reason }),
     });
     return handleResponse<{ message: string }>(res);
+  },
+
+  // Link a job to a sales order (bidirectional)
+  linkSalesOrder: async (jobId: number | string, salesOrderId: number | null) => {
+    const res = await apiFetch(`${BASE}/${jobId}/link-order`, {
+      method: "POST",
+      body: JSON.stringify({ sales_order_id: salesOrderId }),
+    });
+    return handleResponse<{ data: Job }>(res);
+  },
+};
+
+// ============================================================
+// DOCUMENTS API
+// ============================================================
+
+export const documentsApi = {
+  list: async (jobId: number | string) => {
+    const res = await apiFetch(`${BASE}/${jobId}/documents`);
+    return handleResponse<{ data: JobDocument[] }>(res);
+  },
+
+  upload: async (
+    jobId: number | string,
+    file: File
+  ): Promise<JobDocument> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = async () => {
+        try {
+          const fileData = reader.result as string;
+          const res = await apiFetch(`${BASE}/${jobId}/documents`, {
+            method: "POST",
+            body: JSON.stringify({
+              file_name: file.name,
+              mime_type: file.type,
+              file_data: fileData,
+              file_size: file.size,
+              document_type: "attachment",
+            }),
+          });
+          const result = await handleResponse<{ data: JobDocument }>(res);
+          resolve(result.data);
+        } catch (err) {
+          reject(err);
+        }
+      };
+      reader.onerror = () => reject(new Error("Failed to read file"));
+      reader.readAsDataURL(file);
+    });
+  },
+
+  delete: async (jobId: number | string, docId: number | string) => {
+    const res = await apiFetch(`${BASE}/${jobId}/documents/${docId}`, {
+      method: "DELETE",
+    });
+    return handleResponse<{ success: boolean }>(res);
   },
 };
 

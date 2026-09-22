@@ -3,7 +3,7 @@
 
 import { useState } from "react";
 import { toast } from "sonner";
-import { MoreHorizontal, Loader2 } from "lucide-react";
+import { MoreHorizontal, Loader2, Link2 } from "lucide-react";
 
 import {
   Table,
@@ -162,6 +162,7 @@ export function SalesOrdersTable({ orders, isLoading, onEdit }: SalesOrdersTable
               <TableHead>Order #</TableHead>
               <TableHead>Company</TableHead>
               <TableHead>Customer PO</TableHead>
+              <TableHead>Linked Job</TableHead>
               <TableHead>Status</TableHead>
               <TableHead>Delivery date</TableHead>
               <TableHead className="text-right">Total</TableHead>
@@ -176,6 +177,19 @@ export function SalesOrdersTable({ orders, isLoading, onEdit }: SalesOrdersTable
                 </TableCell>
                 <TableCell onClick={() => onEdit(o)}>{o.company_name ?? "—"}</TableCell>
                 <TableCell onClick={() => onEdit(o)}>{o.customer_po ?? "—"}</TableCell>
+                <TableCell onClick={(e) => e.stopPropagation()}>
+                  {o.job_number ? (
+                    <button
+                      className="flex items-center gap-1 text-xs font-medium text-blue-600 hover:text-blue-800 hover:underline"
+                      onClick={() => router.push(`/dashboard/mrp/jobs/${o.job_id}`)}
+                    >
+                      <Link2 className="h-3 w-3" />
+                      {o.job_number}
+                    </button>
+                  ) : (
+                    <span className="text-muted-foreground text-xs">—</span>
+                  )}
+                </TableCell>
                 <TableCell onClick={() => onEdit(o)}>
                   <SalesOrderStatusBadge status={o.status} hasStockAvailable={o.has_stock_available} />
                 </TableCell>
