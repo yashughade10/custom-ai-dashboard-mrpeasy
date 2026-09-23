@@ -21,7 +21,7 @@ import {
 import { callOpenRouter, tryParseJson } from "@/lib/openrouter";
 
 const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_BASE_URL ?? "https://apimrpeasy-vaclift-backend.vercel.app/api";
+  process.env.NEXT_PUBLIC_API_BASE_URL ?? "/api";
 const REPORT_CACHE_TTL_MS = 5 * 60 * 1000;
 
 type ReportCache = {

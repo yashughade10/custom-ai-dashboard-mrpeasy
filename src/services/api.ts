@@ -4,7 +4,7 @@ import type { AIAnalyticsReport, AIChatResponse } from "@/lib/ai-report-types";
 import { apiFetch } from "@/lib/api/http";
 
 const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_BASE_URL ?? "https://apimrpeasy-vaclift-backend.vercel.app/api";
+  process.env.NEXT_PUBLIC_API_BASE_URL ?? "/api";
 
 async function fetchOrders() {
   const response = await apiFetch(`${API_BASE_URL}/orders`);

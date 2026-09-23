@@ -10,7 +10,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
 import { Trash2, Upload, Loader2, Image as ImageIcon } from "lucide-react";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:4000/api";
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || "/api";
 
 interface ItemFormProps {
   initialData?: any;

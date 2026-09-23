@@ -27,7 +27,7 @@ export function RoleForm({ open, onOpenChange, onSuccess }: RoleFormProps) {
     e.preventDefault();
     setLoading(true);
     try {
-      const res = await apiFetch("http://localhost:4000/api/admin/roles", {
+      const res = await apiFetch("/admin/roles", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData)

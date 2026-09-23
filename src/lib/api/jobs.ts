@@ -452,7 +452,7 @@ export const publicFormApi = {
   getForm: async (token: string) => {
     try {
       const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL || "https://apimrpeasy-vaclift-backend.vercel.app/api"}/mrp/job-forms/public/${token}`,
+        `${process.env.NEXT_PUBLIC_API_BASE_URL || "/api"}/mrp/job-forms/public/${token}`,
         { cache: "no-store" }
       );
       const data = await res.json();
@@ -501,7 +501,7 @@ export const publicFormApi = {
   submitForm: async (token: string, formData: Record<string, any>, signatureData?: string) => {
     try {
       const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL || "https://apimrpeasy-vaclift-backend.vercel.app/api"}/mrp/job-forms/public/${token}/submit`,
+        `${process.env.NEXT_PUBLIC_API_BASE_URL || "/api"}/mrp/job-forms/public/${token}/submit`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },

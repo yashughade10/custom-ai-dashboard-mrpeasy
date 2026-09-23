@@ -51,7 +51,7 @@ export function UserForm({ open, onOpenChange, user, onSuccess }: UserFormProps)
 
   const fetchConstants = async () => {
     try {
-      const res = await apiFetch("http://localhost:4000/api/admin/system-constants");
+      const res = await apiFetch("/admin/system-constants");
       if (res.ok) {
         const json = await res.json();
         setSystemRoles(json.data.roles);
@@ -77,8 +77,8 @@ export function UserForm({ open, onOpenChange, user, onSuccess }: UserFormProps)
     setLoading(true);
     try {
       const url = isEditing 
-        ? `http://localhost:4000/api/admin/users/${user.id}`
-        : "http://localhost:4000/api/admin/users";
+        ? `/admin/users/${user.id}`
+        : "/admin/users";
       
       const method = isEditing ? "PUT" : "POST";
       

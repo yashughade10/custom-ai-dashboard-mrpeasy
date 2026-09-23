@@ -22,7 +22,7 @@ export function UsersTable() {
   const fetchUsers = async () => {
     setLoading(true);
     try {
-      const res = await apiFetch("http://localhost:4000/api/admin/users");
+      const res = await apiFetch("/admin/users");
       if (!res.ok) throw new Error("Failed to fetch users");
       const data = await res.json();
       setUsers(data);
@@ -41,7 +41,7 @@ export function UsersTable() {
     if (!userToDelete) return;
     setIsDeleting(true);
     try {
-      const res = await apiFetch(`http://localhost:4000/api/admin/users/${userToDelete}`, { method: "DELETE" });
+      const res = await apiFetch(`/admin/users/${userToDelete}`, { method: "DELETE" });
       if (!res.ok) throw new Error("Failed to delete user");
       toast.success("User deleted successfully");
       fetchUsers();
