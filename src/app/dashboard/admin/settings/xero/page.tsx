@@ -97,7 +97,7 @@ function XeroSettingsPage() {
         <CardHeader>
           <CardTitle>Connection Status</CardTitle>
           <CardDescription>
-            Connect your Xero account to enable two-way sync for invoices, bills, and contacts.
+            Connect your Xero account to enable two-way sync for invoices, bills, contacts, and items/products.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -114,6 +114,10 @@ function XeroSettingsPage() {
                       Last token refresh: {format(new Date(status.lastUpdated), "PP pp")}
                     </p>
                   )}
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Use <strong>Sync All Now</strong> to import invoices, bills, contacts, and items from Xero into MRP.
+                    Use <strong>Sync Items</strong> to import only products/items (e.g. Vaclifts) from Xero.
+                  </p>
                 </div>
               ) : (
                 <div className="flex items-center space-x-2">
@@ -128,15 +132,33 @@ function XeroSettingsPage() {
           {status?.connected ? (
             <>
               <Button variant="destructive" onClick={handleDisconnect}>Disconnect</Button>
-              <Button onClick={handleSyncAll} disabled={syncing}>
-                {syncing ? "Syncing..." : "Sync All Now"}
-              </Button>
+              <div className="flex gap-2">
+                <Button variant="outline" onClick={async () => {
+                  setSyncing(true);
+                  try {
+                    const res = await fetch(`${API_BASE}/xero/sync/pull-items`, { method: "POST" });
+                    const data = await res.json();
+                    alert(data.message || "Items synced successfully!");
+                    fetchLogs();
+                  } catch (err) {
+                    alert("Failed to sync items from Xero.");
+                  } finally {
+                    setSyncing(false);
+                  }
+                }} disabled={syncing}>
+                  Sync Items
+                </Button>
+                <Button onClick={handleSyncAll} disabled={syncing}>
+                  {syncing ? "Syncing..." : "Sync All Now"}
+                </Button>
+              </div>
             </>
           ) : (
             <Button onClick={handleConnect}>Connect to Xero</Button>
           )}
         </CardFooter>
       </Card>
+
 
       {status?.connected && (
         <Card>

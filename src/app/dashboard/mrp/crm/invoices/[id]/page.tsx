@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Trash2, Download, Cloud, Mail, CheckCircle, AlertCircle, Loader2, X } from "lucide-react";
+import { Trash2, Download, Cloud, Mail, CheckCircle, AlertCircle, Loader2, X, Printer } from "lucide-react";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || "/api";
 
@@ -185,6 +185,17 @@ export default function InvoiceDetailsPage() {
     window.open(`${API_BASE}/mrp/crm/invoices/${invoiceId}/pdf`, "_blank");
   };
 
+  // ─── Print Invoice (opens PDF in new tab for printing) ────────────────────
+  const handlePrint = () => {
+    const printUrl = `${API_BASE}/mrp/crm/invoices/${invoiceId}/pdf`;
+    const win = window.open(printUrl, "_blank");
+    if (win) {
+      win.addEventListener("load", () => {
+        setTimeout(() => win.print(), 500);
+      });
+    }
+  };
+
   // ─── Excel Download ────────────────────────────────────────────────────────
   const handleExcel = () => {
     window.open(`${API_BASE}/mrp/crm/invoices/${invoiceId}/excel`, "_blank");
@@ -276,6 +287,13 @@ export default function InvoiceDetailsPage() {
                 onClick={() => setShowEmailModal(true)}
               >
                 <Mail className="w-3.5 h-3.5" /> Send e-mail
+              </Button>
+              <Button
+                variant="outline" size="sm"
+                className="h-8 px-4 text-xs font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 border-gray-200 flex items-center gap-1"
+                onClick={handlePrint}
+              >
+                <Printer className="w-3.5 h-3.5" /> Print
               </Button>
               <Button
                 variant="outline" size="sm"
@@ -394,11 +412,10 @@ export default function InvoiceDetailsPage() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="AUD">AUD</SelectItem>
-                    <SelectItem value="USD">USD</SelectItem>
-                    <SelectItem value="EUR">EUR</SelectItem>
-                    <SelectItem value="GBP">GBP</SelectItem>
-                    <SelectItem value="NZD">NZD</SelectItem>
+                    <SelectItem value="AUD">AUD — Australian Dollar</SelectItem>
+                    <SelectItem value="NZD">NZD — New Zealand Dollar</SelectItem>
+                    <SelectItem value="EUR">EUR — Euro</SelectItem>
+                    <SelectItem value="GBP">GBP — British Pound</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Cloud, Link as LinkIcon, Paperclip, GripVertical, Trash2, HardDrive } from "lucide-react";
+import { Cloud, Link as LinkIcon, Paperclip, GripVertical, Trash2, HardDrive, Printer, Download } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { mrpApi } from "@/services/mrpApi";
 import { toast } from "sonner";
@@ -65,17 +65,21 @@ export function BomForm({ initialProductId, editingBomId, onBack, onSaved }: Bom
   }));
 
   useEffect(() => {
-    if (isEditing && bomDetail?.success && bomDetail.data) {
+    if (isEditing) {
+      // Wait until both BOM detail AND stock items are loaded before populating parts
+      // This prevents a race condition where partId values are set before partOptions are available
+      if (!bomDetail?.success || !bomDetail.data || isItemsLoading) return;
+
       const bom = bomDetail.data;
       setProductName(bom.part_description || bom.product_title || "");
       setBomNumber(bom.number || bom.code || "");
       setBomName(bom.name || bom.title || "");
-      
-      // If the backend has items attached, populate them (assuming bom.items exists, if not leave empty)
+
+      // Populate parts from BOM line items, matching by part_number
       if (bom.items && bom.items.length > 0) {
         setParts(bom.items.map((i: any) => {
-          const matchedItem = (itemsData?.data || []).find((item: any) => 
-            item.part_number === i.component_part_no || 
+          const matchedItem = (itemsData?.data || []).find((item: any) =>
+            item.part_number === i.component_part_no ||
             item.part_no === i.component_part_no ||
             item.id?.toString() === i.component_part_no
           );
@@ -92,16 +96,15 @@ export function BomForm({ initialProductId, editingBomId, onBack, onSaved }: Bom
         // Provide at least one empty row
         setParts([createEmptyPart()]);
       }
-    } else if (!isEditing) {
-      // In create mode, if initialProductId is passed, we can prefill productName and BOM name.
-      // But we have to find it from itemsData.
+    } else if (!isEditing && !isItemsLoading) {
+      // In create mode, if initialProductId is passed, prefill productName and BOM name.
       const product = (itemsData?.data || []).find((i: any) => i.id?.toString() === initialProductId || i.part_number === initialProductId);
       const name = product?.part_description || product?.name || `Product ${initialProductId || ""}`;
       setProductName(name);
       setBomName(`${name} BOM`);
       setParts([createEmptyPart()]);
     }
-  }, [isEditing, bomDetail, initialProductId, itemsData]);
+  }, [isEditing, bomDetail, initialProductId, itemsData, isItemsLoading]);
 
   const createEmptyPart = (): BomPartItem => ({
     id: Math.random().toString(36).substring(7),
@@ -184,10 +187,71 @@ export function BomForm({ initialProductId, editingBomId, onBack, onSaved }: Bom
         </h1>
         {isEditing && (
           <div className="flex items-center gap-2">
-            <Button variant="outline" className="h-8 px-3 text-xs font-medium text-gray-600 bg-gray-50 hover:bg-gray-100 flex gap-2">Print BOM</Button>
-            <Button variant="outline" className="h-8 px-3 text-xs font-medium text-gray-600 bg-gray-50 hover:bg-gray-100 flex gap-2">Export to CSV</Button>
-            <Button variant="outline" className="h-8 px-3 text-xs font-medium text-gray-600 bg-gray-50 hover:bg-gray-100 flex gap-2">Indented BOM</Button>
-            <Button variant="outline" className="h-8 px-3 text-xs font-medium text-gray-600 bg-gray-50 hover:bg-gray-100 flex gap-2">Indented CSV</Button>
+            <Button
+              variant="outline"
+              className="h-8 px-3 text-xs font-medium text-gray-600 bg-gray-50 hover:bg-gray-100 flex gap-2"
+              onClick={() => window.print()}
+            >
+              <Printer className="w-3 h-3" /> Print BOM
+            </Button>
+            <Button
+              variant="outline"
+              className="h-8 px-3 text-xs font-medium text-gray-600 bg-gray-50 hover:bg-gray-100 flex gap-2"
+              onClick={() => {
+                if (!parts.length) { toast.error("No parts to export"); return; }
+                const header = "#,Product Group,Part,Notes,UoM,Quantity";
+                const rows = parts.map((p, i) => {
+                  const g = groupOptions.find((o: any) => o.value === p.groupId)?.label || p.groupId;
+                  const pt = partOptions.find((o: any) => o.value === p.partId)?.label || p.partId;
+                  return `${i+1},"${g}","${pt}","${p.notes}",${p.uom},${p.quantity}`;
+                });
+                const csvContent = [header, ...rows].join("\n");
+                const blob = new Blob([csvContent], { type: "text/csv" });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement("a");
+                a.href = url; a.download = `BOM_${bomNumber || bomName}_export.csv`;
+                a.click(); URL.revokeObjectURL(url);
+              }}
+            >
+              <Download className="w-3 h-3" /> Export to CSV
+            </Button>
+            <Button
+              variant="outline"
+              className="h-8 px-3 text-xs font-medium text-gray-600 bg-gray-50 hover:bg-gray-100 flex gap-2"
+              onClick={() => {
+                const rows = parts.map((p, i) => {
+                  const g = groupOptions.find((o: any) => o.value === p.groupId)?.label || p.groupId || "";
+                  const pt = partOptions.find((o: any) => o.value === p.partId)?.label || p.partId || "";
+                  return `<tr><td>${i+1}</td><td>${g}</td><td><strong>${pt}</strong></td><td>${p.notes||""}</td><td>${p.uom}</td><td>${p.quantity}</td></tr>`;
+                }).join("");
+                const html = `<!DOCTYPE html><html><head><title>Indented BOM – ${bomName}</title><style>body{font-family:Arial,sans-serif;padding:24px}h2{color:#1a56db}table{width:100%;border-collapse:collapse;font-size:12px}th{background:#1a56db;color:#fff;padding:8px}td{padding:7px;border-bottom:1px solid #e5e7eb}tr:nth-child(even)td{background:#f8fafc}</style></head><body><h2>Indented BOM – ${bomName} (${bomNumber})</h2><p>Product: ${productName}</p><table><thead><tr><th>#</th><th>Product Group</th><th>Part</th><th>Notes</th><th>UoM</th><th>Quantity</th></tr></thead><tbody>${rows}</tbody></table></body></html>`;
+                const win = window.open("", "_blank");
+                if (win) { win.document.write(html); win.document.close(); win.print(); }
+              }}
+            >
+              Indented BOM
+            </Button>
+            <Button
+              variant="outline"
+              className="h-8 px-3 text-xs font-medium text-gray-600 bg-gray-50 hover:bg-gray-100 flex gap-2"
+              onClick={() => {
+                if (!parts.length) { toast.error("No parts to export"); return; }
+                const header = "Level,#,Product Group,Part,Notes,UoM,Quantity";
+                const rows = parts.map((p, i) => {
+                  const g = groupOptions.find((o: any) => o.value === p.groupId)?.label || p.groupId;
+                  const pt = partOptions.find((o: any) => o.value === p.partId)?.label || p.partId;
+                  return `1,${i+1},"${g}","${pt}","${p.notes}",${p.uom},${p.quantity}`;
+                });
+                const csvContent = [header, ...rows].join("\n");
+                const blob = new Blob([csvContent], { type: "text/csv" });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement("a");
+                a.href = url; a.download = `BOM_${bomNumber || bomName}_indented.csv`;
+                a.click(); URL.revokeObjectURL(url);
+              }}
+            >
+              <Download className="w-3 h-3" /> Indented CSV
+            </Button>
           </div>
         )}
       </div>
