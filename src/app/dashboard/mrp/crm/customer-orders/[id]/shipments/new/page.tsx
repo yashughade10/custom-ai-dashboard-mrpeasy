@@ -1,6 +1,8 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
+import { useQuery } from "@tanstack/react-query";
+import { mrpApi } from "@/services/mrpApi";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -9,6 +11,15 @@ import { Cloud, HardDrive, Link as LinkIcon, Share2, Trash2, Link2 } from "lucid
 
 export default function CreateShipmentPage() {
   const router = useRouter();
+  const params = useParams();
+  const orderId = typeof params?.id === 'string' ? params.id : '';
+
+  const { data: orderResponse } = useQuery({
+    queryKey: ["mrpCustomerOrder", orderId],
+    queryFn: () => mrpApi.getCustomerOrderById(orderId),
+    enabled: !!orderId,
+  });
+  const order = orderResponse?.data || {};
 
   return (
     <div className="flex flex-col h-full bg-[#f4f7fb] min-h-[calc(100vh-4rem)] p-4 sm:p-6 lg:p-8">
@@ -47,12 +58,16 @@ export default function CreateShipmentPage() {
               <label className="text-xs text-right text-gray-700 font-medium pt-2">Customer order *</label>
               <div className="space-y-2">
                 <div className="flex items-center gap-2">
-                  <Select defaultValue="CO00065">
+                  <Select value={order.order_number || "none"}>
                     <SelectTrigger className="h-8 text-xs bg-gray-100/50 border-gray-200 flex-1">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="CO00065">CO00065; CU00304 RMD AUSTRALIA (Quotati...</SelectItem>
+                      {order.order_number ? (
+                        <SelectItem value={order.order_number}>{order.order_number}; {order.customer_number} {order.customer_name} ({order.status})</SelectItem>
+                      ) : (
+                        <SelectItem value="none">No order selected</SelectItem>
+                      )}
                     </SelectContent>
                   </Select>
                   <Link2 className="w-4 h-4 text-gray-400 cursor-pointer hover:text-gray-600" />
@@ -139,14 +154,27 @@ export default function CreateShipmentPage() {
                 </tr>
               </thead>
               <tbody>
-                <tr>
-                  <td colSpan={6} className="px-2 py-4 text-red-500">
-                    Please book items for the customer order
-                  </td>
-                </tr>
+                {order.items?.length ? order.items.map((item: any, i: number) => (
+                  <tr key={i} className="border-t border-gray-200">
+                    <td className="px-2 py-3">{item.product} - {item.description}</td>
+                    <td className="px-2 py-3">{item.quantity} {item.uom}</td>
+                    <td className="px-2 py-3">-</td>
+                    <td className="px-2 py-3 text-yellow-600">Pending</td>
+                    <td className="px-2 py-3">Main Warehouse</td>
+                    <td className="px-2 py-3">
+                      <Input defaultValue={item.quantity} className="h-7 w-20 text-xs" />
+                    </td>
+                  </tr>
+                )) : (
+                  <tr>
+                    <td colSpan={6} className="px-2 py-4 text-red-500">
+                      Please book items for the customer order
+                    </td>
+                  </tr>
+                )}
                 <tr className="border-t border-gray-200">
                   <td colSpan={5} className="px-2 py-2 font-bold text-right">Total:</td>
-                  <td className="px-2 py-2"></td>
+                  <td className="px-2 py-2 font-bold">{order.items?.reduce((acc: number, item: any) => acc + (parseFloat(item.quantity) || 0), 0) || 0}</td>
                 </tr>
               </tbody>
             </table>

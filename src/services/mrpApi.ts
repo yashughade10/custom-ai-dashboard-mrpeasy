@@ -90,6 +90,26 @@ export const mrpApi = {
     return res.json();
   },
 
+  createCustomer: async (data: any) => {
+    const res = await fetch(`${API_BASE}/mrp/crm/customers`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    });
+    if (!res.ok) throw new Error("Failed to create customer");
+    return res.json();
+  },
+
+  updateCustomer: async (id: string, data: any) => {
+    const res = await fetch(`${API_BASE}/mrp/crm/customers/${id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    });
+    if (!res.ok) throw new Error("Failed to update customer");
+    return res.json();
+  },
+
   getCustomerStatistics: async (page = 1, limit = 100) => {
     const res = await fetch(`${API_BASE}/mrp/crm/customer-statistics?page=${page}&limit=${limit}`);
     if (!res.ok) throw new Error("Failed to fetch customer statistics");
@@ -105,6 +125,26 @@ export const mrpApi = {
   getCustomerOrderById: async (id: string) => {
     const res = await fetch(`${API_BASE}/mrp/crm/customer-orders/${id}`);
     if (!res.ok) throw new Error("Failed to fetch customer order");
+    return res.json();
+  },
+
+  createCustomerOrder: async (data: any) => {
+    const res = await fetch(`${API_BASE}/mrp/crm/customer-orders`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    });
+    if (!res.ok) throw new Error("Failed to create customer order");
+    return res.json();
+  },
+
+  updateCustomerOrder: async (id: string, data: any) => {
+    const res = await fetch(`${API_BASE}/mrp/crm/customer-orders/${id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    });
+    if (!res.ok) throw new Error("Failed to update customer order");
     return res.json();
   },
 

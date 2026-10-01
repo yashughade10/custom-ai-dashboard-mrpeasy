@@ -1,6 +1,7 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
+import { useState, useEffect } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { mrpApi } from "@/services/mrpApi";
 import { useParams, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
@@ -9,6 +10,7 @@ import { MrpTabBar } from "@/components/mrp/MrpTabBar";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { SearchableSelect } from "@/components/ui/searchable-select";
 import { Download, Plus, Pencil } from "lucide-react";
 import { format } from "date-fns";
 
@@ -26,15 +28,82 @@ export default function CustomerOrderDetailsPage() {
   const router = useRouter();
   const orderId = params.id as string;
 
+  const isNew = orderId === "new";
+
   const { data: response, isLoading } = useQuery({
     queryKey: ["mrpCustomerOrder", orderId],
     queryFn: () => mrpApi.getCustomerOrderById(orderId),
+    enabled: !isNew,
   });
 
-  const order = response?.data;
+  const { data: customersResponse, isLoading: isLoadingCustomers } = useQuery({
+    queryKey: ["mrpCustomers", 2000],
+    queryFn: () => mrpApi.getCustomers(1, 2000),
+  });
+  
+  const customers = customersResponse?.data || [];
+  const customerOptions = customers.map((c: any) => ({
+    label: `${c.customer_number} ${c.name}`,
+    value: c.customer_number
+  }));
+
+  const queryClient = useQueryClient();
+
+  const initialOrder = isNew 
+    ? { order_number: "NEW", status: "Quotation", currency: "AUD", items: [], invoices: [], shipments: [] } 
+    : response?.data;
+
+  const [formData, setFormData] = useState<any>({});
+
+  useEffect(() => {
+    if (initialOrder) {
+      setFormData(initialOrder);
+    }
+  }, [JSON.stringify(initialOrder)]);
+
+  const { data: groupsResponse } = useQuery({
+    queryKey: ["mrpProductGroups"],
+    queryFn: () => mrpApi.getProductGroups(),
+  });
+  const productGroups = groupsResponse?.data || [];
+
+  const order = formData.order_number ? formData : initialOrder;
   const items = order?.items || [];
   const invoices = order?.invoices || [];
   const shipments = order?.shipments || [];
+
+  const updateItem = (index: number, field: string, value: any) => {
+    const newItems = [...items];
+    if (index >= newItems.length) {
+      newItems.push({});
+    }
+    newItems[index] = { ...newItems[index], [field]: value };
+    
+    if (["quantity", "price", "discount"].includes(field)) {
+      const qty = parseFloat(newItems[index].quantity) || 0;
+      const price = parseFloat(newItems[index].price) || 0;
+      const discount = parseFloat(newItems[index].discount) || 0;
+      newItems[index].subtotal = (qty * price) * (1 - discount / 100);
+    }
+    
+    const newTotal = newItems.reduce((acc: number, item: any) => acc + (parseFloat(item.subtotal) || 0), 0);
+    setFormData({ ...formData, items: newItems, total: newTotal });
+  };
+
+  const handleSave = async () => {
+    try {
+      if (isNew) {
+        await mrpApi.createCustomerOrder(formData);
+      } else {
+        await mrpApi.updateCustomerOrder(orderId, formData);
+      }
+      queryClient.invalidateQueries({ queryKey: ["mrpCustomerOrders"] });
+      queryClient.invalidateQueries({ queryKey: ["mrpCustomerOrder", orderId] });
+      router.push("/dashboard/mrp/crm");
+    } catch (error) {
+      console.error("Failed to save order", error);
+    }
+  };
 
   const formatDate = (dateStr: string) => {
     if (!dateStr) return "-";
@@ -49,7 +118,7 @@ export default function CustomerOrderDetailsPage() {
     return <div className="p-8 text-center text-gray-500">Loading order details...</div>;
   }
 
-  if (!order) {
+  if (!order && !isNew) {
     return <div className="p-8 text-center text-red-500">Order not found.</div>;
   }
 
@@ -62,7 +131,7 @@ export default function CustomerOrderDetailsPage() {
           <div className="px-6 py-4 flex-1 flex flex-col">
             {/* Header */}
             <div className="flex items-center justify-between mb-4">
-              <h1 className="text-xl font-bold text-gray-900">Customer order {order.order_number} details</h1>
+              <h1 className="text-xl font-bold text-gray-900">{isNew ? "Create Customer Order" : `Customer order ${order.order_number} details`}</h1>
               <Button variant="outline" size="sm" className="h-8 bg-gray-50 text-gray-700 text-xs font-medium border-gray-300">
                 <Download className="h-3 w-3 mr-1.5" />
                 PDF
@@ -72,7 +141,7 @@ export default function CustomerOrderDetailsPage() {
             {/* Top Toolbar */}
             <div className="flex gap-2 mb-6">
               <Button variant="outline" size="sm" onClick={() => router.back()} className="h-7 px-4 text-xs font-medium text-blue-600 border-blue-200 bg-blue-50 hover:bg-blue-100">Back</Button>
-              <Button size="sm" className="h-7 px-4 text-xs font-medium bg-blue-600 hover:bg-blue-700 text-white">Save</Button>
+              <Button size="sm" onClick={handleSave} className="h-7 px-4 text-xs font-medium bg-blue-600 hover:bg-blue-700 text-white">Save</Button>
               <Button variant="outline" size="sm" className="h-7 px-4 text-xs font-medium text-red-600 border-red-200 bg-red-50 hover:bg-red-100">Delete</Button>
               <Button variant="outline" size="sm" className="h-7 px-4 text-xs font-medium text-blue-600 border-blue-200 bg-blue-50 hover:bg-blue-100">Reports</Button>
               <Button variant="outline" size="sm" className="h-7 px-4 text-xs font-medium text-blue-600 border-blue-200 bg-blue-50 hover:bg-blue-100">Copy</Button>
@@ -87,14 +156,20 @@ export default function CustomerOrderDetailsPage() {
                 </div>
                 <div className="grid grid-cols-[120px_1fr] items-center gap-2">
                   <label className="text-xs text-right text-gray-600 font-medium">Customer *</label>
-                  <Select value={order.customer_number || "unknown"}>
-                    <SelectTrigger className="h-7 text-xs bg-gray-50">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value={order.customer_number || "unknown"}>{order.customer_number} {order.customer_name}</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <SearchableSelect
+                    options={customerOptions}
+                    value={order?.customer_number || ""}
+                    onChange={(val) => {
+                      const selected = customers.find((c: any) => c.customer_number === val);
+                      setFormData({
+                        ...formData,
+                        customer_number: val,
+                        customer_name: selected ? selected.name : ""
+                      });
+                    }}
+                    placeholder="Select customer..."
+                    isLoading={isLoadingCustomers}
+                  />
                 </div>
                 <div className="grid grid-cols-[120px_1fr] items-center gap-2">
                   <label className="text-xs text-right text-gray-600 font-medium">Status *</label>
@@ -190,35 +265,38 @@ export default function CustomerOrderDetailsPage() {
                       <td className="px-2 py-3 align-top">
                         <div className="flex items-center gap-2">
                           <span className="text-gray-400">{i + 1}</span>
-                          <Select defaultValue="system">
-                            <SelectTrigger className="h-6 w-32 text-[11px] bg-white border-transparent">
-                              <SelectValue />
+                          <Select value={item.product_group || "none"} onValueChange={(v) => updateItem(i, "product_group", v)}>
+                            <SelectTrigger className="h-6 w-32 text-[11px] bg-white border-gray-200">
+                              <SelectValue placeholder="Select group" />
                             </SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="system">A000000 Z Air System</SelectItem>
+                              <SelectItem value="none">None</SelectItem>
+                              {productGroups.map((g: any) => (
+                                <SelectItem key={g.group_number} value={g.group_number}>{g.group_name || g.group_number}</SelectItem>
+                              ))}
                             </SelectContent>
                           </Select>
                         </div>
                       </td>
                       <td className="px-2 py-3 align-top">
-                        <div className="font-semibold">{item.product}</div>
-                        <div className="text-gray-500 mt-1">{item.description}</div>
+                        <Input className="h-6 w-full text-[11px]" value={item.product || ""} onChange={e => updateItem(i, "product", e.target.value)} placeholder="Product name" />
+                        <Input className="h-6 w-full text-[11px] mt-1" value={item.description || ""} onChange={e => updateItem(i, "description", e.target.value)} placeholder="Description" />
                       </td>
                       <td className="px-2 py-3 align-top">
                         <div className="flex items-center gap-1">
-                          <Input className="h-6 w-12 text-[11px]" defaultValue={item.quantity} />
-                          <span className="text-gray-500">{item.uom}</span>
+                          <Input className="h-6 w-12 text-[11px]" value={item.quantity || ""} onChange={e => updateItem(i, "quantity", e.target.value)} />
+                          <span className="text-gray-500">{item.uom || 'pcs'}</span>
                         </div>
                       </td>
                       <td className="px-2 py-3 align-top">
                         <div className="flex items-center gap-1">
-                          <Input className="h-6 w-16 text-[11px]" defaultValue={item.price?.toFixed(2)} />
+                          <Input className="h-6 w-16 text-[11px]" value={item.price || ""} onChange={e => updateItem(i, "price", e.target.value)} />
                           <span className="text-gray-500">{order.currency || 'AUD'}</span>
                         </div>
                       </td>
                       <td className="px-2 py-3 align-top">
                         <div className="flex items-center gap-1">
-                          <Input className="h-6 w-12 text-[11px]" defaultValue={item.discount} />
+                          <Input className="h-6 w-12 text-[11px]" value={item.discount || ""} onChange={e => updateItem(i, "discount", e.target.value)} />
                           <span className="text-gray-500">%</span>
                         </div>
                       </td>
@@ -226,13 +304,13 @@ export default function CustomerOrderDetailsPage() {
                         {item.subtotal?.toFixed(2)} <span className="font-normal text-gray-500 ml-1">{order.currency || 'AUD'}</span>
                       </td>
                       <td className="px-2 py-3 align-top">
-                        <Input type="date" className="h-6 w-24 text-[11px] text-gray-500" />
+                        <Input type="date" className="h-6 w-24 text-[11px] text-gray-500" value={item.delivery_date || ""} onChange={e => updateItem(i, "delivery_date", e.target.value)} />
                       </td>
                       <td className="px-2 py-3 align-top">{item.cost?.toFixed(2) || ''}</td>
                       <td className="px-2 py-3 align-top">{item.profit?.toFixed(2) || ''}</td>
                       <td className="px-2 py-3 align-top text-red-600">{item.status}</td>
                       <td className="px-2 py-3 align-top">{item.source}</td>
-                      <td className="px-2 py-3 align-top">{item.shipped}</td>
+                      <td className="px-2 py-3 align-top">{item.shipped || 0}</td>
                     </tr>
                   ))}
                   {/* Empty Row for adding new */}
@@ -240,29 +318,34 @@ export default function CustomerOrderDetailsPage() {
                     <td className="px-2 py-3 align-top">
                       <div className="flex items-center gap-2">
                         <span className="text-gray-400">{items.length + 1}</span>
-                        <Select>
+                        <Select onValueChange={(v) => updateItem(items.length, "product_group", v)}>
                           <SelectTrigger className="h-6 w-32 text-[11px] bg-white border-transparent">
                             <SelectValue placeholder="Select group" />
                           </SelectTrigger>
-                          <SelectContent><SelectItem value="none">None</SelectItem></SelectContent>
+                          <SelectContent>
+                            <SelectItem value="none">None</SelectItem>
+                            {productGroups.map((g: any) => (
+                              <SelectItem key={g.group_number} value={g.group_number}>{g.group_name || g.group_number}</SelectItem>
+                            ))}
+                          </SelectContent>
                         </Select>
                       </div>
                     </td>
                     <td className="px-2 py-3 align-top">
-                      <Input placeholder="Free text" className="h-6 w-full text-[11px]" />
+                      <Input placeholder="Free text" className="h-6 w-full text-[11px]" onChange={(e) => updateItem(items.length, "product", e.target.value)} />
                     </td>
                     <td className="px-2 py-3 align-top">
-                      <Input className="h-6 w-12 text-[11px]" />
+                      <Input className="h-6 w-12 text-[11px]" onChange={(e) => updateItem(items.length, "quantity", e.target.value)} />
                     </td>
                     <td className="px-2 py-3 align-top">
                       <div className="flex items-center gap-1">
-                        <Input className="h-6 w-16 text-[11px]" />
+                        <Input className="h-6 w-16 text-[11px]" onChange={(e) => updateItem(items.length, "price", e.target.value)} />
                         <span className="text-gray-500">{order.currency || 'AUD'}</span>
                       </div>
                     </td>
                     <td className="px-2 py-3 align-top">
                       <div className="flex items-center gap-1">
-                        <Input className="h-6 w-12 text-[11px]" />
+                        <Input className="h-6 w-12 text-[11px]" onChange={(e) => updateItem(items.length, "discount", e.target.value)} />
                         <span className="text-gray-500">%</span>
                       </div>
                     </td>
@@ -270,7 +353,7 @@ export default function CustomerOrderDetailsPage() {
                       {order.currency || 'AUD'}
                     </td>
                     <td className="px-2 py-3 align-top">
-                      <Input type="date" className="h-6 w-24 text-[11px] text-gray-500" />
+                      <Input type="date" className="h-6 w-24 text-[11px] text-gray-500" onChange={(e) => updateItem(items.length, "delivery_date", e.target.value)} />
                     </td>
                     <td className="px-2 py-3 align-top" colSpan={5}></td>
                   </tr>
@@ -293,7 +376,7 @@ export default function CustomerOrderDetailsPage() {
                 <div className="grid grid-cols-[200px_1fr_200px] items-center font-bold">
                   <div className="ml-6">Total:</div>
                   <div className="flex gap-1 items-center justify-center -ml-16">
-                    <span className="text-gray-500 font-normal">{order.currency || 'AUD'}</span> {Number(order.total || 360).toFixed(2)}
+                    <span className="text-gray-500 font-normal">{order.currency || 'AUD'}</span> {Number(order.total || 0).toFixed(2)}
                   </div>
                   <div className="text-right text-gray-500 font-normal mr-2 text-xs">
                     0 Hourly Rate
@@ -306,7 +389,7 @@ export default function CustomerOrderDetailsPage() {
             <div className="flex items-center justify-between mb-8">
               <div className="flex gap-2">
                 <Button variant="outline" size="sm" onClick={() => router.back()} className="h-7 px-4 text-xs font-medium text-blue-600 border-blue-200 bg-blue-50 hover:bg-blue-100">Back</Button>
-                <Button size="sm" className="h-7 px-4 text-xs font-medium bg-blue-600 hover:bg-blue-700 text-white">Save</Button>
+                <Button size="sm" onClick={handleSave} className="h-7 px-4 text-xs font-medium bg-blue-600 hover:bg-blue-700 text-white">Save</Button>
                 <Button variant="outline" size="sm" className="h-7 px-4 text-xs font-medium text-red-600 border-red-200 bg-red-50 hover:bg-red-100">Delete</Button>
                 <Button variant="outline" size="sm" className="h-7 px-4 text-xs font-medium text-blue-600 border-blue-200 bg-blue-50 hover:bg-blue-100">Reports</Button>
                 <Button variant="outline" size="sm" className="h-7 px-4 text-xs font-medium text-blue-600 border-blue-200 bg-blue-50 hover:bg-blue-100">Copy</Button>

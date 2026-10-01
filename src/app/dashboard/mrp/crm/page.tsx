@@ -106,7 +106,7 @@ export default function CRMPage() {
           <div className="px-4 py-3 border-b border-gray-100 flex flex-wrap items-center justify-between gap-3 bg-white">
             <div className="flex items-center gap-3">
               <h1 className="text-xl font-bold text-gray-900">Customer orders</h1>
-              <Button size="sm" className="bg-blue-600 hover:bg-blue-700 text-white gap-1.5 font-medium px-3">
+              <Button size="sm" className="bg-blue-600 hover:bg-blue-700 text-white gap-1.5 font-medium px-3" onClick={() => router.push('/dashboard/mrp/crm/customer-orders/new')}>
                 <Plus className="h-4 w-4" />
                 Create
               </Button>

@@ -1,12 +1,23 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
+import { useQuery } from "@tanstack/react-query";
+import { mrpApi } from "@/services/mrpApi";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Link, Cloud, HardDrive, Share2 } from "lucide-react";
 
 export default function AddNewOrderNotePage() {
   const router = useRouter();
+  const params = useParams();
+  const orderId = typeof params?.id === 'string' ? params.id : '';
+
+  const { data: orderResponse } = useQuery({
+    queryKey: ["mrpCustomerOrder", orderId],
+    queryFn: () => mrpApi.getCustomerOrderById(orderId),
+    enabled: !!orderId,
+  });
+  const order = orderResponse?.data || {};
 
   return (
     <div className="flex flex-col h-full bg-[#f4f7fb] min-h-[calc(100vh-4rem)] p-4 sm:p-6 lg:p-8">
@@ -25,7 +36,9 @@ export default function AddNewOrderNotePage() {
           <div className="space-y-6">
             <div className="grid grid-cols-[100px_1fr] items-baseline gap-4">
               <label className="text-sm text-right text-gray-700">Company</label>
-              <div className="text-sm text-gray-900">CU01439 1770 CASTAWAY SURVIVER PTY LTD ATF SEQ CRANE HIRE</div>
+              <div className="text-sm text-gray-900">
+                {order.customer_number ? `${order.customer_number} ${order.customer_name || ""}` : "No customer selected"}
+              </div>
             </div>
 
             <div className="grid grid-cols-[100px_1fr] items-start gap-4">

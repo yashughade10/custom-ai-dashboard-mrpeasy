@@ -1,6 +1,7 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
+import { useState, useEffect } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { mrpApi } from "@/services/mrpApi";
 import { useParams, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
@@ -26,18 +27,50 @@ export default function CustomerDetailsPage() {
   const router = useRouter();
   const customerId = params.id as string;
 
+  const isNew = customerId === "new";
+
   const { data: response, isLoading } = useQuery({
     queryKey: ["mrpCustomer", customerId],
     queryFn: () => mrpApi.getCustomerById(customerId),
+    enabled: !isNew,
   });
 
-  const customer = response?.data;
+  const queryClient = useQueryClient();
+
+  const customer = isNew 
+    ? { customer_number: "NEW", name: "", status: "Active", phone: "", email: "", address: "", first_name: "", last_name: "" } 
+    : response?.data;
+
+  const [formData, setFormData] = useState<any>({});
+
+  useEffect(() => {
+    if (customer) {
+      setFormData(customer);
+    }
+    // Using stringify prevents infinite loop when customer is a newly created object literal on every render
+  }, [JSON.stringify(customer)]);
+
+  const handleSave = async () => {
+    try {
+      if (isNew) {
+        await mrpApi.createCustomer(formData);
+      } else {
+        await mrpApi.updateCustomer(customerId, formData);
+      }
+      queryClient.invalidateQueries({ queryKey: ["mrpCustomers"] });
+      queryClient.invalidateQueries({ queryKey: ["mrpCustomer", customerId] });
+      router.push("/dashboard/mrp/crm/customers");
+    } catch (error) {
+      console.error("Failed to save customer:", error);
+      alert("Failed to save customer");
+    }
+  };
 
   if (isLoading) {
     return <div className="p-8 text-center text-gray-500">Loading customer details...</div>;
   }
 
-  if (!customer) {
+  if (!customer && !isNew) {
     return <div className="p-8 text-center text-red-500">Customer not found.</div>;
   }
 
@@ -50,7 +83,7 @@ export default function CustomerDetailsPage() {
           <div className="px-6 py-4 flex-1 flex flex-col">
             {/* Header */}
             <div className="flex items-center justify-between mb-4">
-              <h1 className="text-xl font-bold text-gray-900">Customer {customer.customer_number} {customer.name} details</h1>
+              <h1 className="text-xl font-bold text-gray-900">{isNew ? "Create Customer" : `Customer ${customer.customer_number} ${customer.name} details`}</h1>
               <Button variant="outline" size="sm" className="h-8 bg-blue-600 text-white hover:bg-blue-700 text-xs font-medium border-blue-600">
                 <Download className="h-3 w-3 mr-1.5" />
                 PDF
@@ -60,7 +93,7 @@ export default function CustomerDetailsPage() {
             {/* Top Toolbar */}
             <div className="flex gap-2 mb-6">
               <Button variant="outline" size="sm" onClick={() => router.back()} className="h-7 px-4 text-xs font-medium text-blue-600 border-blue-200 bg-blue-50 hover:bg-blue-100">Back</Button>
-              <Button size="sm" className="h-7 px-4 text-xs font-medium bg-blue-600 hover:bg-blue-700 text-white">Save</Button>
+              <Button size="sm" onClick={handleSave} className="h-7 px-4 text-xs font-medium bg-blue-600 hover:bg-blue-700 text-white">Save</Button>
               <Button variant="outline" size="sm" className="h-7 px-4 text-xs font-medium text-blue-600 border-blue-200 bg-blue-50 hover:bg-blue-100">Delete</Button>
               <Button size="sm" className="h-7 px-4 text-xs font-medium bg-blue-600 hover:bg-blue-700 text-white">Reports</Button>
             </div>
@@ -74,11 +107,11 @@ export default function CustomerDetailsPage() {
                 </div>
                 <div className="grid grid-cols-[140px_1fr] items-center gap-2">
                   <label className="text-xs text-right text-gray-600 font-medium">Name *</label>
-                  <Input defaultValue={customer.name} className="h-7 text-xs bg-gray-50" />
+                  <Input value={formData.name || ""} onChange={e => setFormData({ ...formData, name: e.target.value })} className="h-7 text-xs bg-gray-50" />
                 </div>
                 <div className="grid grid-cols-[140px_1fr] items-center gap-2">
                   <label className="text-xs text-right text-gray-600 font-medium">Status</label>
-                  <Select value={customer.status || "Active"}>
+                  <Select value={formData.status || "Active"} onValueChange={v => setFormData({ ...formData, status: v })}>
                     <SelectTrigger className="h-7 text-xs bg-gray-50">
                       <SelectValue />
                     </SelectTrigger>
@@ -116,7 +149,7 @@ export default function CustomerDetailsPage() {
                           <SelectItem value="Address">Address</SelectItem>
                         </SelectContent>
                       </Select>
-                      <Input defaultValue={customer.phone} className="h-7 text-xs bg-gray-50" />
+                      <Input value={formData.phone || ""} onChange={e => setFormData({ ...formData, phone: e.target.value })} className="h-7 text-xs bg-gray-50" />
                       <div className="flex gap-1 items-center justify-end text-gray-400">
                         <Trash2 className="w-3.5 h-3.5 cursor-pointer hover:text-red-500" />
                         <GripVertical className="w-3.5 h-3.5 cursor-move" />
@@ -134,7 +167,7 @@ export default function CustomerDetailsPage() {
                           <SelectItem value="Address">Address</SelectItem>
                         </SelectContent>
                       </Select>
-                      <Input defaultValue={customer.email} className="h-7 text-xs bg-gray-50" />
+                      <Input value={formData.email || ""} onChange={e => setFormData({ ...formData, email: e.target.value })} className="h-7 text-xs bg-gray-50" />
                       <div className="flex gap-1 items-center justify-end text-gray-400">
                         <Trash2 className="w-3.5 h-3.5 cursor-pointer hover:text-red-500" />
                         <GripVertical className="w-3.5 h-3.5 cursor-move" />
@@ -153,10 +186,10 @@ export default function CustomerDetailsPage() {
                         </SelectContent>
                       </Select>
                       <div className="space-y-1">
-                        <Input placeholder="First name" defaultValue={customer.first_name || ""} className="h-7 text-xs bg-gray-50" />
-                        <Input placeholder="Last name" defaultValue={customer.last_name || ""} className="h-7 text-xs bg-gray-50" />
-                        <Input placeholder="Company name" defaultValue={customer.name || ""} className="h-7 text-xs bg-gray-50" />
-                        <Textarea defaultValue={customer.address || ""} placeholder="Full Address" className="min-h-[60px] text-xs bg-gray-50" />
+                        <Input placeholder="First name" value={formData.first_name || ""} onChange={e => setFormData({ ...formData, first_name: e.target.value })} className="h-7 text-xs bg-gray-50" />
+                        <Input placeholder="Last name" value={formData.last_name || ""} onChange={e => setFormData({ ...formData, last_name: e.target.value })} className="h-7 text-xs bg-gray-50" />
+                        <Input placeholder="Company name" value={formData.name || ""} onChange={e => setFormData({ ...formData, name: e.target.value })} className="h-7 text-xs bg-gray-50" />
+                        <Textarea value={formData.address || ""} onChange={e => setFormData({ ...formData, address: e.target.value })} placeholder="Full Address" className="min-h-[60px] text-xs bg-gray-50" />
                       </div>
                       <div className="flex gap-1 items-center justify-end text-gray-400 mt-1">
                         <Trash2 className="w-3.5 h-3.5 cursor-pointer hover:text-red-500" />
@@ -267,7 +300,7 @@ export default function CustomerDetailsPage() {
             {/* Bottom Toolbar */}
             <div className="flex gap-2 mb-8">
               <Button variant="outline" size="sm" onClick={() => router.back()} className="h-7 px-4 text-xs font-medium text-blue-600 border-blue-200 bg-blue-50 hover:bg-blue-100">Back</Button>
-              <Button size="sm" className="h-7 px-4 text-xs font-medium bg-blue-600 hover:bg-blue-700 text-white">Save</Button>
+              <Button size="sm" onClick={handleSave} className="h-7 px-4 text-xs font-medium bg-blue-600 hover:bg-blue-700 text-white">Save</Button>
               <Button variant="outline" size="sm" className="h-7 px-4 text-xs font-medium text-blue-600 border-blue-200 bg-blue-50 hover:bg-blue-100">Delete</Button>
               <Button size="sm" className="h-7 px-4 text-xs font-medium bg-blue-600 hover:bg-blue-700 text-white">Reports</Button>
             </div>

@@ -134,23 +134,53 @@ function XeroSettingsPage() {
               <Button variant="destructive" onClick={handleDisconnect}>Disconnect</Button>
               <div className="flex gap-2">
                 <Button variant="outline" onClick={async () => {
-                  setSyncing(true);
-                  try {
-                    const res = await fetch(`${API_BASE}/xero/sync/pull-items`, { method: "POST" });
-                    const data = await res.json();
-                    alert(data.message || "Items synced successfully!");
-                    fetchLogs();
-                  } catch (err) {
-                    alert("Failed to sync items from Xero.");
-                  } finally {
-                    setSyncing(false);
-                  }
-                }} disabled={syncing}>
-                  Sync Items
-                </Button>
-                <Button onClick={handleSyncAll} disabled={syncing}>
-                  {syncing ? "Syncing..." : "Sync All Now"}
-                </Button>
+                setSyncing(true);
+                try {
+                  const res = await fetch(`${API_BASE}/xero/sync/pull-contacts`, { method: "POST" });
+                  const data = await res.json();
+                  alert(data.message || "Customers/contacts synced successfully!");
+                  fetchLogs();
+                } catch (err) {
+                  alert("Failed to sync contacts from Xero.");
+                } finally {
+                  setSyncing(false);
+                }
+              }} disabled={syncing}>
+                Sync Customers
+              </Button>
+              <Button variant="outline" onClick={async () => {
+                setSyncing(true);
+                try {
+                  const res = await fetch(`${API_BASE}/xero/sync/pull-invoices`, { method: "POST" });
+                  const data = await res.json();
+                  alert(data.message || "Invoices synced successfully!");
+                  fetchLogs();
+                } catch (err) {
+                  alert("Failed to sync invoices from Xero.");
+                } finally {
+                  setSyncing(false);
+                }
+              }} disabled={syncing}>
+                Sync Invoices
+              </Button>
+              <Button variant="outline" onClick={async () => {
+                setSyncing(true);
+                try {
+                  const res = await fetch(`${API_BASE}/xero/sync/pull-items`, { method: "POST" });
+                  const data = await res.json();
+                  alert(data.message || "Items synced successfully!");
+                  fetchLogs();
+                } catch (err) {
+                  alert("Failed to sync items from Xero.");
+                } finally {
+                  setSyncing(false);
+                }
+              }} disabled={syncing}>
+                Sync Items
+              </Button>
+              <Button onClick={handleSyncAll} disabled={syncing}>
+                {syncing ? "Syncing..." : "Sync All Now"}
+              </Button>
               </div>
             </>
           ) : (

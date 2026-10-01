@@ -1,6 +1,8 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
+import { useQuery } from "@tanstack/react-query";
+import { mrpApi } from "@/services/mrpApi";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -9,6 +11,15 @@ import { Trash2, GripVertical, Link2 } from "lucide-react";
 
 export default function CreateDocumentPage() {
   const router = useRouter();
+  const params = useParams();
+  const orderId = typeof params?.id === 'string' ? params.id : '';
+
+  const { data: orderResponse } = useQuery({
+    queryKey: ["mrpCustomerOrder", orderId],
+    queryFn: () => mrpApi.getCustomerOrderById(orderId),
+    enabled: !!orderId,
+  });
+  const order = orderResponse?.data || {};
 
   return (
     <div className="flex flex-col h-full bg-[#f4f7fb] min-h-[calc(100vh-4rem)] p-4 sm:p-6 lg:p-8">
@@ -29,13 +40,17 @@ export default function CreateDocumentPage() {
             <div className="grid grid-cols-[140px_1fr] items-center gap-4">
               <label className="text-[11px] text-right text-gray-500 font-medium uppercase">Customer order</label>
               <div className="flex items-center gap-2">
-                <Select defaultValue="CO00065">
+                <Select value={order.order_number || "new"}>
                   <SelectTrigger className="h-7 text-xs bg-blue-50 border-blue-200 text-blue-900 flex-1">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="new">Add a new customer order</SelectItem>
-                    <SelectItem value="CO00065">1304 RMD AUSTRALIA (Quotation, AUD 360.00)</SelectItem>
+                    {order.order_number && (
+                      <SelectItem value={order.order_number}>
+                        {order.order_number} {order.customer_name} ({order.status}, {order.currency} {order.total})
+                      </SelectItem>
+                    )}
                   </SelectContent>
                 </Select>
                 <Link2 className="w-3.5 h-3.5 text-gray-400 cursor-pointer" />
@@ -45,12 +60,16 @@ export default function CreateDocumentPage() {
 
             <div className="grid grid-cols-[140px_1fr] items-center gap-4">
               <label className="text-[11px] text-right text-gray-500 font-medium uppercase">or customer *</label>
-              <Select defaultValue="CU00304">
+              <Select value={order.customer_number || "none"}>
                 <SelectTrigger className="h-7 text-xs bg-blue-50/50 border-blue-200">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="CU00304">CO00065; CU00304 RMD AUSTRALIA (Quotation, AUD 360.00)</SelectItem>
+                  {order.customer_number ? (
+                    <SelectItem value={order.customer_number}>{order.customer_number} {order.customer_name}</SelectItem>
+                  ) : (
+                    <SelectItem value="none">No customer selected</SelectItem>
+                  )}
                 </SelectContent>
               </Select>
             </div>
@@ -99,7 +118,7 @@ export default function CreateDocumentPage() {
           <div className="space-y-3">
             <div className="grid grid-cols-[120px_1fr] items-center gap-4">
               <label className="text-[11px] text-right text-gray-500 font-medium uppercase">Created *</label>
-              <Input type="date" defaultValue="2026-07-29" className="h-7 text-xs bg-blue-50/50 border-blue-200" />
+              <Input type="date" value={order.created_date ? new Date(order.created_date).toISOString().split('T')[0] : ""} className="h-7 text-xs bg-blue-50/50 border-blue-200" readOnly />
             </div>
 
             <div className="grid grid-cols-[120px_1fr] items-center gap-4">
@@ -109,7 +128,7 @@ export default function CreateDocumentPage() {
 
             <div className="grid grid-cols-[120px_1fr] items-center gap-4">
               <label className="text-[11px] text-right text-gray-500 font-medium uppercase">Currency</label>
-              <Input defaultValue="AUD" className="h-7 text-xs bg-gray-100/50 border-gray-200" readOnly />
+              <Input value={order.currency || "AUD"} className="h-7 text-xs bg-gray-100/50 border-gray-200" readOnly />
             </div>
 
             <div className="grid grid-cols-[120px_1fr] items-center gap-4">
@@ -149,132 +168,75 @@ export default function CreateDocumentPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100 bg-white">
-              {/* Row 1 */}
-              <tr>
-                <td className="px-2 py-3 text-center text-gray-400">1</td>
-                <td className="px-2 py-3 align-top">
-                  <Select defaultValue="CO00065">
-                    <SelectTrigger className="h-7 text-[10px] bg-gray-50/50">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent><SelectItem value="CO00065">CO00065</SelectItem></SelectContent>
-                  </Select>
-                </td>
-                <td className="px-2 py-3 align-top">
-                  <Select defaultValue="group1">
-                    <SelectTrigger className="h-7 text-[10px] bg-gray-50/50">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent><SelectItem value="group1">AG0000S.2 Air System</SelectItem></SelectContent>
-                  </Select>
-                </td>
-                <td className="px-2 py-3">
-                  <div className="space-y-1">
-                    <Select defaultValue="prod1">
+              {order.items?.length ? order.items.map((item: any, i: number) => (
+                <tr key={i}>
+                  <td className="px-2 py-3 text-center text-gray-400">{i + 1}</td>
+                  <td className="px-2 py-3 align-top">
+                    <Select value={order.order_number}>
                       <SelectTrigger className="h-7 text-[10px] bg-gray-50/50">
                         <SelectValue />
                       </SelectTrigger>
-                      <SelectContent><SelectItem value="prod1">AG0001S1 SERVICE DEPT LABOUR</SelectItem></SelectContent>
+                      <SelectContent><SelectItem value={order.order_number}>{order.order_number}</SelectItem></SelectContent>
                     </Select>
-                    <div className="text-[10px] text-gray-500 bg-gray-100/50 p-1 rounded-sm leading-tight">
-                      clean unit, check vacuum level, red/green switching venting, tilt operation, check pads for damage, no leaks. Grease rotator and actuator links. replace switch rubber boot on pendant ( wires to warning buzzer were cut) re solder wires on warning buzzer. Check operation of battery charger.
-                    </div>
-                  </div>
-                </td>
-                <td className="px-2 py-3 align-top">
-                  <Input defaultValue="2" className="h-7 text-[10px] text-right bg-gray-50/50" />
-                </td>
-                <td className="px-2 py-3 align-top">
-                  <div className="flex gap-1 items-center">
-                    <span className="text-[10px] text-gray-400">Hourly Rate</span>
-                    <Input defaultValue="180.00" className="h-7 text-[10px] text-right bg-gray-50/50 flex-1" />
-                    <span className="text-[10px] text-gray-400">AUD</span>
-                  </div>
-                </td>
-                <td className="px-2 py-3 align-top">
-                  <div className="flex gap-1 items-center">
-                    <Input className="h-7 text-[10px] bg-gray-50/50 w-full" />
-                    <span className="text-[10px] text-gray-400">%</span>
-                  </div>
-                </td>
-                <td className="px-2 py-3 align-top">
-                  <div className="flex gap-1 items-center font-medium">
-                    <Input defaultValue="360.00" className="h-7 text-[10px] text-right font-bold w-16 border-transparent bg-transparent p-0" readOnly />
-                    <span className="text-[10px] text-gray-400">AUD</span>
-                  </div>
-                </td>
-                <td className="px-2 py-3 align-top">
-                  <Input type="date" className="h-7 text-[10px] bg-gray-50/50 w-full" />
-                </td>
-                <td className="px-2 py-3 align-top text-right">
-                  <div className="flex gap-1 items-center justify-end text-gray-400 pt-1">
-                    <Trash2 className="w-3.5 h-3.5 cursor-pointer hover:text-red-500" />
-                    <GripVertical className="w-3.5 h-3.5 cursor-move" />
-                  </div>
-                </td>
-              </tr>
-
-              {/* Row 2 (Empty) */}
-              <tr>
-                <td className="px-2 py-3 text-center text-gray-400">2</td>
-                <td className="px-2 py-3 align-top">
-                  <Select>
-                    <SelectTrigger className="h-7 text-[10px] bg-gray-50/50">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent></SelectContent>
-                  </Select>
-                </td>
-                <td className="px-2 py-3 align-top">
-                  <Select>
-                    <SelectTrigger className="h-7 text-[10px] bg-gray-50/50">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent></SelectContent>
-                  </Select>
-                </td>
-                <td className="px-2 py-3">
-                  <div className="space-y-1">
-                    <Select>
-                      <SelectTrigger className="h-7 text-[10px] bg-gray-50/50 text-gray-400">
-                        <SelectValue placeholder="Start typing to select an item" />
+                  </td>
+                  <td className="px-2 py-3 align-top">
+                    <Select value={item.product_group || "none"}>
+                      <SelectTrigger className="h-7 text-[10px] bg-gray-50/50">
+                        <SelectValue />
                       </SelectTrigger>
-                      <SelectContent></SelectContent>
+                      <SelectContent><SelectItem value={item.product_group || "none"}>{item.product_group || "None"}</SelectItem></SelectContent>
                     </Select>
-                    <Input placeholder="Free text" className="h-7 text-[10px] bg-gray-50/50" />
-                  </div>
-                </td>
-                <td className="px-2 py-3 align-top">
-                  <Input className="h-7 text-[10px] text-right bg-gray-50/50" />
-                </td>
-                <td className="px-2 py-3 align-top">
-                  <div className="flex gap-1 items-center">
-                    <Input className="h-7 text-[10px] text-right bg-gray-50/50 flex-1" />
-                    <span className="text-[10px] text-gray-400">AUD</span>
-                  </div>
-                </td>
-                <td className="px-2 py-3 align-top">
-                  <div className="flex gap-1 items-center">
-                    <Input className="h-7 text-[10px] bg-gray-50/50 w-full" />
-                    <span className="text-[10px] text-gray-400">%</span>
-                  </div>
-                </td>
-                <td className="px-2 py-3 align-top">
-                  <div className="flex gap-1 items-center font-medium">
-                    <span className="text-[10px] w-16"></span>
-                    <span className="text-[10px] text-gray-400">AUD</span>
-                  </div>
-                </td>
-                <td className="px-2 py-3 align-top">
-                  <Input type="date" className="h-7 text-[10px] bg-gray-50/50 w-full" />
-                </td>
-                <td className="px-2 py-3 align-top text-right">
-                  <div className="flex gap-1 items-center justify-end text-gray-400 pt-1">
-                    <Trash2 className="w-3.5 h-3.5 cursor-pointer hover:text-red-500" />
-                    <GripVertical className="w-3.5 h-3.5 cursor-move" />
-                  </div>
-                </td>
-              </tr>
+                  </td>
+                  <td className="px-2 py-3">
+                    <div className="space-y-1">
+                      <Select value={item.product || "none"}>
+                        <SelectTrigger className="h-7 text-[10px] bg-gray-50/50">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent><SelectItem value={item.product || "none"}>{item.product || "None"}</SelectItem></SelectContent>
+                      </Select>
+                      <div className="text-[10px] text-gray-500 bg-gray-100/50 p-1 rounded-sm leading-tight">
+                        {item.description}
+                      </div>
+                    </div>
+                  </td>
+                  <td className="px-2 py-3 align-top">
+                    <Input defaultValue={item.quantity} className="h-7 text-[10px] text-right bg-gray-50/50" />
+                  </td>
+                  <td className="px-2 py-3 align-top">
+                    <div className="flex gap-1 items-center">
+                      <span className="text-[10px] text-gray-400">Rate</span>
+                      <Input defaultValue={item.price} className="h-7 text-[10px] text-right bg-gray-50/50 flex-1" />
+                      <span className="text-[10px] text-gray-400">{order.currency || "AUD"}</span>
+                    </div>
+                  </td>
+                  <td className="px-2 py-3 align-top">
+                    <div className="flex gap-1 items-center">
+                      <Input defaultValue={item.discount} className="h-7 text-[10px] bg-gray-50/50 w-full" />
+                      <span className="text-[10px] text-gray-400">%</span>
+                    </div>
+                  </td>
+                  <td className="px-2 py-3 align-top">
+                    <div className="flex gap-1 items-center font-medium">
+                      <Input defaultValue={item.subtotal} className="h-7 text-[10px] text-right font-bold w-16 border-transparent bg-transparent p-0" readOnly />
+                      <span className="text-[10px] text-gray-400">{order.currency || "AUD"}</span>
+                    </div>
+                  </td>
+                  <td className="px-2 py-3 align-top">
+                    <Input type="date" defaultValue={item.delivery_date} className="h-7 text-[10px] bg-gray-50/50 w-full" />
+                  </td>
+                  <td className="px-2 py-3 align-top text-right">
+                    <div className="flex gap-1 items-center justify-end text-gray-400 pt-1">
+                      <Trash2 className="w-3.5 h-3.5 cursor-pointer hover:text-red-500" />
+                      <GripVertical className="w-3.5 h-3.5 cursor-move" />
+                    </div>
+                  </td>
+                </tr>
+              )) : (
+                <tr>
+                  <td colSpan={10} className="px-2 py-8 text-center text-gray-500">No line items in this order.</td>
+                </tr>
+              )}
             </tbody>
             {/* Table Footer Totals */}
             <tbody className="bg-white border-t border-gray-200">
@@ -291,9 +253,9 @@ export default function CreateDocumentPage() {
               </tr>
               <tr>
                 <td colSpan={4} className="px-2 py-2 font-bold text-gray-900">Total:</td>
-                <td className="px-2 py-2 text-right font-bold">2</td>
+                <td className="px-2 py-2 text-right font-bold">{order.items?.length || 0}</td>
                 <td colSpan={2}></td>
-                <td className="px-2 py-2 font-bold whitespace-nowrap">AUD 360.00</td>
+                <td className="px-2 py-2 font-bold whitespace-nowrap">{order.currency || "AUD"} {order.total?.toFixed(2) || "0.00"}</td>
                 <td colSpan={2}></td>
               </tr>
               <tr>

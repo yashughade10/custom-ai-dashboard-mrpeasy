@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useQuery, keepPreviousData } from "@tanstack/react-query";
+import { useQuery, useQueryClient, keepPreviousData } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { mrpApi } from "@/services/mrpApi";
 import { MrpTabBar } from "@/components/mrp/MrpTabBar";
@@ -23,7 +23,26 @@ const crmTabs = [
 
 export default function CustomersPage() {
   const router = useRouter();
-  const [limit, setLimit] = useState(100);
+  const queryClient = useQueryClient();
+  const [limit, setLimit] = useState(2000);
+  const [syncing, setSyncing] = useState(false);
+  const [syncMsg, setSyncMsg] = useState<string | null>(null);
+
+  const handleXeroSync = async () => {
+    setSyncing(true);
+    setSyncMsg(null);
+    try {
+      const res = await fetch(`${API_BASE}/xero/sync/pull-contacts`, { method: "POST" });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Sync failed");
+      setSyncMsg(`✓ ${data.message || "Customers synced from Xero!"}`);
+      queryClient.invalidateQueries({ queryKey: ["mrpCustomers"] });
+    } catch (err: any) {
+      setSyncMsg(`✗ ${err.message}`);
+    } finally {
+      setSyncing(false);
+    }
+  };
 
   const { data: response, isLoading } = useQuery({
     queryKey: ["mrpCustomers", limit],
@@ -51,11 +70,32 @@ export default function CustomersPage() {
           <MrpTabBar tabs={crmTabs} />
           
           <div className="px-4 pb-4 flex-1 flex flex-col">
-            <MrpExportBar
-              createLabel="Create customer"
-              onDownloadPDF={() => window.open(`${API_BASE}/mrp/crm/customers/export/pdf`, "_blank")}
-              onDownloadCSV={() => window.open(`${API_BASE}/mrp/crm/customers/export/csv`, "_blank")}
-            />
+            <div className="flex items-center gap-2">
+              <div className="flex-1">
+                <MrpExportBar
+                  createLabel="Create customer"
+                  onCreate={() => router.push('/dashboard/mrp/crm/customers/new')}
+                  onDownloadPDF={() => window.open(`${API_BASE}/mrp/crm/customers/export/pdf`, "_blank")}
+                  onDownloadCSV={() => window.open(`${API_BASE}/mrp/crm/customers/export/csv`, "_blank")}
+                />
+              </div>
+              <div className="flex flex-col items-end gap-1 pr-2">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="h-7 px-3 text-xs font-medium border-blue-300 text-blue-700 bg-blue-50 hover:bg-blue-100 whitespace-nowrap"
+                  onClick={handleXeroSync}
+                  disabled={syncing}
+                >
+                  {syncing ? "Syncing from Xero..." : "⟳ Sync Customers from Xero"}
+                </Button>
+                {syncMsg && (
+                  <span className={`text-xs ${syncMsg.startsWith('✓') ? 'text-green-600' : 'text-red-500'}`}>
+                    {syncMsg}
+                  </span>
+                )}
+              </div>
+            </div>
             
             <div className="flex-1 mt-4">
               {isLoading ? (
