@@ -117,6 +117,19 @@ export default function CustomerOrderDetailsPage() {
     }
   };
 
+  const handleDelete = async () => {
+    if (confirm("Are you sure you want to delete this customer order?")) {
+      try {
+        await mrpApi.deleteCustomerOrder(orderId);
+        queryClient.invalidateQueries({ queryKey: ["mrpCustomerOrders"] });
+        router.push("/dashboard/mrp/crm");
+      } catch (error) {
+        console.error("Failed to delete order:", error);
+        alert("Failed to delete order");
+      }
+    }
+  };
+
   const formatDate = (dateStr: string) => {
     if (!dateStr) return "-";
     try {
@@ -155,8 +168,13 @@ export default function CustomerOrderDetailsPage() {
             {/* Top Toolbar */}
             <div className="flex gap-2 mb-6">
               <Button variant="outline" size="sm" onClick={() => router.back()} className="h-7 px-4 text-xs font-medium text-blue-600 border-blue-200 bg-blue-50 hover:bg-blue-100">Back</Button>
-              <Button size="sm" onClick={handleSave} className="h-7 px-4 text-xs font-medium bg-blue-600 hover:bg-blue-700 text-white">Save</Button>
-              <Button variant="outline" size="sm" className="h-7 px-4 text-xs font-medium text-red-600 border-red-200 bg-red-50 hover:bg-red-100">Delete</Button>
+              <Button variant="outline" size="sm" onClick={handleSave} className="h-7 px-4 text-xs font-medium bg-blue-600 hover:bg-blue-700 text-white">Save</Button>
+              <Button 
+                onClick={handleDelete}
+                disabled={isNew}
+                variant="outline" size="sm" className="h-7 px-4 text-xs font-medium text-red-600 border-red-200 bg-red-50 hover:bg-red-100 disabled:opacity-50">
+                Delete
+              </Button>
               <Button variant="outline" size="sm" className="h-7 px-4 text-xs font-medium text-blue-600 border-blue-200 bg-blue-50 hover:bg-blue-100">Reports</Button>
               <Button variant="outline" size="sm" className="h-7 px-4 text-xs font-medium text-blue-600 border-blue-200 bg-blue-50 hover:bg-blue-100">Copy</Button>
             </div>

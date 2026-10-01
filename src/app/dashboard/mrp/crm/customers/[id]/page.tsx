@@ -66,6 +66,19 @@ export default function CustomerDetailsPage() {
     }
   };
 
+  const handleDelete = async () => {
+    if (confirm("Are you sure you want to delete this customer?")) {
+      try {
+        await mrpApi.deleteCustomer(customerId);
+        queryClient.invalidateQueries({ queryKey: ["mrpCustomers"] });
+        router.push("/dashboard/mrp/crm/customers");
+      } catch (error) {
+        console.error("Failed to delete customer:", error);
+        alert("Failed to delete customer");
+      }
+    }
+  };
+
   if (isLoading) {
     return <div className="p-8 text-center text-gray-500">Loading customer details...</div>;
   }
@@ -91,7 +104,12 @@ export default function CustomerDetailsPage() {
             <div className="flex gap-2 mb-6">
               <Button variant="outline" size="sm" onClick={() => router.back()} className="h-7 px-4 text-xs font-medium text-blue-600 border-blue-200 bg-blue-50 hover:bg-blue-100">Back</Button>
               <Button size="sm" onClick={handleSave} className="h-7 px-4 text-xs font-medium bg-blue-600 hover:bg-blue-700 text-white">Save</Button>
-              <Button variant="outline" size="sm" className="h-7 px-4 text-xs font-medium text-blue-600 border-blue-200 bg-blue-50 hover:bg-blue-100">Delete</Button>
+              <Button 
+                onClick={handleDelete}
+                disabled={isNew}
+                variant="outline" size="sm" className="h-7 px-4 text-xs font-medium text-red-600 border-red-200 bg-red-50 hover:bg-red-100 disabled:opacity-50">
+                Delete
+              </Button>
               <Button size="sm" className="h-7 px-4 text-xs font-medium bg-blue-600 hover:bg-blue-700 text-white">Reports</Button>
             </div>
 

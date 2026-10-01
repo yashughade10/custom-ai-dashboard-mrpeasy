@@ -106,6 +106,18 @@ export const mrpApi = {
     return res.json();
   },
 
+  deleteCustomer: async (id: string) => {
+    const res = await fetch(`${API_BASE}/mrp/crm/customers/${id}`, { method: "DELETE" });
+    if (!res.ok) throw new Error("Failed to delete customer");
+    return res.json();
+  },
+
+  deleteTodayContact: async (id: string) => {
+    const res = await fetch(`${API_BASE}/mrp/crm/today-contacts/${id}`, { method: "DELETE" });
+    if (!res.ok) throw new Error("Failed to delete contact");
+    return res.json();
+  },
+
   updateCustomer: async (id: string, data: any) => {
     const res = await fetch(`${API_BASE}/mrp/crm/customers/${id}`, {
       method: "PUT",
@@ -151,6 +163,12 @@ export const mrpApi = {
       body: JSON.stringify(data),
     });
     if (!res.ok) throw new Error("Failed to update customer order");
+    return res.json();
+  },
+
+  deleteCustomerOrder: async (id: string) => {
+    const res = await fetch(`${API_BASE}/mrp/crm/customer-orders/${id}`, { method: "DELETE" });
+    if (!res.ok) throw new Error("Failed to delete customer order");
     return res.json();
   },
 

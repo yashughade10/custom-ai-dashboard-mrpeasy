@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useQuery, keepPreviousData } from "@tanstack/react-query";
+import { useQuery, useQueryClient, keepPreviousData } from "@tanstack/react-query";
 import { mrpApi } from "@/services/mrpApi";
 import { MrpTabBar } from "@/components/mrp/MrpTabBar";
 import { RouteGuard } from "@/components/auth/RouteGuard";
@@ -34,6 +34,19 @@ export default function TodayContactsPage() {
 
   const contacts = response?.data || [];
   const hasMore = contacts.length >= limit;
+  const queryClient = useQueryClient();
+
+  const handleDeleteContact = async (id: string) => {
+    if (confirm("Are you sure you want to delete this contact?")) {
+      try {
+        await mrpApi.deleteTodayContact(id);
+        queryClient.invalidateQueries({ queryKey: ["mrpTodayContacts"] });
+      } catch (error) {
+        console.error("Failed to delete contact:", error);
+        alert("Failed to delete contact");
+      }
+    }
+  };
 
   return (
     <RouteGuard module="crm" fallback={<div>Access Denied</div>}>
@@ -153,7 +166,7 @@ export default function TodayContactsPage() {
                             <button onClick={() => router.push(`/dashboard/mrp/crm/customers/${row.id || row.customer_number}`)} className="p-1 hover:bg-gray-200 rounded text-blue-600 bg-white border border-gray-200 shadow-sm transition-colors">
                               <Pencil className="w-3.5 h-3.5" />
                             </button>
-                            <button className="p-1 hover:bg-gray-200 rounded text-red-600 bg-white border border-gray-200 shadow-sm transition-colors">
+                            <button onClick={() => handleDeleteContact(row.id || row.customer_number)} className="p-1 hover:bg-gray-200 rounded text-red-600 bg-white border border-gray-200 shadow-sm transition-colors">
                               <Trash2 className="w-3.5 h-3.5" />
                             </button>
                           </div>
