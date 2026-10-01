@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Download, FileText, Pencil, Plus, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import { mrpApi } from "@/services/mrpApi";
 
@@ -35,11 +35,20 @@ function fmtMoney(n: any) {
 export default function InvoicesPage() {
   const router = useRouter();
   const [page, setPage] = useState(1);
+  const [searchInput, setSearchInput] = useState("");
   const [search, setSearch] = useState("");
 
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setSearch(searchInput);
+      setPage(1); // Reset to first page on new search
+    }, 300);
+    return () => clearTimeout(handler);
+  }, [searchInput]);
+
   const { data: response, isLoading } = useQuery({
-    queryKey: ["mrpInvoices", page],
-    queryFn: () => mrpApi.getInvoices(page, 50),
+    queryKey: ["mrpInvoices", page, search],
+    queryFn: () => mrpApi.getInvoices(page, 50, { search }),
     placeholderData: keepPreviousData,
   });
 
@@ -47,14 +56,7 @@ export default function InvoicesPage() {
   const pagination = response?.pagination || {};
   const currencySummary = response?.currency_summary || {};
 
-  const filtered = search
-    ? invoices.filter(inv =>
-        (inv.invoice_number || "").toLowerCase().includes(search.toLowerCase()) ||
-        (inv.customer_name || "").toLowerCase().includes(search.toLowerCase()) ||
-        (inv.customer_number || "").toLowerCase().includes(search.toLowerCase()) ||
-        (inv.status || "").toLowerCase().includes(search.toLowerCase())
-      )
-    : invoices;
+  const filtered = invoices;
 
   const handleExportCSV = () => {
     window.open(`${API_BASE}/mrp/crm/invoices/export/csv`, "_blank");
@@ -118,12 +120,12 @@ export default function InvoicesPage() {
             <div className="mb-3 flex gap-2">
               <Input
                 placeholder="Search by invoice no., customer, or status..."
-                value={search}
-                onChange={e => setSearch(e.target.value)}
+                value={searchInput}
+                onChange={e => setSearchInput(e.target.value)}
                 className="h-8 text-xs max-w-sm"
               />
-              {search && (
-                <Button variant="outline" size="sm" className="h-8 text-xs" onClick={() => setSearch("")}>Clear</Button>
+              {searchInput && (
+                <Button variant="outline" size="sm" className="h-8 text-xs" onClick={() => setSearchInput("")}>Clear</Button>
               )}
             </div>
 
