@@ -1,5 +1,8 @@
 "use client";
 
+import { useQuery } from "@tanstack/react-query";
+import { mrpApi } from "@/services/mrpApi";
+
 import { MrpTabBar } from "@/components/mrp/MrpTabBar";
 import { RouteGuard } from "@/components/auth/RouteGuard";
 import { Button } from "@/components/ui/button";
@@ -17,6 +20,7 @@ import {
   ResponsiveContainer,
   ReferenceLine
 } from "recharts";
+import { exportToPDF, exportToCSV } from "@/lib/exportUtils";
 
 const crmTabs = [
   { name: "Customer orders", href: "/dashboard/mrp/crm" },
@@ -27,18 +31,6 @@ const crmTabs = [
   { name: "Statistics", href: "/dashboard/mrp/crm/statistics" },
 ];
 
-const mockData = [
-  { week: "27/07/2026 - 02/08/2026", salesInvoices: 7451.40, incomingPayments: -2772.00, incomingInvoices: 117.57, outgoingPayments: 117.57, forecast: 4679.40 },
-  { week: "03/08/2026 - 09/08/2026", salesInvoices: 782.10, incomingPayments: 0, incomingInvoices: 0, outgoingPayments: 0, forecast: 782.10 },
-  { week: "10/08/2026 - 16/08/2026", salesInvoices: 1250.00, incomingPayments: 500, incomingInvoices: 200, outgoingPayments: 200, forecast: 1750.00 },
-  { week: "17/08/2026 - 23/08/2026", salesInvoices: 450.00, incomingPayments: 0, incomingInvoices: 150.00, outgoingPayments: 150.00, forecast: 450.00 },
-  { week: "24/08/2026 - 30/08/2026", salesInvoices: 3200.00, incomingPayments: 1000, incomingInvoices: 500, outgoingPayments: 500, forecast: 4200.00 },
-  { week: "31/08/2026 - 06/09/2026", salesInvoices: 890.00, incomingPayments: 0, incomingInvoices: 50, outgoingPayments: 50, forecast: 890.00 },
-  { week: "07/09/2026 - 13/09/2026", salesInvoices: 5500.00, incomingPayments: 2500, incomingInvoices: 1200, outgoingPayments: 1200, forecast: 8000.00 },
-  { week: "14/09/2026 - 20/09/2026", salesInvoices: 0, incomingPayments: 0, incomingInvoices: 800, outgoingPayments: 800, forecast: 0 },
-  { week: "21/09/2026 - 27/09/2026", salesInvoices: 150.00, incomingPayments: 0, incomingInvoices: 20, outgoingPayments: 20, forecast: 150.00 },
-];
-
 const formatCurrency = (val: number) => {
   if (val === undefined || val === null) return "";
   if (val === 0) return "AUD 0.00";
@@ -46,6 +38,19 @@ const formatCurrency = (val: number) => {
 };
 
 export default function CashFlowPage() {
+  const { data: response, isLoading } = useQuery({
+    queryKey: ["mrpCashFlow"],
+    queryFn: () => mrpApi.getCashFlowForecast(),
+  });
+
+  const cashFlowData = (response?.data || []).map((row: any) => ({
+    week: row.week,
+    salesInvoices: row.sales_invoices || 0,
+    incomingPayments: row.incoming_payments || 0,
+    incomingInvoices: row.incoming_invoices || 0,
+    outgoingPayments: row.outgoing_payments || 0,
+    forecast: row.cash_flow_forecast || 0
+  }));
   return (
     <RouteGuard module="crm" fallback={<div>Access Denied</div>}>
       <div className="flex flex-col bg-[#f4f7fb] min-h-[calc(100vh-4rem)] p-4 -m-4 sm:-m-6 lg:-m-8">
@@ -88,22 +93,42 @@ export default function CashFlowPage() {
               </div>
 
               <div className="flex items-center gap-2 shrink-0">
-                <Button variant="outline" size="sm" className="h-8 px-3 text-xs font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 border-gray-200 flex items-center gap-1 rounded-sm">
+                <Button 
+                  onClick={() => {
+                    const columns = [
+                      { header: "Week", dataKey: "week" },
+                      { header: "Sales Invoices", dataKey: "salesInvoices" },
+                      { header: "Incoming Payments", dataKey: "incomingPayments" },
+                      { header: "Incoming Invoices", dataKey: "incomingInvoices" },
+                      { header: "Outgoing Payments", dataKey: "outgoingPayments" },
+                      { header: "Forecast", dataKey: "forecast" }
+                    ];
+                    exportToPDF(cashFlowData, columns, "cash_flow_forecast", "Cash Flow Forecast");
+                  }}
+                  disabled={cashFlowData.length === 0}
+                  variant="outline" size="sm" className="h-8 px-3 text-xs font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 border-gray-200 flex items-center gap-1 rounded-sm disabled:opacity-50 disabled:cursor-not-allowed">
                   <Download className="w-3.5 h-3.5" />
                   PDF
                 </Button>
-                <Button variant="outline" size="sm" className="h-8 px-3 text-xs font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 border-gray-200 flex items-center gap-1 rounded-sm">
+                <Button 
+                  onClick={() => exportToCSV(cashFlowData, "cash_flow_forecast")}
+                  disabled={cashFlowData.length === 0}
+                  variant="outline" size="sm" className="h-8 px-3 text-xs font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 border-gray-200 flex items-center gap-1 rounded-sm disabled:opacity-50 disabled:cursor-not-allowed">
                   <Download className="w-3.5 h-3.5" />
                   CSV
                 </Button>
               </div>
             </div>
 
-            {/* Recharts Chart */}
-            <div className="w-full h-[300px] mb-8 mt-2">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart
-                  data={mockData}
+            {isLoading ? (
+              <div className="flex-1 flex items-center justify-center text-gray-500">Loading forecast...</div>
+            ) : (
+              <>
+                {/* Recharts Chart */}
+                <div className="w-full h-[300px] mb-8 mt-2">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart
+                      data={cashFlowData}
                   margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
                 >
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
@@ -147,7 +172,7 @@ export default function CashFlowPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
-                  {mockData.map((row, i) => (
+                  {cashFlowData.map((row: any, i: number) => (
                     <tr key={i} className="hover:bg-gray-50">
                       <td className="px-4 py-3 font-medium text-gray-900">{row.week}</td>
                       <td className="px-4 py-3">{formatCurrency(row.salesInvoices)}</td>
@@ -160,8 +185,10 @@ export default function CashFlowPage() {
                 </tbody>
               </table>
             </div>
+          </>
+        )}
 
-          </div>
+      </div>
         </div>
       </div>
     </RouteGuard>

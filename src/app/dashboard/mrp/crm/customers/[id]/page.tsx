@@ -84,10 +84,7 @@ export default function CustomerDetailsPage() {
             {/* Header */}
             <div className="flex items-center justify-between mb-4">
               <h1 className="text-xl font-bold text-gray-900">{isNew ? "Create Customer" : `Customer ${customer.customer_number} ${customer.name} details`}</h1>
-              <Button variant="outline" size="sm" className="h-8 bg-blue-600 text-white hover:bg-blue-700 text-xs font-medium border-blue-600">
-                <Download className="h-3 w-3 mr-1.5" />
-                PDF
-              </Button>
+
             </div>
 
             {/* Top Toolbar */}

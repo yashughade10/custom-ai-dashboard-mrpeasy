@@ -10,6 +10,8 @@ import { Download, Search, Calendar as CalendarIcon, ArrowUp } from "lucide-reac
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import { mrpApi } from "@/services/mrpApi";
 
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || "/api";
+
 const crmTabs = [
   { name: "Customer orders", href: "/dashboard/mrp/crm" },
   { name: "Customers", href: "/dashboard/mrp/crm/customers" },
@@ -114,11 +116,15 @@ export default function StatisticsPage() {
               </div>
 
               <div className="flex items-center gap-2 pt-8">
-                <Button variant="outline" size="sm" className="h-7 px-3 text-[11px] font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 border-gray-200 flex items-center gap-1 rounded-sm">
+                <Button 
+                  onClick={() => window.open(`${API_BASE}/mrp/crm/statistics/export/pdf`, "_blank")}
+                  variant="outline" size="sm" className="h-7 px-3 text-[11px] font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 border-gray-200 flex items-center gap-1 rounded-sm">
                   <Download className="w-3 h-3" />
                   PDF
                 </Button>
-                <Button variant="outline" size="sm" className="h-7 px-3 text-[11px] font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 border-gray-200 flex items-center gap-1 rounded-sm">
+                <Button 
+                  onClick={() => window.open(`${API_BASE}/mrp/crm/statistics/export/csv`, "_blank")}
+                  variant="outline" size="sm" className="h-7 px-3 text-[11px] font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 border-gray-200 flex items-center gap-1 rounded-sm">
                   <Download className="w-3 h-3" />
                   CSV
                 </Button>

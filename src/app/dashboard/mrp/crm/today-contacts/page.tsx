@@ -11,6 +11,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Download, FileText, Trash2, Pencil, Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
 
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || "/api";
+
 const crmTabs = [
   { name: "Customer orders", href: "/dashboard/mrp/crm" },
   { name: "Customers", href: "/dashboard/mrp/crm/customers" },
@@ -50,11 +52,17 @@ export default function TodayContactsPage() {
                 </Button>
               </div>
               <div className="flex items-center gap-2">
-                <Button variant="outline" size="sm" className="h-7 px-3 text-xs font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 border-gray-200 flex items-center gap-1 rounded-sm">
+                <Button 
+                  onClick={() => window.open(`${API_BASE}/mrp/crm/today-contacts/export/pdf`, "_blank")}
+                  disabled={!contacts || contacts.length === 0}
+                  variant="outline" size="sm" className="h-7 px-3 text-xs font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 border-gray-200 flex items-center gap-1 rounded-sm disabled:opacity-50 disabled:cursor-not-allowed">
                   <Download className="w-3.5 h-3.5" />
                   PDF
                 </Button>
-                <Button variant="outline" size="sm" className="h-7 px-3 text-xs font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 border-gray-200 flex items-center gap-1 rounded-sm">
+                <Button 
+                  onClick={() => window.open(`${API_BASE}/mrp/crm/today-contacts/export/csv`, "_blank")}
+                  disabled={!contacts || contacts.length === 0}
+                  variant="outline" size="sm" className="h-7 px-3 text-xs font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 border-gray-200 flex items-center gap-1 rounded-sm disabled:opacity-50 disabled:cursor-not-allowed">
                   <Download className="w-3.5 h-3.5" />
                   CSV
                 </Button>

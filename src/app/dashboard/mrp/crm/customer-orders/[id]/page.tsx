@@ -14,6 +14,8 @@ import { SearchableSelect } from "@/components/ui/searchable-select";
 import { Download, Plus, Pencil } from "lucide-react";
 import { format } from "date-fns";
 
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || "/api";
+
 const crmTabs = [
   { name: "Customer orders", href: "/dashboard/mrp/crm" },
   { name: "Customers", href: "/dashboard/mrp/crm/customers" },
@@ -45,6 +47,16 @@ export default function CustomerOrderDetailsPage() {
   const customerOptions = customers.map((c: any) => ({
     label: `${c.customer_number} ${c.name}`,
     value: c.customer_number
+  }));
+
+  const { data: itemsResponse, isLoading: isLoadingItems } = useQuery({
+    queryKey: ["mrpItems", 10000],
+    queryFn: () => mrpApi.getItems(1, 10000),
+  });
+
+  const partOptions = (itemsResponse?.data || []).map((item: any) => ({
+    label: item.part_description || item.name || item.part_number || "Unnamed Part",
+    value: item.part_number || item.part_no || item.id?.toString() || Math.random().toString(),
   }));
 
   const queryClient = useQueryClient();
@@ -124,15 +136,17 @@ export default function CustomerOrderDetailsPage() {
 
   return (
     <RouteGuard module="crm" fallback={<div>Access Denied</div>}>
-      <div className="flex flex-col h-full bg-[#f4f7fb] min-h-[calc(100vh-4rem)] p-4 -m-4 sm:-m-6 lg:-m-8">
-        <div className="bg-white rounded-md shadow-sm overflow-hidden flex flex-col min-h-[80vh]">
+      <div className="flex flex-col bg-[#f4f7fb] min-h-[calc(100vh-4rem)] p-4 -m-4 sm:-m-6 lg:-m-8">
+        <div className="bg-white rounded-md shadow-sm flex flex-col min-h-[80vh]">
           <MrpTabBar tabs={crmTabs} />
           
           <div className="px-6 py-4 flex-1 flex flex-col">
             {/* Header */}
             <div className="flex items-center justify-between mb-4">
               <h1 className="text-xl font-bold text-gray-900">{isNew ? "Create Customer Order" : `Customer order ${order.order_number} details`}</h1>
-              <Button variant="outline" size="sm" className="h-8 bg-gray-50 text-gray-700 text-xs font-medium border-gray-300">
+              <Button 
+                onClick={() => window.open(`${API_BASE}/mrp/crm/customer-orders/${orderId}/pdf`, "_blank")}
+                variant="outline" size="sm" className="h-8 bg-gray-50 text-gray-700 text-xs font-medium border-gray-300">
                 <Download className="h-3 w-3 mr-1.5" />
                 PDF
               </Button>
@@ -173,7 +187,7 @@ export default function CustomerOrderDetailsPage() {
                 </div>
                 <div className="grid grid-cols-[120px_1fr] items-center gap-2">
                   <label className="text-xs text-right text-gray-600 font-medium">Status *</label>
-                  <Select value={order.status}>
+                  <Select value={order.status} onValueChange={(val) => setFormData({ ...formData, status: val })}>
                     <SelectTrigger className="h-7 text-xs bg-gray-50">
                       <SelectValue />
                     </SelectTrigger>
@@ -241,7 +255,7 @@ export default function CustomerOrderDetailsPage() {
             </div>
 
             {/* Items Table */}
-            <div className="border border-gray-200 rounded-sm overflow-hidden mb-6">
+            <div className="border border-gray-200 rounded-sm overflow-visible mb-6">
               <table className="w-full text-[11px] text-left">
                 <thead className="bg-[#e2e8f0] text-gray-700">
                   <tr>
@@ -279,7 +293,34 @@ export default function CustomerOrderDetailsPage() {
                         </div>
                       </td>
                       <td className="px-2 py-3 align-top">
-                        <Input className="h-6 w-full text-[11px]" value={item.product || ""} onChange={e => updateItem(i, "product", e.target.value)} placeholder="Product name" />
+                        <SearchableSelect 
+                          options={partOptions}
+                          value={item.product || ""}
+                          onChange={(val) => {
+                            const matchedItem = (itemsResponse?.data || []).find((i: any) => i.part_number === val || i.part_no === val || i.id?.toString() === val);
+                            const newItems = [...items];
+                            newItems[i] = {
+                              ...newItems[i],
+                              product: val,
+                              description: matchedItem?.part_description || matchedItem?.name || "",
+                              product_group: matchedItem?.group_number || matchedItem?.group_id?.toString() || "none",
+                              price: matchedItem?.selling_price || matchedItem?.sell_price || matchedItem?.cost || "0",
+                              cost: matchedItem?.cost || "0",
+                              quantity: newItems[i].quantity || "1",
+                              uom: newItems[i].uom || matchedItem?.uom || "pcs"
+                            };
+                            
+                            const qty = parseFloat(newItems[i].quantity) || 1;
+                            const price = parseFloat(newItems[i].price) || 0;
+                            const discount = parseFloat(newItems[i].discount) || 0;
+                            newItems[i].subtotal = (qty * price) * (1 - discount / 100);
+
+                            const newTotal = newItems.reduce((acc: number, item: any) => acc + (parseFloat(item.subtotal) || 0), 0);
+                            setFormData({ ...formData, items: newItems, total: newTotal });
+                          }}
+                          placeholder="Select part..."
+                          isLoading={isLoadingItems}
+                        />
                         <Input className="h-6 w-full text-[11px] mt-1" value={item.description || ""} onChange={e => updateItem(i, "description", e.target.value)} placeholder="Description" />
                       </td>
                       <td className="px-2 py-3 align-top">
@@ -301,13 +342,13 @@ export default function CustomerOrderDetailsPage() {
                         </div>
                       </td>
                       <td className="px-2 py-3 align-top font-semibold">
-                        {item.subtotal?.toFixed(2)} <span className="font-normal text-gray-500 ml-1">{order.currency || 'AUD'}</span>
+                        {item.subtotal ? Number(item.subtotal).toFixed(2) : ''} <span className="font-normal text-gray-500 ml-1">{order.currency || 'AUD'}</span>
                       </td>
                       <td className="px-2 py-3 align-top">
                         <Input type="date" className="h-6 w-24 text-[11px] text-gray-500" value={item.delivery_date || ""} onChange={e => updateItem(i, "delivery_date", e.target.value)} />
                       </td>
-                      <td className="px-2 py-3 align-top">{item.cost?.toFixed(2) || ''}</td>
-                      <td className="px-2 py-3 align-top">{item.profit?.toFixed(2) || ''}</td>
+                      <td className="px-2 py-3 align-top">{item.cost ? Number(item.cost).toFixed(2) : ''}</td>
+                      <td className="px-2 py-3 align-top">{item.profit ? Number(item.profit).toFixed(2) : ''}</td>
                       <td className="px-2 py-3 align-top text-red-600">{item.status}</td>
                       <td className="px-2 py-3 align-top">{item.source}</td>
                       <td className="px-2 py-3 align-top">{item.shipped || 0}</td>
@@ -332,7 +373,30 @@ export default function CustomerOrderDetailsPage() {
                       </div>
                     </td>
                     <td className="px-2 py-3 align-top">
-                      <Input placeholder="Free text" className="h-6 w-full text-[11px]" onChange={(e) => updateItem(items.length, "product", e.target.value)} />
+                      <SearchableSelect 
+                        options={partOptions}
+                        value=""
+                        onChange={(val) => {
+                          const matchedItem = (itemsResponse?.data || []).find((i: any) => i.part_number === val || i.part_no === val || i.id?.toString() === val);
+                          const newItems = [...items];
+                          const price = matchedItem?.selling_price || matchedItem?.sell_price || matchedItem?.cost || "0";
+                          const newItem = { 
+                            product: val, 
+                            description: matchedItem?.part_description || matchedItem?.name || "",
+                            product_group: matchedItem?.group_number || matchedItem?.group_id?.toString() || "none",
+                            quantity: "1",
+                            uom: matchedItem?.uom || "pcs",
+                            price: price,
+                            cost: matchedItem?.cost || "0",
+                            subtotal: parseFloat(price)
+                          };
+                          newItems.push(newItem);
+                          const newTotal = newItems.reduce((acc: number, item: any) => acc + (parseFloat(item.subtotal) || 0), 0);
+                          setFormData({ ...formData, items: newItems, total: newTotal });
+                        }}
+                        placeholder="Select part..."
+                        isLoading={isLoadingItems}
+                      />
                     </td>
                     <td className="px-2 py-3 align-top">
                       <Input className="h-6 w-12 text-[11px]" onChange={(e) => updateItem(items.length, "quantity", e.target.value)} />

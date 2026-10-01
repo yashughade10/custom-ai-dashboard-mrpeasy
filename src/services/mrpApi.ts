@@ -84,6 +84,12 @@ export const mrpApi = {
     return res.json();
   },
 
+  getCashFlowForecast: async () => {
+    const res = await fetch(`${API_BASE}/mrp/crm/cash-flow`);
+    if (!res.ok) throw new Error("Failed to fetch cash flow forecast");
+    return res.json();
+  },
+
   getCustomerById: async (id: string) => {
     const res = await fetch(`${API_BASE}/mrp/crm/customers/${id}`);
     if (!res.ok) throw new Error("Failed to fetch customer");
