@@ -50,7 +50,7 @@ export function BomForm({ initialProductId, editingBomId, onBack, onSaved }: Bom
 
   const { data: itemsData, isLoading: isItemsLoading } = useQuery({
     queryKey: ["stock-items"],
-    queryFn: () => mrpApi.getItems(1, 1000), // fetch enough items for dropdown
+    queryFn: () => mrpApi.getItems(1, 10000), // fetch enough items for dropdown
   });
 
   // Derived options

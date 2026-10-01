@@ -39,7 +39,7 @@ function BomsPage() {
 
   const { data: itemsData, isLoading: isItemsLoading } = useQuery({
     queryKey: ["stock-items"],
-    queryFn: () => mrpApi.getItems(1, 1000),
+    queryFn: () => mrpApi.getItems(1, 10000),
     enabled: showSelectProduct,
   });
 
