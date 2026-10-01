@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { mrpApi } from "@/services/mrpApi";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { RouteGuard } from "@/components/auth/RouteGuard";
 import { MrpTabBar } from "@/components/mrp/MrpTabBar";
@@ -28,6 +28,8 @@ const crmTabs = [
 export default function CustomerOrderDetailsPage() {
   const params = useParams();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const copyFromId = searchParams.get("copyFrom");
   const orderId = params.id as string;
 
   const isNew = orderId === "new";
@@ -36,6 +38,12 @@ export default function CustomerOrderDetailsPage() {
     queryKey: ["mrpCustomerOrder", orderId],
     queryFn: () => mrpApi.getCustomerOrderById(orderId),
     enabled: !isNew,
+  });
+
+  const { data: copyFromResponse, isLoading: isLoadingCopy } = useQuery({
+    queryKey: ["mrpCustomerOrder", copyFromId],
+    queryFn: () => mrpApi.getCustomerOrderById(copyFromId!),
+    enabled: !!copyFromId,
   });
 
   const { data: customersResponse, isLoading: isLoadingCustomers } = useQuery({
@@ -68,10 +76,16 @@ export default function CustomerOrderDetailsPage() {
   const [formData, setFormData] = useState<any>({});
 
   useEffect(() => {
-    if (initialOrder) {
+    if (isNew && copyFromResponse?.data) {
+      const copyData = { ...copyFromResponse.data };
+      delete copyData.id;
+      copyData.order_number = "NEW";
+      copyData.status = "Quotation";
+      setFormData(copyData);
+    } else if (initialOrder) {
       setFormData(initialOrder);
     }
-  }, [JSON.stringify(initialOrder)]);
+  }, [JSON.stringify(initialOrder), JSON.stringify(copyFromResponse?.data), isNew]);
 
   const { data: groupsResponse } = useQuery({
     queryKey: ["mrpProductGroups"],
@@ -175,8 +189,12 @@ export default function CustomerOrderDetailsPage() {
                 variant="outline" size="sm" className="h-7 px-4 text-xs font-medium text-red-600 border-red-200 bg-red-50 hover:bg-red-100 disabled:opacity-50">
                 Delete
               </Button>
-              <Button variant="outline" size="sm" className="h-7 px-4 text-xs font-medium text-blue-600 border-blue-200 bg-blue-50 hover:bg-blue-100">Reports</Button>
-              <Button variant="outline" size="sm" className="h-7 px-4 text-xs font-medium text-blue-600 border-blue-200 bg-blue-50 hover:bg-blue-100">Copy</Button>
+              <Button 
+                onClick={() => router.push(`/dashboard/mrp/crm/customer-orders/new?copyFrom=${orderId}`)}
+                disabled={isNew}
+                variant="outline" size="sm" className="h-7 px-4 text-xs font-medium text-blue-600 border-blue-200 bg-blue-50 hover:bg-blue-100 disabled:opacity-50">
+                Copy
+              </Button>
             </div>
 
             {/* Form Fields */}
