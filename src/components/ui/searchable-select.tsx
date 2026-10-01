@@ -97,19 +97,26 @@ export function SearchableSelect({
               {filteredOptions.length === 0 ? (
                 <div className="p-2 text-sm text-gray-500 text-center">No results found</div>
               ) : (
-                filteredOptions.map((opt, i) => (
-                  <div 
-                    key={i}
-                    className="p-2 text-sm text-gray-800 cursor-pointer hover:bg-gray-100"
-                    onClick={() => {
-                      onChange(opt.value);
-                      setIsOpen(false);
-                      setSearch("");
-                    }}
-                  >
-                    {opt.label}
-                  </div>
-                ))
+                <>
+                  {filteredOptions.slice(0, 100).map((opt, i) => (
+                    <div 
+                      key={i}
+                      className="p-2 text-sm text-gray-800 cursor-pointer hover:bg-gray-100"
+                      onClick={() => {
+                        onChange(opt.value);
+                        setIsOpen(false);
+                        setSearch("");
+                      }}
+                    >
+                      {opt.label}
+                    </div>
+                  ))}
+                  {filteredOptions.length > 100 && (
+                    <div className="p-2 text-xs text-gray-400 text-center italic border-t border-gray-100">
+                      Type to search more...
+                    </div>
+                  )}
+                </>
               )}
             </>
           )}

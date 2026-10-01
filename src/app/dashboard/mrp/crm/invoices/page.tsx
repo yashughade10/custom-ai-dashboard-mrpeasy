@@ -78,7 +78,9 @@ export default function InvoicesPage() {
               <div>
                 <div className="flex items-center gap-4 mb-4">
                   <h1 className="text-2xl font-bold text-slate-900">Invoices</h1>
-                  <Button size="sm" className="h-7 px-4 text-xs font-medium bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-1 rounded-sm">
+                  <Button 
+                    onClick={() => router.push('/dashboard/mrp/crm/invoices/new')}
+                    size="sm" className="h-7 px-4 text-xs font-medium bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-1 rounded-sm">
                     <Plus className="w-3.5 h-3.5" />
                     Create
                   </Button>
