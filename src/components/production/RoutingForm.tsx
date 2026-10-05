@@ -129,6 +129,24 @@ export function RoutingForm({ initialProductId, editingRoutingId, onBack, onSave
     }
   });
 
+  const deleteMutation = useMutation({
+    mutationFn: () => mrpApi.deleteRouting(editingRoutingId!),
+    onSuccess: () => {
+      toast.success("Routing deleted successfully");
+      queryClient.invalidateQueries({ queryKey: ["mrp-routings"] });
+      onSaved();
+    },
+    onError: (err: any) => {
+      toast.error(err.message || "Failed to delete routing");
+    }
+  });
+
+  const handleDelete = () => {
+    if (confirm("Are you sure you want to delete this routing?")) {
+      deleteMutation.mutate();
+    }
+  };
+
   const handleSave = () => {
     if (!routingName) {
       toast.error("Routing Name is required");
@@ -176,8 +194,20 @@ export function RoutingForm({ initialProductId, editingRoutingId, onBack, onSave
         </h1>
         {isEditing && (
           <div className="flex items-center gap-2">
-            <Button variant="outline" className="h-8 px-3 text-xs font-medium text-gray-600 bg-gray-50 hover:bg-gray-100 flex gap-2">PDF</Button>
-            <Button variant="outline" className="h-8 px-3 text-xs font-medium text-gray-600 bg-gray-50 hover:bg-gray-100 flex gap-2">Excel</Button>
+            <Button 
+              variant="outline" 
+              className="h-8 px-3 text-xs font-medium text-gray-600 bg-gray-50 hover:bg-gray-100 flex gap-2"
+              onClick={() => window.open(`${process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:4001/api"}/mrp/production/routings/${editingRoutingId}/export/pdf`, "_blank")}
+            >
+              PDF
+            </Button>
+            <Button 
+              variant="outline" 
+              className="h-8 px-3 text-xs font-medium text-gray-600 bg-gray-50 hover:bg-gray-100 flex gap-2"
+              onClick={() => window.open(`${process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:4001/api"}/mrp/production/routings/${editingRoutingId}/export/csv`, "_blank")}
+            >
+              CSV
+            </Button>
           </div>
         )}
       </div>
@@ -188,7 +218,7 @@ export function RoutingForm({ initialProductId, editingRoutingId, onBack, onSave
           <Button variant="outline" className="h-8 px-4 text-blue-600 bg-[#f0f4ff] border-none hover:bg-[#e0e7ff]" onClick={onBack}>Cancel</Button>
           <Button className="h-8 px-4 bg-blue-600 hover:bg-blue-700 text-white" onClick={handleSave} disabled={saveMutation.isPending}>Save</Button>
           {isEditing && (
-            <Button variant="outline" className="h-8 px-4 text-red-600 border-gray-200">Delete</Button>
+            <Button variant="outline" className="h-8 px-4 text-red-600 border-gray-200" onClick={handleDelete} disabled={deleteMutation.isPending}>Delete</Button>
           )}
         </div>
 
@@ -396,7 +426,7 @@ export function RoutingForm({ initialProductId, editingRoutingId, onBack, onSave
           <Button variant="outline" className="h-8 px-4 text-blue-600 bg-[#f0f4ff] border-none hover:bg-[#e0e7ff]" onClick={onBack}>Cancel</Button>
           <Button className="h-8 px-4 bg-blue-600 hover:bg-blue-700 text-white" onClick={handleSave} disabled={saveMutation.isPending}>Save</Button>
           {isEditing && (
-             <Button variant="outline" className="h-8 px-4 text-red-600 border-gray-200">Delete</Button>
+             <Button variant="outline" className="h-8 px-4 text-red-600 border-gray-200" onClick={handleDelete} disabled={deleteMutation.isPending}>Delete</Button>
           )}
         </div>
       </div>
