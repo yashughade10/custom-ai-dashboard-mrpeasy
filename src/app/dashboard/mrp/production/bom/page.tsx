@@ -102,12 +102,16 @@ function BomsPage() {
                 </Button>
               </div>
               <div className="flex items-center gap-2">
-                <Button variant="outline" className="h-8 px-3 text-xs font-medium text-gray-600 bg-gray-50 hover:bg-gray-100 flex gap-2">
+                <Button 
+                  variant="outline" 
+                  className="h-8 px-3 text-xs font-medium text-gray-600 bg-gray-50 hover:bg-gray-100 flex gap-2"
+                  onClick={() => window.open(`${process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:4001/api"}/mrp/production/boms/export/csv`, "_blank")}
+                >
                   <Download className="w-3.5 h-3.5" /> CSV
                 </Button>
-                <Button variant="outline" className="h-8 px-3 text-xs font-medium text-gray-600 bg-gray-50 hover:bg-gray-100 flex gap-2">
+                {/* <Button variant="outline" className="h-8 px-3 text-xs font-medium text-gray-600 bg-gray-50 hover:bg-gray-100 flex gap-2">
                   <Filter className="w-3.5 h-3.5" /> Import from CSV
-                </Button>
+                </Button> */}
               </div>
             </div>
 
