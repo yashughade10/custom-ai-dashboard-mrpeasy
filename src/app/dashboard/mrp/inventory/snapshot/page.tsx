@@ -195,15 +195,23 @@ export default function InventorySnapshotPage() {
               </div>
               
               <div className="flex items-center gap-2">
-                <button className="flex items-center gap-2 px-3 py-1.5 bg-gray-100 text-gray-700 text-sm font-medium rounded border border-gray-200 hover:bg-gray-200">
+                <button 
+                  className="flex items-center gap-2 px-3 py-1.5 bg-gray-100 text-gray-700 text-sm font-medium rounded border border-gray-200 hover:bg-gray-200"
+                  onClick={() => window.open(`${process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:4001/api"}/mrp/stock/inventory/export/pdf`, "_blank")}
+                >
                   <Download className="w-4 h-4" /> PDF
                 </button>
-                <button className="flex items-center gap-2 px-3 py-1.5 bg-gray-100 text-gray-700 text-sm font-medium rounded border border-gray-200 hover:bg-gray-200">
+                <button 
+                  className="flex items-center gap-2 px-3 py-1.5 bg-gray-100 text-gray-700 text-sm font-medium rounded border border-gray-200 hover:bg-gray-200"
+                  onClick={() => window.open(`${process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:4001/api"}/mrp/stock/inventory/export/csv`, "_blank")}
+                >
                   <Download className="w-4 h-4" /> CSV
                 </button>
+                {/* 
                 <button className="flex items-center gap-2 px-3 py-1.5 bg-gray-100 text-gray-700 text-sm font-medium rounded border border-gray-200 hover:bg-gray-200">
                   <Upload className="w-4 h-4" /> Import from CSV
                 </button>
+                */}
               </div>
             </div>
             

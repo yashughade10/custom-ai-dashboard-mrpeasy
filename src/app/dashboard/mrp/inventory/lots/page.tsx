@@ -136,18 +136,26 @@ export default function StockLotsPage() {
                     + Create
                   </button>
                 </Link>
-                <button className="flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 text-sm font-medium rounded border border-gray-200 hover:bg-gray-200">
+                <button 
+                  className="flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 text-sm font-medium rounded border border-gray-200 hover:bg-gray-200"
+                  onClick={() => window.open(`${process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:4001/api"}/mrp/stock/lots/export/pdf`, "_blank")}
+                >
                   <Download className="w-4 h-4" /> PDF
                 </button>
-                <button className="flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 text-sm font-medium rounded border border-gray-200 hover:bg-gray-200">
+                <button 
+                  className="flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 text-sm font-medium rounded border border-gray-200 hover:bg-gray-200"
+                  onClick={() => window.open(`${process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:4001/api"}/mrp/stock/lots/export/csv`, "_blank")}
+                >
                   <Download className="w-4 h-4" /> CSV
                 </button>
+                {/* 
                 <button className="flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 text-sm font-medium rounded border border-gray-200 hover:bg-gray-200">
                   Move stock item
                 </button>
                 <button className="flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 text-sm font-medium rounded border border-gray-200 hover:bg-gray-200">
                   <Upload className="w-4 h-4" /> Import from CSV
                 </button>
+                */}
               </div>
             </div>
             

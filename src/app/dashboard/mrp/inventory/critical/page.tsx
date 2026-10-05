@@ -77,10 +77,16 @@ export default function CriticalOnHandPage() {
             <h1 className="text-xl font-medium text-gray-800">Critical on-hand</h1>
             
             <div className="flex gap-2">
-              <Button variant="outline" size="sm" className="h-8 border-gray-300 text-gray-700">
+              <Button 
+                variant="outline" size="sm" className="h-8 border-gray-300 text-gray-700"
+                onClick={() => window.open(`${process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:4001/api"}/mrp/stock/critical/export/pdf`, "_blank")}
+              >
                 <FileText className="w-4 h-4 mr-2" /> PDF
               </Button>
-              <Button variant="outline" size="sm" className="h-8 border-gray-300 text-gray-700">
+              <Button 
+                variant="outline" size="sm" className="h-8 border-gray-300 text-gray-700"
+                onClick={() => window.open(`${process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:4001/api"}/mrp/stock/critical/export/csv`, "_blank")}
+              >
                 <Download className="w-4 h-4 mr-2" /> CSV
               </Button>
             </div>
