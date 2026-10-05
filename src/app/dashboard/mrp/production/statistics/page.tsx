@@ -398,10 +398,18 @@ function StatisticsPage() {
           <div className="flex items-center justify-between mb-2">
             <h2 className="text-lg text-gray-800">{getReportTitle()}</h2>
             <div className="flex items-center gap-2">
-              <Button variant="outline" className="h-8 px-3 text-xs font-medium text-gray-600 bg-gray-50 hover:bg-gray-100 flex gap-2">
+              <Button 
+                variant="outline" 
+                className="h-8 px-3 text-xs font-medium text-gray-600 bg-gray-50 hover:bg-gray-100 flex gap-2"
+                onClick={() => window.open(`${process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:4001/api"}/mrp/production/statistics/export/pdf?report=${selectedReport}&fromDate=${fromDate}&toDate=${toDate}`, "_blank")}
+              >
                 <Download className="w-3.5 h-3.5" /> PDF
               </Button>
-              <Button variant="outline" className="h-8 px-3 text-xs font-medium text-gray-600 bg-gray-50 hover:bg-gray-100 flex gap-2">
+              <Button 
+                variant="outline" 
+                className="h-8 px-3 text-xs font-medium text-gray-600 bg-gray-50 hover:bg-gray-100 flex gap-2"
+                onClick={() => window.open(`${process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:4001/api"}/mrp/production/statistics/export/csv?report=${selectedReport}&fromDate=${fromDate}&toDate=${toDate}`, "_blank")}
+              >
                 <Download className="w-3.5 h-3.5" /> CSV
               </Button>
             </div>
