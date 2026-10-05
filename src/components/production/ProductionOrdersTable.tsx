@@ -44,8 +44,8 @@ export default function ProductionOrdersTable({ onOpenCreate }: { onOpenCreate?:
 
   return (
     <div className="w-full bg-white text-[12px] text-gray-800">
-      <div className="overflow-hidden w-full">
-        <table className="w-full border-collapse table-auto">
+      <div className="overflow-x-auto w-full">
+        <table className="w-full border-collapse table-auto min-w-[2000px]">
           <thead>
             {/* Main Header */}
             <tr className="text-left font-medium text-gray-700 bg-white">

@@ -23,6 +23,16 @@ function ManufacturingOrdersPage() {
   const searchParams = useSearchParams();
   const [isCreating, setIsCreating] = useState(searchParams.get("create") === "true");
 
+  const handleExportPdf = () => {
+    const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:4000/api";
+    window.open(`${API_BASE}/mrp/production/orders/export/pdf`, "_blank");
+  };
+
+  const handleExportCsv = () => {
+    const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:4000/api";
+    window.open(`${API_BASE}/mrp/production/orders/export/csv`, "_blank");
+  };
+
   return (
     <div className="flex flex-col bg-[#f4f7fb] min-h-[calc(100vh-4rem)] p-4 -m-4 sm:-m-6 lg:-m-8">
       <div className="bg-white rounded-md shadow-sm flex flex-col min-h-[80vh]">
@@ -52,10 +62,20 @@ function ManufacturingOrdersPage() {
                 </Button>
               </div>
               <div className="flex items-center gap-2">
-                <Button variant="outline" size="sm" className="h-8 gap-1.5 bg-gray-50/50 text-gray-600">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="h-8 gap-1.5 bg-gray-50/50 text-gray-600"
+                  onClick={handleExportPdf}
+                >
                   <Download className="h-3.5 w-3.5" /> PDF
                 </Button>
-                <Button variant="outline" size="sm" className="h-8 gap-1.5 bg-gray-50/50 text-gray-600">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="h-8 gap-1.5 bg-gray-50/50 text-gray-600"
+                  onClick={handleExportCsv}
+                >
                   <Download className="h-3.5 w-3.5" /> CSV
                 </Button>
               </div>

@@ -4,7 +4,7 @@ import { useState } from "react";
 import { ChevronDown, CalendarDays, Lock, Cloud, Link as LinkIcon } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { mrpApi } from "@/services/mrpApi";
-
+import { SearchableSelect } from "@/components/ui/searchable-select";
 export default function CreateManufacturingOrder({ onBack }: { onBack: () => void }) {
   const [groupOpen, setGroupOpen] = useState(false);
   const [selectedGroup, setSelectedGroup] = useState("");
@@ -33,9 +33,24 @@ export default function CreateManufacturingOrder({ onBack }: { onBack: () => voi
     queryFn: () => mrpApi.getItems(1, 1000), // Get a large list for dropdown
   });
 
+  const { data: bomSearchData } = useQuery({
+    queryKey: ["mrp-boms-search", selectedProduct],
+    queryFn: () => mrpApi.getBoms(1, 10, { search: selectedProduct }),
+    enabled: !!selectedProduct,
+  });
+
+  const matchingBomId = bomSearchData?.data?.[0]?.id;
+
+  const { data: bomDetailsData, isLoading: isLoadingBom } = useQuery({
+    queryKey: ["mrp-bom-details", matchingBomId],
+    queryFn: () => mrpApi.getBomById(matchingBomId!),
+    enabled: !!matchingBomId && !!selectedProduct,
+  });
+
   const groups = groupsData?.data || [];
   const assignees = assigneesData?.data || ["Kamal"]; // fallback
   const products = itemsData?.data || [];
+  const bomLines = selectedProduct ? (bomDetailsData?.data?.items || []) : [];
 
   return (
     <div className="flex flex-col h-full bg-white text-[12.5px] text-gray-800">
@@ -59,67 +74,30 @@ export default function CreateManufacturingOrder({ onBack }: { onBack: () => voi
             
             {/* Product Group */}
             <div className="flex items-center justify-end text-gray-600">Product group</div>
-            <div className="relative max-w-[320px]">
-              <div 
-                className="flex items-center justify-between w-full h-[28px] bg-[#EEF0F4] border-none rounded-sm px-2 cursor-pointer"
-                onClick={() => setGroupOpen(!groupOpen)}
-              >
-                <span className="truncate">{selectedGroup}</span>
-                <ChevronDown className="w-3.5 h-3.5 text-gray-500" />
-              </div>
-              
-              {groupOpen && (
-                <div className="absolute z-10 top-full left-0 mt-1 w-full bg-white border border-[#90A4E4] rounded-sm shadow-lg overflow-hidden">
-                  <div className="p-2 hover:bg-blue-50 cursor-pointer font-bold text-gray-900 border-b border-gray-100">
-                    Add a new group
-                  </div>
-                  <div className="max-h-60 overflow-y-auto py-1">
-                    {groups.map((g: any) => {
-                      const displayStr = `${g.group_number} ${g.group_name}`;
-                      return (
-                        <div 
-                          key={g.group_number} 
-                          className="px-2 py-1.5 hover:bg-blue-50 cursor-pointer text-gray-800"
-                          onClick={() => { setSelectedGroup(displayStr); setGroupOpen(false); }}
-                        >
-                          {displayStr}
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
+            <div className="max-w-[320px]">
+              <SearchableSelect
+                options={groups.map((g: any) => ({
+                  label: `${g.group_number} ${g.group_name}`,
+                  value: `${g.group_number} ${g.group_name}`
+                }))}
+                value={selectedGroup}
+                onChange={setSelectedGroup}
+                placeholder="Select product group..."
+              />
             </div>
 
             {/* Product */}
             <div className="flex items-center justify-end text-gray-600">Product</div>
-            <div className="relative max-w-[320px]">
-              <div 
-                className="flex items-center justify-between w-full h-[28px] bg-[#EEF0F4] border-none rounded-sm px-2 cursor-pointer"
-                onClick={() => setProductOpen(!productOpen)}
-              >
-                <span className="truncate">{selectedProduct}</span>
-                <ChevronDown className="w-3.5 h-3.5 text-gray-500" />
-              </div>
-
-              {productOpen && (
-                <div className="absolute z-20 top-full left-0 mt-1 w-[400px] bg-white border border-gray-200 rounded-sm shadow-lg overflow-hidden">
-                  <div className="max-h-60 overflow-y-auto py-1">
-                    {products.map((p: any) => {
-                      const displayStr = `${p.part_no} ${p.part_description}`;
-                      return (
-                        <div 
-                          key={p.part_no} 
-                          className="px-2 py-1.5 hover:bg-blue-50 cursor-pointer text-gray-800 truncate"
-                          onClick={() => { setSelectedProduct(displayStr); setProductOpen(false); }}
-                        >
-                          {displayStr}
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
+            <div className="max-w-[320px]">
+              <SearchableSelect
+                options={products.map((p: any) => ({
+                  label: `${p.part_no} ${p.part_description}`,
+                  value: p.part_no
+                }))}
+                value={selectedProduct}
+                onChange={setSelectedProduct}
+                placeholder="Select product..."
+              />
             </div>
 
             {/* Files */}
@@ -156,50 +134,33 @@ export default function CreateManufacturingOrder({ onBack }: { onBack: () => voi
             {/* Due date */}
             <div className="flex items-center justify-end text-gray-600">Due date</div>
             <div className="relative max-w-[320px]">
-              <input type="text" className="w-full h-[28px] bg-[#EEF0F4] border-none rounded-sm px-2 focus:ring-1 focus:ring-blue-500 outline-none" />
-              <Lock className="w-3.5 h-3.5 text-gray-400 absolute right-2 top-2 pointer-events-none" />
+              <input type="date" className="w-full h-[28px] bg-[#EEF0F4] border-none rounded-sm px-2 focus:ring-1 focus:ring-blue-500 outline-none" />
             </div>
 
             {/* Start */}
             <div className="flex items-center justify-end text-gray-600">Start</div>
             <div className="relative max-w-[320px]">
-              <input type="text" className="w-full h-[28px] bg-[#EEF0F4] border-none rounded-sm px-2 focus:ring-1 focus:ring-blue-500 outline-none" />
-              <CalendarDays className="w-3.5 h-3.5 text-gray-400 absolute right-2 top-2 pointer-events-none" />
+              <input type="datetime-local" className="w-full h-[28px] bg-[#EEF0F4] border-none rounded-sm px-2 focus:ring-1 focus:ring-blue-500 outline-none" />
             </div>
 
             {/* Finish */}
             <div className="flex items-center justify-end text-gray-600">Finish</div>
             <div className="relative max-w-[320px]">
-              <input type="text" className="w-full h-[28px] bg-[#EEF0F4] border-none rounded-sm px-2 focus:ring-1 focus:ring-blue-500 outline-none" />
-              <Lock className="w-3.5 h-3.5 text-gray-400 absolute right-2 top-2 pointer-events-none" />
+              <input type="datetime-local" className="w-full h-[28px] bg-[#EEF0F4] border-none rounded-sm px-2 focus:ring-1 focus:ring-blue-500 outline-none" />
             </div>
 
             {/* Assigned to */}
             <div className="flex items-center justify-end text-gray-600">Assigned to <span className="text-gray-400 ml-1">*</span></div>
-            <div className="relative max-w-[320px]">
-              <div 
-                className="flex items-center justify-between w-full h-[28px] bg-[#EEF0F4] border-none rounded-sm px-2 cursor-pointer"
-                onClick={() => setAssigneeOpen(!assigneeOpen)}
-              >
-                <span>{selectedAssignee}</span>
-                <ChevronDown className="w-3.5 h-3.5 text-gray-500" />
-              </div>
-
-              {assigneeOpen && (
-                <div className="absolute z-20 top-full left-0 mt-1 w-full bg-white border border-gray-200 rounded-sm shadow-lg overflow-hidden">
-                  <div className="max-h-60 overflow-y-auto py-1">
-                    {assignees.map((a: string) => (
-                      <div 
-                        key={a} 
-                        className="px-2 py-1.5 hover:bg-blue-50 cursor-pointer text-gray-800"
-                        onClick={() => { setSelectedAssignee(a); setAssigneeOpen(false); }}
-                      >
-                        {a}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
+            <div className="max-w-[320px]">
+              <SearchableSelect
+                options={assignees.map((a: string) => ({
+                  label: a,
+                  value: a
+                }))}
+                value={selectedAssignee}
+                onChange={setSelectedAssignee}
+                placeholder="Select assignee..."
+              />
             </div>
 
             {/* Checkboxes */}
@@ -241,14 +202,30 @@ export default function CreateManufacturingOrder({ onBack }: { onBack: () => voi
               </tr>
             </thead>
             <tbody>
-              {/* Empty row for spacing */}
-              <tr>
-                <td className="py-4"></td>
-                <td></td>
-                <td></td>
-                <td></td>
-                <td></td>
-              </tr>
+              {isLoadingBom ? (
+                <tr>
+                  <td className="py-4 text-right pr-4 text-gray-500">Loading BOM...</td>
+                  <td colSpan={4}></td>
+                </tr>
+              ) : bomLines.length > 0 ? (
+                bomLines.map((line: any, idx: number) => (
+                  <tr key={idx} className="border-b border-gray-100 last:border-0 hover:bg-gray-50">
+                    <td className="py-2 px-4 text-right pr-4 text-gray-500">{idx === 0 ? "Items" : ""}</td>
+                    <td className="py-2 px-2">{line.component_part_no} - {line.component_description} ({line.quantity} {line.uom})</td>
+                    <td className="py-2 px-2">${Number(line.approximate_cost || 0).toFixed(2)}</td>
+                    <td className="py-2 px-2 text-gray-400">-</td>
+                    <td className="py-2 px-2 text-gray-400">-</td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td className="py-4 text-right pr-4 text-gray-400">No BOM found</td>
+                  <td></td>
+                  <td></td>
+                  <td></td>
+                  <td></td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>
