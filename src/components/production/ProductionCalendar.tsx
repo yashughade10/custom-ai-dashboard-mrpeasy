@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { format, addMonths, subMonths, startOfMonth, endOfMonth, startOfWeek, endOfWeek, eachDayOfInterval, isSameMonth, parseISO, getWeek } from "date-fns";
+import { format, addMonths, subMonths, startOfMonth, endOfMonth, startOfWeek, endOfWeek, eachDayOfInterval, isSameMonth, parseISO, getWeek, addWeeks, subWeeks, addDays, subDays, startOfDay, endOfDay } from "date-fns";
 import { ChevronLeft, ChevronRight, X } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { mrpApi } from "@/services/mrpApi";
@@ -15,6 +15,7 @@ interface ProductionCalendarProps {
 }
 
 export default function ProductionCalendar({ viewMode = "calendar", searchQuery = "" }: ProductionCalendarProps) {
+  const [calendarView, setCalendarView] = useState<"month" | "week" | "day">("month");
   const [currentDate, setCurrentDate] = useState(new Date()); 
   const [selectedOrder, setSelectedOrder] = useState<any | null>(null);
   
@@ -36,23 +37,37 @@ export default function ProductionCalendar({ viewMode = "calendar", searchQuery 
     );
   });
 
-  const nextMonth = () => setCurrentDate(addMonths(currentDate, 1));
-  const prevMonth = () => setCurrentDate(subMonths(currentDate, 1));
+  const nextPeriod = () => {
+    if (calendarView === "month") setCurrentDate(addMonths(currentDate, 1));
+    else if (calendarView === "week") setCurrentDate(addWeeks(currentDate, 1));
+    else setCurrentDate(addDays(currentDate, 1));
+  };
+  const prevPeriod = () => {
+    if (calendarView === "month") setCurrentDate(subMonths(currentDate, 1));
+    else if (calendarView === "week") setCurrentDate(subWeeks(currentDate, 1));
+    else setCurrentDate(subDays(currentDate, 1));
+  };
   const goToToday = () => setCurrentDate(new Date());
 
-  const monthStart = startOfMonth(currentDate);
-  const monthEnd = endOfMonth(monthStart);
-  const startDate = startOfWeek(monthStart, { weekStartsOn: 1 }); // Week starts on Monday
-  const endDate = endOfWeek(monthEnd, { weekStartsOn: 1 });
+  const periodStart = calendarView === "month" ? startOfWeek(startOfMonth(currentDate), { weekStartsOn: 1 }) :
+                      calendarView === "week" ? startOfWeek(currentDate, { weekStartsOn: 1 }) :
+                      startOfDay(currentDate);
 
-  const dateFormat = "MMMM yyyy";
-  const days = eachDayOfInterval({ start: startDate, end: endDate });
+  const periodEnd = calendarView === "month" ? endOfWeek(endOfMonth(currentDate), { weekStartsOn: 1 }) :
+                    calendarView === "week" ? endOfWeek(currentDate, { weekStartsOn: 1 }) :
+                    endOfDay(currentDate);
+
+  const displayFormat = calendarView === "month" ? "MMMM yyyy" :
+                     calendarView === "week" ? "'Week of' MMMM d, yyyy" :
+                     "EEEE, MMMM d, yyyy";
+
+  const days = eachDayOfInterval({ start: periodStart, end: periodEnd });
 
   // Group days by weeks
   const weeks: Date[][] = [];
   let daysArray: Date[] = [];
   days.forEach((day) => {
-    if (daysArray.length === 7) {
+    if (daysArray.length === (calendarView === "day" ? 1 : 7)) {
       weeks.push(daysArray);
       daysArray = [];
     }
@@ -77,10 +92,10 @@ export default function ProductionCalendar({ viewMode = "calendar", searchQuery 
       <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200">
         <div className="flex items-center gap-4">
           <div className="flex items-center rounded-sm border border-gray-200 overflow-hidden bg-gray-50/50">
-            <button onClick={prevMonth} className="px-2 py-1 border-r border-gray-200 hover:bg-gray-100">
+            <button onClick={prevPeriod} className="px-2 py-1 border-r border-gray-200 hover:bg-gray-100">
               <ChevronLeft className="w-4 h-4 text-gray-600" />
             </button>
-            <button onClick={nextMonth} className="px-2 py-1 border-r border-gray-200 hover:bg-gray-100">
+            <button onClick={nextPeriod} className="px-2 py-1 border-r border-gray-200 hover:bg-gray-100">
               <ChevronRight className="w-4 h-4 text-gray-600" />
             </button>
             <button onClick={goToToday} className="px-3 py-1 text-[13px] font-medium text-gray-700 hover:bg-gray-100">
@@ -90,14 +105,14 @@ export default function ProductionCalendar({ viewMode = "calendar", searchQuery 
         </div>
 
         <h2 className="text-[17px] font-bold text-gray-900 tracking-tight ml-32">
-          {format(currentDate, dateFormat)}
+          {format(currentDate, displayFormat)}
         </h2>
 
         <div className="flex items-center gap-3">
           <div className="flex rounded-sm border border-gray-200 overflow-hidden bg-gray-50/50 text-[12px] font-medium">
-            <button className="px-3 py-1 bg-blue-50 text-blue-700 border-b-2 border-blue-600">Month</button>
-            <button className="px-3 py-1 text-gray-600 hover:bg-gray-100 border-b-2 border-transparent border-l border-gray-200">Week</button>
-            <button className="px-3 py-1 text-gray-600 hover:bg-gray-100 border-b-2 border-transparent border-l border-gray-200">Day</button>
+            <button onClick={() => setCalendarView("month")} className={`px-3 py-1 ${calendarView === "month" ? "bg-blue-50 text-blue-700 border-b-2 border-blue-600" : "text-gray-600 hover:bg-gray-100 border-b-2 border-transparent"}`}>Month</button>
+            <button onClick={() => setCalendarView("week")} className={`px-3 py-1 border-l border-gray-200 ${calendarView === "week" ? "bg-blue-50 text-blue-700 border-b-2 border-blue-600" : "text-gray-600 hover:bg-gray-100 border-b-2 border-transparent"}`}>Week</button>
+            <button onClick={() => setCalendarView("day")} className={`px-3 py-1 border-l border-gray-200 ${calendarView === "day" ? "bg-blue-50 text-blue-700 border-b-2 border-blue-600" : "text-gray-600 hover:bg-gray-100 border-b-2 border-transparent"}`}>Day</button>
           </div>
         </div>
       </div>
@@ -105,8 +120,8 @@ export default function ProductionCalendar({ viewMode = "calendar", searchQuery 
       {viewMode === "calendar" ? (
         <>
           {/* Weekdays Header */}
-          <div className="grid grid-cols-7 border-b border-gray-200 bg-white ml-8">
-            {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((day) => (
+          <div className={`grid ${calendarView === "day" ? "grid-cols-1" : "grid-cols-7"} border-b border-gray-200 bg-white ml-8`}>
+            {(calendarView === "day" ? [format(currentDate, "EEEE")] : ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]).map((day) => (
               <div key={day} className="text-center py-2 text-[12px] font-bold text-gray-900">
                 {day}
               </div>
@@ -119,7 +134,7 @@ export default function ProductionCalendar({ viewMode = "calendar", searchQuery 
           const weekNumber = getWeek(week[0], { weekStartsOn: 1 });
 
           const weekStart = week[0];
-          const weekEnd = week[6];
+          const weekEnd = week[week.length - 1];
           
           let eventsInWeek = orders.filter((o: any) => {
             if (!o.start_datetime || !o.finish_datetime) return false;
@@ -133,8 +148,12 @@ export default function ProductionCalendar({ viewMode = "calendar", searchQuery 
             const drawStart = s < weekStart ? weekStart : s;
             const drawEnd = e > weekEnd ? weekEnd : e;
             
-            const startCol = drawStart.getDay() === 0 ? 7 : drawStart.getDay(); 
-            const endCol = drawEnd.getDay() === 0 ? 7 : drawEnd.getDay();
+            let startCol = drawStart.getDay() === 0 ? 7 : drawStart.getDay(); 
+            let endCol = drawEnd.getDay() === 0 ? 7 : drawEnd.getDay();
+            if (calendarView === 'day') {
+              startCol = 1;
+              endCol = 1;
+            }
             const span = endCol - startCol + 1;
 
             return {
@@ -204,11 +223,12 @@ export default function ProductionCalendar({ viewMode = "calendar", searchQuery 
                   
                   {/* Day Numbers (Row 1) */}
                   {week.map((day, i) => {
-                    const isCurrentMonth = isSameMonth(day, monthStart);
+                    const isCurrentMonth = calendarView === "month" ? isSameMonth(day, currentDate) : true;
+                    const colIdx = calendarView === "day" ? 1 : (i + 1);
                     return (
                       <div 
                         key={day.toISOString()} 
-                        style={{ gridColumn: i + 1, gridRow: 1 }} 
+                        style={{ gridColumn: colIdx, gridRow: 1 }} 
                         className={`text-right p-1.5 ${isCurrentMonth ? 'text-gray-900 font-medium' : 'text-gray-400'} text-[12px] h-6`}
                       >
                         {format(day, "d")}
@@ -261,9 +281,9 @@ export default function ProductionCalendar({ viewMode = "calendar", searchQuery 
               const start = parseISO(o.start_datetime);
               const end = parseISO(o.finish_datetime);
               
-              const monthDuration = endDate.getTime() - startDate.getTime();
-              const eventStartPct = Math.max(0, (start.getTime() - startDate.getTime()) / monthDuration) * 100;
-              const eventEndPct = Math.min(100, (end.getTime() - startDate.getTime()) / monthDuration) * 100;
+              const monthDuration = periodEnd.getTime() - periodStart.getTime();
+              const eventStartPct = Math.max(0, (start.getTime() - periodStart.getTime()) / monthDuration) * 100;
+              const eventEndPct = Math.min(100, (end.getTime() - periodStart.getTime()) / monthDuration) * 100;
               const width = Math.max(0.5, eventEndPct - eventStartPct);
               
               return (

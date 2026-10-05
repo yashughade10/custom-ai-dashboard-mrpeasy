@@ -5,7 +5,7 @@ import { RouteGuard } from "@/components/auth/RouteGuard";
 import { MrpTabBar } from "@/components/mrp/MrpTabBar";
 import ProductionCalendar from "@/components/production/ProductionCalendar";
 import { Button } from "@/components/ui/button";
-import { Plus, Search, RefreshCw, Settings2, Download, X } from "lucide-react";
+import { Plus, RefreshCw, Download } from "lucide-react";
 import Link from "next/link";
 import { useQueryClient } from "@tanstack/react-query";
 import { Input } from "@/components/ui/input";
@@ -23,8 +23,6 @@ const productionTabs = [
 
 function ProductionSchedulePage() {
   const [viewMode, setViewMode] = useState<"calendar" | "gantt">("calendar");
-  const [showSearch, setShowSearch] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
   const queryClient = useQueryClient();
 
   const handleRefresh = () => {
@@ -58,31 +56,11 @@ function ProductionSchedulePage() {
             {/* Sub-navigation */}
             <div className="flex items-center gap-4 text-[13px] font-medium pt-1">
               <span className="text-blue-600 border-b-[2.5px] border-blue-600 pb-1 -mb-[1px]">Manufacturing orders</span>
-              <span className="text-gray-500 hover:text-gray-800 cursor-pointer pb-1">Operations</span>
             </div>
           </div>
 
           <div className="flex items-center gap-2 self-start">
-            {showSearch && (
-              <div className="flex items-center relative">
-                <Input 
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Search orders..."
-                  className="h-7 w-48 text-xs pr-7 rounded-sm"
-                  autoFocus
-                />
-                <button onClick={() => setShowSearch(false)} className="absolute right-1.5 text-gray-400 hover:text-gray-600">
-                  <X className="h-3.5 w-3.5" />
-                </button>
-              </div>
-            )}
-            
-            {!showSearch && (
-              <Button onClick={() => setShowSearch(true)} variant="outline" size="sm" className="h-7 w-7 p-0 bg-gray-50/50 text-gray-600 rounded-sm">
-                <Search className="h-3.5 w-3.5" />
-              </Button>
-            )}
+
             
             <Button onClick={handleExportPng} variant="outline" size="sm" className="h-7 px-3 gap-1.5 bg-gray-50/50 text-gray-600 rounded-sm">
               <Download className="h-3.5 w-3.5" /> PNG
@@ -100,16 +78,12 @@ function ProductionSchedulePage() {
             <Button onClick={handleRefresh} variant="outline" size="sm" className="h-7 w-7 p-0 bg-gray-50/50 text-gray-600 rounded-sm">
               <RefreshCw className="h-3.5 w-3.5" />
             </Button>
-            
-            <Button onClick={() => toast("Settings opened")} variant="outline" size="sm" className="h-7 w-7 p-0 bg-gray-50/50 text-gray-600 rounded-sm">
-              <Settings2 className="h-3.5 w-3.5" />
-            </Button>
           </div>
         </div>
 
         {/* Calendar Area */}
         <div className="flex-1 min-h-0">
-          <ProductionCalendar viewMode={viewMode} searchQuery={searchQuery} />
+          <ProductionCalendar viewMode={viewMode} />
         </div>
         
       </div>
