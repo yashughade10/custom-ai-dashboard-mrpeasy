@@ -6,6 +6,7 @@ import { mrpApi } from "@/services/mrpApi";
 import { CalendarDays, Plus, Settings2, Edit2, ChevronDown, Loader2, Save, BarChart2, Download, Upload, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import jsPDF from "jspdf";
+import { addBWEHeader } from "@/utils/pdfHeader";
 import autoTable from "jspdf-autotable";
 import { toast } from "sonner";
 
@@ -286,10 +287,20 @@ export default function VendorsTable() {
   const handleDownloadPDF = () => {
     if (exportData.length === 0) return;
 
-    const doc = new jsPDF({ orientation: 'landscape', format: 'a4' });
+    const doc = new jsPDF('landscape');
+    const startY = addBWEHeader(doc, true);
     
+    // Title
     doc.setFontSize(16);
-    doc.text('Vendors List', 14, 15);
+    doc.setFont("helvetica", "bold");
+    doc.text('Vendors List', 14, startY);
+    
+    doc.setFontSize(10);
+    doc.setFont("helvetica", "normal");
+    const today = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' });
+    doc.text(today, doc.internal.pageSize.width - 14, startY, { align: "right" });
+    
+    const tableStartY = startY + 5;
     
     const head = [ALL_COLUMNS.filter(c => visibleCols[c.id]).map(c => c.label)];
     const body: any[] = exportData.map((vendor: any) => {
@@ -312,7 +323,7 @@ export default function VendorsTable() {
     autoTable(doc, {
       head: head,
       body: body,
-      startY: 20,
+      startY: typeof tableStartY !== "undefined" ? tableStartY : 20,
       theme: 'grid',
       styles: { fontSize: 8, cellPadding: 2, textColor: [0, 0, 0], lineColor: [220, 220, 220], overflow: 'linebreak' },
       headStyles: { fillColor: [240, 244, 248], textColor: [0, 0, 0], fontStyle: 'bold' },

@@ -8,6 +8,7 @@ import { MrpExportBar } from "@/components/mrp/MrpExportBar";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import jsPDF from "jspdf";
+import { addBWEHeader } from "@/utils/pdfHeader";
 import autoTable from "jspdf-autotable";
 
 const baseCurrencyCols = ['total', 'tax', 'total_including_tax', 'unit_cost', 'buy_price', 's1_buy_price', 's2_buy_price', 'sell_price', 'bwe_added_value_cost'];
@@ -237,16 +238,19 @@ export default function ProcurementItemsTable() {
     if (!allData) return;
 
     const doc = new jsPDF('landscape');
+    const startY = addBWEHeader(doc, true);
     
-    // Add header
+    // Title
     doc.setFontSize(16);
     doc.setFont("helvetica", "bold");
-    doc.text("Procurement Items", 14, 15);
+    doc.text("Procurement Items", 14, startY);
     
     doc.setFontSize(10);
     doc.setFont("helvetica", "normal");
     const today = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' });
-    doc.text(today, doc.internal.pageSize.width - 14, 15, { align: "right" });
+    doc.text(today, doc.internal.pageSize.width - 14, startY, { align: "right" });
+    
+    const tableStartY = startY + 5;
 
     // Exact columns from user request (only important available columns)
     const pdfCols = ALL_COLUMNS.filter(c => visibleCols[c.id]);
@@ -317,7 +321,7 @@ export default function ProcurementItemsTable() {
     autoTable(doc, {
       head: head,
       body: body,
-      startY: 20,
+      startY: typeof tableStartY !== "undefined" ? tableStartY : 20,
       theme: 'grid',
       styles: { fontSize: 8, cellPadding: 2, textColor: [0, 0, 0], lineColor: [220, 220, 220], overflow: 'linebreak' },
       headStyles: { fillColor: [240, 244, 248], textColor: [0, 0, 0], fontStyle: 'bold' },

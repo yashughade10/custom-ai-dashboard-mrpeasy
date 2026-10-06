@@ -241,7 +241,7 @@ export default function ProcurementStatisticsPage() {
     autoTable(doc, {
       head: [headers],
       body: [totalRow, ...dataRows],
-      startY: 28,
+      startY: typeof tableStartY !== "undefined" ? tableStartY : 28,
       styles: { fontSize: 8, cellPadding: 2 },
       headStyles: { fillColor: [238, 242, 249], textColor: [75, 85, 99], fontStyle: 'bold' },
       bodyStyles: { textColor: [51, 51, 51] },

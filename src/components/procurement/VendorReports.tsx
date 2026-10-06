@@ -6,6 +6,7 @@ import { useQuery } from "@tanstack/react-query";
 import { mrpApi } from "@/services/mrpApi";
 import { Search, Download } from "lucide-react";
 import jsPDF from "jspdf";
+import { addBWEHeader } from "@/utils/pdfHeader";
 import autoTable from "jspdf-autotable";
 
 export default function VendorReports({ vendorNumber }: { vendorNumber: string }) {
@@ -166,7 +167,7 @@ export default function VendorReports({ vendorNumber }: { vendorNumber: string }
     autoTable(doc, {
       head: [tableColumn],
       body: tableRows,
-      startY: 20,
+      startY: typeof tableStartY !== "undefined" ? tableStartY : 20,
     });
 
     doc.save(`vendor_${vendorNumber}_purchases.pdf`);

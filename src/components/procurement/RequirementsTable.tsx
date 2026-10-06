@@ -8,6 +8,7 @@ import { MrpExportBar } from "@/components/mrp/MrpExportBar";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import jsPDF from "jspdf";
+import { addBWEHeader } from "@/utils/pdfHeader";
 import autoTable from "jspdf-autotable";
 
 const ALL_COLUMNS = [
@@ -165,16 +166,19 @@ export default function RequirementsTable() {
     if (!allData) return;
 
     const doc = new jsPDF('landscape');
+    const startY = addBWEHeader(doc, true);
     
-    // Add header
+    // Title
     doc.setFontSize(16);
     doc.setFont("helvetica", "bold");
-    doc.text("Requirements", 14, 15);
+    doc.text("Requirements", 14, startY);
     
     doc.setFontSize(10);
     doc.setFont("helvetica", "normal");
     const today = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' });
-    doc.text(today, doc.internal.pageSize.width - 14, 15, { align: "right" });
+    doc.text(today, doc.internal.pageSize.width - 14, startY, { align: "right" });
+    
+    const tableStartY = startY + 5;
 
     const visibleColumnKeys = ALL_COLUMNS.filter(c => visibleCols[c.id]);
     const headers = visibleColumnKeys.map(c => c.label);
@@ -189,7 +193,7 @@ export default function RequirementsTable() {
     autoTable(doc, {
       head: [headers],
       body: data,
-      startY: 25,
+      startY: typeof tableStartY !== "undefined" ? tableStartY : 25,
       styles: { fontSize: 8, cellPadding: 2 },
       headStyles: { fillColor: [240, 244, 248], textColor: [75, 85, 99], fontStyle: 'bold' },
       theme: 'grid'
