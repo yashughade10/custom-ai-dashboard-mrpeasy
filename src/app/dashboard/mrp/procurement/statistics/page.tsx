@@ -7,6 +7,7 @@ import { Calendar as CalendarIcon, Settings2, Search, Download } from "lucide-re
 import { Button } from "@/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
 import { mrpApi } from "@/services/mrpApi";
+import { addBWEHeader } from "@/utils/pdfHeader";
 
 const UOM_OPTIONS = ['BOX', 'CAN', 'Hourly Rate', 'kg', 'l', 'm', 'mm', 'm²', 'pcs', 'REEL'];
 
@@ -205,19 +206,21 @@ export default function ProcurementStatisticsPage() {
     const { default: autoTable } = await import('jspdf-autotable');
 
     const doc = new jsPDF('landscape');
+    const startY = addBWEHeader(doc, true);
     const cols = ALL_COLUMNS.filter(c => visibleCols[c.id]);
 
     // Title
     doc.setFontSize(14);
     doc.setFont("helvetica", "bold");
-    doc.text("Materials used in shipped goods", 14, 15);
+    doc.text("Materials used in shipped goods", 14, startY);
 
     // Date range
     doc.setFontSize(9);
     doc.setFont("helvetica", "normal");
-    doc.text(`Period: ${dateFrom} - ${dateTo}`, 14, 22);
+    doc.text(`Period: ${dateFrom} - ${dateTo}`, 14, startY + 7);
     const today = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' });
-    doc.text(`Generated: ${today}`, doc.internal.pageSize.width - 14, 15, { align: "right" });
+    doc.text(`Generated: ${today}`, doc.internal.pageSize.width - 14, startY, { align: "right" });
+    const tableStartY = startY + 12;
 
     // Table headers
     const headers = cols.map(c => c.label);

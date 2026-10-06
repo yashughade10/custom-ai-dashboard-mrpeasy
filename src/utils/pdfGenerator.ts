@@ -5,15 +5,11 @@ import autoTable from "jspdf-autotable";
 export const generateInternalPdf = (poData: any) => {
   const { order, items } = poData;
   const doc = new jsPDF();
-  const yOffset = addBWEHeader(doc, false) - 15; // original starts at ~22, let's shift down
-  
-  // Apply a coordinate translation trick, wait jsPDF doesn't have it natively for text easily
-  // Let's just redefine doc.text to automatically offset!
+  const yOffset = addBWEHeader(doc, false) - 15;
   const originalText = doc.text.bind(doc);
-  doc.text = function(text, x, y, options) {
+  (doc as any).text = function(text: any, x: any, y: any, options: any) {
     return originalText(text, x, typeof y === 'number' ? y + yOffset : y, options);
   };
-  
   // Title
   doc.setFontSize(18);
   doc.text(`Purchase order ${order.po_number || ''}`, 14, 22);
@@ -72,7 +68,7 @@ export const generateInternalPdf = (poData: any) => {
   ]);
 
   autoTable(doc, {
-    startY: 85 + (typeof yOffset !== "undefined" ? yOffset : 0),
+    startY: 85 + yOffset,
     head: [['', 'Part #', 'Part description', 'Vendor part no.', 'Quantity', 'Price', 'Subtotal', 'Target lot']],
     body: tableData,
     theme: 'grid',
@@ -117,7 +113,11 @@ export const generateInternalPdf = (poData: any) => {
 export const generateVendorPdf = (poData: any) => {
   const { order, items } = poData;
   const doc = new jsPDF();
-  
+  const yOffset = addBWEHeader(doc, false) - 15;
+  const originalText = doc.text.bind(doc);
+  (doc as any).text = function(text: any, x: any, y: any, options: any) {
+    return originalText(text, x, typeof y === 'number' ? y + yOffset : y, options);
+  };
   // Logos Placeholder (Right aligned)
   doc.setFontSize(14);
   doc.setFont("helvetica", "bolditalic");
@@ -193,7 +193,7 @@ export const generateVendorPdf = (poData: any) => {
   ]);
 
   autoTable(doc, {
-    startY: 125 + (typeof yOffset !== "undefined" ? yOffset : 0),
+    startY: 125 + yOffset,
     head: [['', 'Part #', 'Part description', 'Vendor part no.', 'Quantity', 'Price', 'Subtotal']],
     body: tableData,
     theme: 'grid',
@@ -226,7 +226,11 @@ export const generateVendorPdf = (poData: any) => {
 export const generateDeliveryNotePdf = (poData: any) => {
   const { order, items } = poData;
   const doc = new jsPDF();
-  
+  const yOffset = addBWEHeader(doc, false) - 15;
+  const originalText = doc.text.bind(doc);
+  (doc as any).text = function(text: any, x: any, y: any, options: any) {
+    return originalText(text, x, typeof y === 'number' ? y + yOffset : y, options);
+  };
   // Logos Placeholder (Right aligned)
   doc.setFontSize(14);
   doc.setFont("helvetica", "bolditalic");
@@ -282,7 +286,7 @@ export const generateDeliveryNotePdf = (poData: any) => {
   ]);
 
   autoTable(doc, {
-    startY: 90 + (typeof yOffset !== "undefined" ? yOffset : 0),
+    startY: 90 + yOffset,
     head: [['Part #', 'Part description', 'Vendor part no.', 'Quantity', 'Arrival date']],
     body: tableData,
     theme: 'plain',
@@ -313,7 +317,11 @@ export const generateDeliveryNotePdf = (poData: any) => {
 export const generateRfqPdf = (poData: any) => {
   const { order, items } = poData;
   const doc = new jsPDF();
-  
+  const yOffset = addBWEHeader(doc, false) - 15;
+  const originalText = doc.text.bind(doc);
+  (doc as any).text = function(text: any, x: any, y: any, options: any) {
+    return originalText(text, x, typeof y === 'number' ? y + yOffset : y, options);
+  };
   // Logos
   doc.setFontSize(14);
   doc.setFont("helvetica", "bolditalic");
@@ -386,7 +394,7 @@ export const generateRfqPdf = (poData: any) => {
   ]);
 
   autoTable(doc, {
-    startY: 125 + (typeof yOffset !== "undefined" ? yOffset : 0),
+    startY: 125 + yOffset,
     head: [['', 'Part #', 'Part description', 'Vendor part no.', 'Quantity']],
     body: tableData,
     theme: 'grid',

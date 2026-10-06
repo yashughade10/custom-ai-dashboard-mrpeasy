@@ -142,7 +142,14 @@ export default function VendorReports({ vendorNumber }: { vendorNumber: string }
   const handleExportPDF = () => {
     if (!items.length) return;
     const doc = new jsPDF();
-    doc.text(`Purchases for Vendor ${vendorNumber}`, 14, 15);
+    const startY = addBWEHeader(doc, false);
+    
+    // Title
+    doc.setFontSize(16);
+    doc.setFont("helvetica", "bold");
+    doc.text(`Purchases for Vendor ${vendorNumber}`, 14, startY);
+    
+    const tableStartY = startY + 5;
     
     const tableColumn = ["Group number", "Group name", "Part No.", "Part description", "Quantity", "Price"];
     const tableRows = items.map((item: any) => [
