@@ -277,15 +277,27 @@ export default function CustomerOrderDetailsPage() {
                 </div>
                 <div className="grid grid-cols-[120px_1fr] items-start gap-2">
                   <label className="text-xs text-right text-gray-600 font-medium pt-1.5">Shipping address</label>
-                  <Textarea className="min-h-[40px] text-xs bg-gray-50" defaultValue="153 Crockford St, NORTHGATE QLD 4013, Australia" />
+                  <Textarea 
+                    className="min-h-[40px] text-xs bg-gray-50" 
+                    value={formData.shipping_address ?? order.shipping_address ?? ""}
+                    onChange={(e) => setFormData({ ...formData, shipping_address: e.target.value })}
+                  />
                 </div>
                 <div className="grid grid-cols-[120px_1fr] items-start gap-2">
                   <label className="text-xs text-right text-gray-600 font-medium pt-1.5">Internal notes</label>
-                  <Textarea className="min-h-[40px] text-xs bg-gray-50" />
+                  <Textarea 
+                    className="min-h-[40px] text-xs bg-gray-50" 
+                    value={formData.internal_notes ?? order.internal_notes ?? ""}
+                    onChange={(e) => setFormData({ ...formData, internal_notes: e.target.value })}
+                  />
                 </div>
                 <div className="grid grid-cols-[120px_1fr] items-start gap-2">
                   <label className="text-xs text-right text-gray-600 font-medium pt-1.5">Customer notes</label>
-                  <Textarea className="min-h-[40px] text-xs bg-gray-50" defaultValue="GEN PUR NOTE 67663" />
+                  <Textarea 
+                    className="min-h-[40px] text-xs bg-gray-50" 
+                    value={formData.customer_notes ?? order.customer_notes ?? ""}
+                    onChange={(e) => setFormData({ ...formData, customer_notes: e.target.value })}
+                  />
                 </div>
               </div>
             </div>
@@ -329,35 +341,37 @@ export default function CustomerOrderDetailsPage() {
                         </div>
                       </td>
                       <td className="px-2 py-3 align-top">
-                        <SearchableSelect 
-                          options={partOptions}
-                          value={item.product || ""}
-                          onChange={(val) => {
-                            const matchedItem = (itemsResponse?.data || []).find((i: any) => i.part_number === val || i.part_no === val || i.id?.toString() === val);
-                            const newItems = [...items];
-                            newItems[i] = {
-                              ...newItems[i],
-                              product: val,
-                              description: matchedItem?.part_description || matchedItem?.name || "",
-                              product_group: matchedItem?.group_number || matchedItem?.group_id?.toString() || "none",
-                              price: matchedItem?.selling_price || matchedItem?.sell_price || matchedItem?.cost || "0",
-                              cost: matchedItem?.cost || "0",
-                              quantity: newItems[i].quantity || "1",
-                              uom: newItems[i].uom || matchedItem?.uom || "pcs"
-                            };
-                            
-                            const qty = parseFloat(newItems[i].quantity) || 1;
-                            const price = parseFloat(newItems[i].price) || 0;
-                            const discount = parseFloat(newItems[i].discount) || 0;
-                            newItems[i].subtotal = (qty * price) * (1 - discount / 100);
+                        <div className="w-[300px] max-w-full">
+                          <SearchableSelect 
+                            options={partOptions}
+                            value={item.product || ""}
+                            onChange={(val) => {
+                              const matchedItem = (itemsResponse?.data || []).find((i: any) => i.part_number === val || i.part_no === val || i.id?.toString() === val);
+                              const newItems = [...items];
+                              newItems[i] = {
+                                ...newItems[i],
+                                product: val,
+                                description: matchedItem?.part_description || matchedItem?.name || "",
+                                product_group: matchedItem?.group_number || matchedItem?.group_id?.toString() || "none",
+                                price: matchedItem?.selling_price || matchedItem?.sell_price || matchedItem?.cost || "0",
+                                cost: matchedItem?.cost || "0",
+                                quantity: newItems[i].quantity || "1",
+                                uom: newItems[i].uom || matchedItem?.uom || "pcs"
+                              };
+                              
+                              const qty = parseFloat(newItems[i].quantity) || 1;
+                              const price = parseFloat(newItems[i].price) || 0;
+                              const discount = parseFloat(newItems[i].discount) || 0;
+                              newItems[i].subtotal = (qty * price) * (1 - discount / 100);
 
-                            const newTotal = newItems.reduce((acc: number, item: any) => acc + (parseFloat(item.subtotal) || 0), 0);
-                            setFormData({ ...formData, items: newItems, total: newTotal });
-                          }}
-                          placeholder="Select part..."
-                          isLoading={isLoadingItems}
-                        />
-                        <Input className="h-6 w-full text-[11px] mt-1" value={item.description || ""} onChange={e => updateItem(i, "description", e.target.value)} placeholder="Description" />
+                              const newTotal = newItems.reduce((acc: number, item: any) => acc + (parseFloat(item.subtotal) || 0), 0);
+                              setFormData({ ...formData, items: newItems, total: newTotal });
+                            }}
+                            placeholder="Select part..."
+                            isLoading={isLoadingItems}
+                          />
+                          <Input className="h-6 w-full text-[11px] mt-1" value={item.description || ""} onChange={e => updateItem(i, "description", e.target.value)} placeholder="Description" />
+                        </div>
                       </td>
                       <td className="px-2 py-3 align-top">
                         <div className="flex items-center gap-1">
