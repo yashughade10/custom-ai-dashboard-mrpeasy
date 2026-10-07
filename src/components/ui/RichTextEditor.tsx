@@ -19,9 +19,11 @@ export default function RichTextEditor({ value, onChange, placeholder, className
       [{ header: [1, 2, 3, false] }],
       ["bold", "italic", "underline", "strike", "blockquote"],
       [{ list: "ordered" }, { list: "bullet" }],
+      [{ align: [] }, { color: [] }, { background: [] }],
       ["link", "image"],
       ["clean"],
     ],
+    table: true,
   };
 
   const formats = [
@@ -32,8 +34,12 @@ export default function RichTextEditor({ value, onChange, placeholder, className
     "strike",
     "blockquote",
     "list",
+    "align",
+    "color",
+    "background",
     "link",
     "image",
+    "table",
   ];
 
   return (
@@ -55,6 +61,15 @@ export default function RichTextEditor({ value, onChange, placeholder, className
           border-top-left-radius: 0.375rem;
           border-top-right-radius: 0.375rem;
           background: #f8fafc;
+        }
+        .rich-text-editor-wrapper .ql-editor table {
+          width: 100%;
+          border-collapse: collapse;
+        }
+        .rich-text-editor-wrapper .ql-editor td {
+          width: 50%;
+          vertical-align: top;
+          padding: 10px;
         }
       `}} />
       <ReactQuill

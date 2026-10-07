@@ -13,18 +13,21 @@ import { Eye, EyeOff } from "lucide-react";
 // Helper to detect if user pasted raw HTML code into the WYSIWYG
 const getFinalHtml = (rawBody: string) => {
   if (typeof document === 'undefined') return rawBody;
-  const temp = document.createElement("div");
-  temp.innerHTML = rawBody;
-  let text = (temp.innerText || temp.textContent || "").trim();
   
-  // Quill converts spaces to non-breaking spaces (&nbsp;).
-  // This breaks HTML parsers if we try to render it as raw HTML, so we must convert them back to regular spaces.
-  text = text.replace(/\u00A0/g, " ");
-  
-  if (text.startsWith("<!DOCTYPE") || text.startsWith("<html") || text.startsWith("<body") || text.startsWith("<table")) {
-    return text; // They pasted raw HTML!
+  // Try to use a style block to force table styling for preview and email
+  const styleBlock = `<style>
+    table { width: 100% !important; border-collapse: collapse !important; table-layout: fixed !important; }
+    td { width: 50% !important; vertical-align: top !important; padding: 10px !important; }
+    img { max-width: 100% !important; height: auto !important; display: block !important; }
+  </style>`;
+
+  let text = rawBody.replace(/<[^>]*>?/gm, '').trim();
+  if (text.startsWith("<!DOCTYPE") || text.startsWith("<html") || text.startsWith("<body")) {
+    return rawBody;
   }
-  return rawBody;
+  
+  // Inject style block at the top of the body so both preview and email get it
+  return styleBlock + rawBody;
 };
 
 export default function NewsletterEmailSender() {
@@ -39,6 +42,7 @@ export default function NewsletterEmailSender() {
   const [newTemplateName, setNewTemplateName] = useState("");
   const [newTemplateSubject, setNewTemplateSubject] = useState("");
   const [newTemplateBody, setNewTemplateBody] = useState("");
+  const bweTemplateHtml = "<div style=\"font-family: Arial, sans-serif; max-width: 800px; margin: auto; color: #003366; font-size: 14px;\">\n  <!-- Header Banner (Placeholder for background image, can be replaced by user) -->\n  <div style=\"background-color: #002244; padding: 20px; position: relative; height: 160px; color: white; text-align: center;\">\n    <h1 style=\"color: yellow; font-size: 24px; margin: 0; padding-top: 10px;\">BLUEWATER<br>ENGINEERING</h1>\n    <p style=\"font-size: 12px; margin: 10px 0 0 0;\">32 JADE DRIVE, MOLENDINAR</p>\n    <p style=\"color: yellow; font-size: 10px; margin: 5px 0 0 0;\">PRODUCTION@BWENG.COM.AU<br>55976511</p>\n    <p style=\"color: #66ccff; font-weight: bold; font-size: 16px; position: absolute; bottom: 20px; left: 20px; margin: 0;\">Blues News - October 2026 Edition</p>\n  </div>\n  \n  <div style=\"padding: 20px 20px;\">\n    <!-- Breaking News ribbon -->\n    <img src=\"http://localhost:3000/breaking.png\" alt=\"BREAKING NEWS\" style=\"display: block; margin-bottom: 20px;\" />\n    \n    <!-- Text with Links -->\n    <div style=\"margin-bottom: 30px;\">\n      <p style=\"font-size: 16px; margin-bottom: 15px;\">ISO9001:2015 Certification</p>\n      <p style=\"line-height: 1.6; margin-bottom: 15px;\">We are pleased to announce that Bluewater Engineering Group has achieved ISO9001:2015 certification. This milestone reflects the quality standards we have built on since 1982 - across waterjet cutting, CNC machining and fabrication (<a href=\"http://bluewaterengineering.com.au\" style=\"color: #0066cc;\">Bluewaterengineering.com.au</a>) , Design and Manufacture of Vacuum Lifting Equipment (<a href=\"http://vacliftaustralia.com\" style=\"color: #0066cc;\">vacliftaustralia.com</a>) and Precision Pipe Handling and Alignment Attachments (<a href=\"http://pipeboss.com.au\" style=\"color: #0066cc;\">pipeboss.com.au</a>).</p>\n      <p style=\"line-height: 1.6;\">\"It's formal recognition of the consistency and continuous improvement our customers already know us for and a commitment to keep raising the bar.\"</p>\n    </div>\n    \n    <!-- Two Columns Section -->\n    <table width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" border=\"0\" style=\"margin-bottom: 30px; table-layout: fixed;\">\n      <tr>\n        <!-- Column 1 -->\n        <td width=\"48%\" valign=\"top\" style=\"padding-right: 2%;\">\n          <img src=\"http://localhost:3000/product1.png\" alt=\"Water Jet Cutting\" style=\"width: 100%; height: auto; display: block; margin-bottom: 15px;\" />\n          <p style=\"font-size: 14px; margin: 0 0 15px 0;\">Water Jet Cutting</p>\n          <p style=\"font-weight: bold; margin: 0 0 15px 0; color: #003366;\">3-5 DAY TURNAROUND for most jobs</p>\n          <div style=\"margin-bottom: 20px; text-align: center;\">\n            <a href=\"#\" style=\"background-color: yellow; color: #003366; font-weight: bold; text-decoration: underline; padding: 5px 10px; display: inline-block;\">WATER JET QUOTES</a>\n          </div>\n          <p style=\"font-weight: bold; margin: 0 0 10px 0;\">Why Waterjet?</p>\n          <ul style=\"padding-left: 20px; line-height: 1.4; margin: 0 0 20px 0; font-size: 13px;\">\n            <li>No heat-affected zone — zero material distortion</li>\n            <li>Cuts virtually any material in a single setup</li>\n            <li>Tight tolerances on complex profiles and intricate shapes</li>\n            <li>No tool changes, no cracking, no melting</li>\n            <li>Clean edges that often require no secondary finishing</li>\n            <li>Suitable for materials sensitive to heat, stress or contamination</li>\n          </ul>\n          <p style=\"font-weight: bold; margin: 0 0 10px 0;\">What We Can Cut</p>\n          <ul style=\"padding-left: 20px; line-height: 1.4; margin: 0; font-size: 13px;\">\n            <li>Sheet metal and plate</li>\n            <li>Structural steel and tool steel</li>\n            <li>Stainless steel</li>\n            <li>Aluminium and aluminium alloys</li>\n            <li>Copper, brass and bronze</li>\n            <li>Titanium and exotic alloys</li>\n            <li>Cast iron</li>\n            <li>Stone — granite, marble and slate</li>\n            <li>Ceramics and porcelain tiles</li>\n            <li>Glass — flat and laminated</li>\n            <li>Rubber and gasket material</li>\n            <li>Foam and composite foam</li>\n            <li>Carbon fibre and fibreglass composites</li>\n            <li>Plastics — acrylic, HDPE, nylon, polycarbonate</li>\n            <li>Laminates and sandwich panels</li>\n            <li>Timber and MDF</li>\n          </ul>\n        </td>\n        \n        <!-- Spacer -->\n        <td width=\"4%\"></td>\n        \n        <!-- Column 2 -->\n        <td width=\"48%\" valign=\"top\" style=\"padding-left: 2%;\">\n          <img src=\"http://localhost:3000/product2.png\" alt=\"Vacuum Lifter\" style=\"width: 100%; height: auto; display: block; margin-bottom: 15px;\" />\n          <p style=\"font-size: 14px; margin: 0 0 15px 0;\">VACLIFT-Vacuum Lifters</p>\n          <p style=\"margin: 0 0 15px 0; color: #0066cc;\">3 Year Warranty on all of our Australian Made compressed air and battery vacuum lifters.</p>\n          <div style=\"margin-bottom: 20px; text-align: center;\">\n            <a href=\"#\" style=\"background-color: yellow; color: #003366; font-weight: bold; text-decoration: underline; padding: 5px 10px; display: inline-block;\">VACLIFT® QUOTE</a>\n          </div>\n          <ul style=\"padding-left: 20px; line-height: 1.4; margin: 0 0 20px 0; font-size: 13px; color: #0066cc;\">\n            <li>Compressed air and battery Crane/Jib lifters</li>\n            <li>Forklift units</li>\n            <li>250kg-20 tonne lifting capacity</li>\n            <li>Service and parts department on the Gold Coast</li>\n            <li>Suitable for Metal, Glass, Stone, Composite</li>\n          </ul>\n          <div style=\"margin-bottom: 20px; text-align: center;\">\n            <a href=\"#\" style=\"background-color: #0033cc; color: white; font-weight: bold; text-decoration: underline; padding: 5px 10px; display: inline-block;\">VACLIFT - LEARN MORE</a>\n          </div>\n          <p style=\"margin: 0 0 10px 0;\">Why Vaclift?</p>\n          <ul style=\"padding-left: 20px; line-height: 1.4; margin: 0; font-size: 13px; color: #0066cc;\">\n            <li>Manufactured by Blue Water Engineering Group for over 20 years</li>\n            <li>Used & trusted by some of the largest manufacturers in Australia and overseas</li>\n            <li>All of our units have been tested and comply with Australian Standards AS4991-2004 and the US Standard ASME B30.20-2010</li>\n            <li>Dramatically reduces musculoskeletal injury risks</li>\n            <li>Increases productivity and throughput</li>\n            <li>Extends worker longevity & reduces absenteeism</li>\n            <li>Improves load handling precision and product safety</li>\n            <li>Delivers a strong ROI through reduced workers compensation costs.</li>\n          </ul>\n        </td>\n      </tr>\n    </table>\n  </div>\n</div>".replace(/http:\/\/localhost:3000/g, process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000');
 
   const fetchSegments = () => {
     apiFetch(`${API_BASE_URL}/email/segments`)
@@ -142,8 +146,13 @@ export default function NewsletterEmailSender() {
               onChange={(e) => {
                 const val = e.target.value;
                 setSelectedTemplate(val);
-                if (val) {
-                  const t = templates.find(t => t.id.toString() === val);
+                if (val === 'bwe-newsletter') {
+                    if (typeof setNewTemplateName !== 'undefined') setNewTemplateName("BWE Newsletter Template (Copy)");
+                    setNewTemplateSubject("Blues News - " + new Date().toLocaleString('default', { month: 'long', year: 'numeric' }) + " Edition");
+                    setNewTemplateBody(bweTemplateHtml);
+                        setShowPreview(true);
+                  } else if (val) {
+                    const t = templates.find(t => t.id.toString() === val);
                   if (t) {
                     setNewTemplateName(t.name + " (Copy)");
                     setNewTemplateSubject(t.subject);
@@ -159,6 +168,7 @@ export default function NewsletterEmailSender() {
               }}
             >
               <option value="">-- Choose a template --</option>
+                <option value="bwe-newsletter">BWE Newsletter Template (Built-in)</option>
               {templates.map(t => (
                 <option key={t.id} value={t.id}>{t.name} ({t.subject})</option>
               ))}
@@ -189,16 +199,24 @@ export default function NewsletterEmailSender() {
             </div>
             
             <div className={showPreview ? "grid grid-cols-1 md:grid-cols-2 gap-4 items-stretch" : "block"}>
-              <div className="border rounded-md overflow-hidden bg-white shadow-sm flex flex-col h-full min-h-[500px]">
-                <RichTextEditor 
-                  value={newTemplateBody}
-                  onChange={setNewTemplateBody}
-                  placeholder="Write your template content here, or paste raw developer code..."
-                  className="flex-grow"
-                />
-              </div>
               
-              {showPreview && (
+                {selectedTemplate === "" ? (
+                  <div className="border rounded-md overflow-hidden bg-white shadow-sm flex flex-col h-full min-h-[500px]">
+                    <RichTextEditor 
+                      value={newTemplateBody}
+                      onChange={setNewTemplateBody}
+                      placeholder="Write your email content here..."
+                      className="flex-grow"
+                    />
+                  </div>
+                ) : (
+                  <div className="border rounded-md overflow-hidden bg-slate-50 shadow-sm flex flex-col h-full min-h-[500px] justify-center items-center text-slate-500 p-8 text-center">
+                    <p className="mb-2 font-medium">Using a pre-defined template</p>
+                    <p className="text-sm">The content is locked for editing. Please review the final email using the preview panel.</p>
+                  </div>
+                )}
+
+                {showPreview && (
                 <div className="border rounded-md bg-white shadow-inner flex flex-col h-full min-h-[500px]">
                   <div className="p-3 border-b bg-muted/50 flex items-center justify-center">
                     <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Client Preview</span>
