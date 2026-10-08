@@ -110,6 +110,16 @@ async function fetchContact(id: string) {
   return (await response.json()).data;
 }
 
+async function updateContact(id: string, data: Record<string, any>) {
+  const response = await apiFetch(`${API_BASE_URL}/crm/contacts/${id}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+  if (!response.ok) throw new Error("Failed to update contact");
+  return (await response.json()).data;
+}
+
 async function fetchCompanies(params?: { page?: number; search?: string; industry?: string; limit?: number }) {
   const q = new URLSearchParams(params as any).toString();
   const response = await apiFetch(`${API_BASE_URL}/crm/companies?${q}`);
@@ -120,6 +130,16 @@ async function fetchCompanies(params?: { page?: number; search?: string; industr
 async function fetchCompany(id: string) {
   const response = await apiFetch(`${API_BASE_URL}/crm/companies/${id}`);
   if (!response.ok) throw new Error("Failed to fetch company");
+  return (await response.json()).data;
+}
+
+async function updateCompany(id: string, data: Record<string, any>) {
+  const response = await apiFetch(`${API_BASE_URL}/crm/companies/${id}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+  if (!response.ok) throw new Error("Failed to update company");
   return (await response.json()).data;
 }
 
@@ -577,8 +597,10 @@ export {
   fetchCrmStats,
   fetchContacts,
   fetchContact,
+  updateContact,
   fetchCompanies,
   fetchCompany,
+  updateCompany,
   fetchDeals,
   fetchDeal,
   fetchDealsPipeline,

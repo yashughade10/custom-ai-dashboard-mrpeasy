@@ -15,6 +15,7 @@ export default function ContactsTable() {
   const [lifecycle, setLifecycle] = useState("");
   const [selectedContactId, setSelectedContactId] = useState<string | null>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
+  const [isEditingSheet, setIsEditingSheet] = useState(false);
 
   const { data, isLoading } = useQuery({
     queryKey: ["crm-contacts", { page, search, lifecycle }],
@@ -29,6 +30,14 @@ export default function ContactsTable() {
 
   const handleRowClick = (id: string) => {
     setSelectedContactId(id);
+    setSheetOpen(true);
+    setIsEditingSheet(false);
+  };
+
+  const handleEditClick = (e: React.MouseEvent, id: string) => {
+    e.stopPropagation();
+    setSelectedContactId(id);
+    setIsEditingSheet(true);
     setSheetOpen(true);
   };
 
@@ -69,6 +78,7 @@ export default function ContactsTable() {
               <TableHead>Lifecycle Stage</TableHead>
               <TableHead>Owner</TableHead>
               <TableHead>Last Modified</TableHead>
+              <TableHead className="w-[80px]">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -78,7 +88,7 @@ export default function ContactsTable() {
               </TableRow>
             ) : contacts.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={6} className="text-center py-6 text-muted-foreground">No contacts found.</TableCell>
+                <TableCell colSpan={7} className="text-center py-6 text-muted-foreground">No contacts found.</TableCell>
               </TableRow>
             ) : (
               contacts.map((contact: any) => (
@@ -95,6 +105,11 @@ export default function ContactsTable() {
                   </TableCell>
                   <TableCell>{contact.owner_name || "-"}</TableCell>
                   <TableCell>{new Date(contact.lastmodifieddate).toLocaleDateString()}</TableCell>
+                  <TableCell onClick={(e) => e.stopPropagation()}>
+                    <Button variant="outline" size="sm" onClick={(e) => handleEditClick(e, contact.id.toString())}>
+                      Edit
+                    </Button>
+                  </TableCell>
                 </TableRow>
               ))
             )}
@@ -131,7 +146,11 @@ export default function ContactsTable() {
       <ContactDetailSheet 
         contactId={selectedContactId} 
         open={sheetOpen} 
-        onOpenChange={setSheetOpen} 
+        onOpenChange={(open) => {
+          setSheetOpen(open);
+          if (!open) setIsEditingSheet(false);
+        }} 
+        initialEditMode={isEditingSheet}
       />
     </div>
   );
