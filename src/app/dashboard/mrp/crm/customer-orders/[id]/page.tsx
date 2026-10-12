@@ -74,6 +74,16 @@ export default function CustomerOrderDetailsPage() {
     : response?.data;
 
   const [formData, setFormData] = useState<any>({});
+  const [invalidPriceIndices, setInvalidPriceIndices] = useState<number[]>([]);
+
+  const isPriceInvalid = (price: any) => {
+    if (price === undefined || price === null) return true;
+    const str = String(price).trim();
+    if (str === "") return true;
+    const num = Number(str);
+    if (isNaN(num) || num <= 0) return true;
+    return false;
+  };
 
   useEffect(() => {
     if (isNew && copyFromResponse?.data) {
@@ -118,10 +128,45 @@ export default function CustomerOrderDetailsPage() {
 
   const handleSave = async () => {
     try {
+      if (items.length === 0) {
+        alert("Please add at least one product with Price per UoM before saving.");
+        const tableEl = document.getElementById("order-items-table");
+        if (tableEl) {
+          tableEl.scrollIntoView({ behavior: "smooth", block: "center" });
+        }
+        return;
+      }
+
+      const invalidIndices = items
+        .map((item: any, idx: number) => (isPriceInvalid(item.price) ? idx : -1))
+        .filter((idx: number) => idx !== -1);
+
+      if (invalidIndices.length > 0) {
+        setInvalidPriceIndices(invalidIndices);
+        setTimeout(() => {
+          const firstInvalidId = `item-price-input-${invalidIndices[0]}`;
+          const el = document.getElementById(firstInvalidId);
+          if (el) {
+            el.scrollIntoView({ behavior: "smooth", block: "center" });
+            el.focus();
+          }
+        }, 50);
+        return;
+      }
+
+      const dueDateVal = formData.due_date || formData.delivery_date || order?.due_date || order?.delivery_date || null;
+      const payload = {
+        ...formData,
+        due_date: dueDateVal,
+        delivery_date: dueDateVal,
+        reference: formData.reference !== undefined ? formData.reference : (order?.reference ?? ""),
+        delivery_terms: formData.delivery_terms !== undefined ? formData.delivery_terms : (order?.delivery_terms ?? ""),
+        po: formData.po !== undefined ? formData.po : (formData.po_number !== undefined ? formData.po_number : (order?.po || order?.po_number || "")),
+      };
       if (isNew) {
-        await mrpApi.createCustomerOrder(formData);
+        await mrpApi.createCustomerOrder(payload);
       } else {
-        await mrpApi.updateCustomerOrder(orderId, formData);
+        await mrpApi.updateCustomerOrder(orderId, payload);
       }
       queryClient.invalidateQueries({ queryKey: ["mrpCustomerOrders"] });
       queryClient.invalidateQueries({ queryKey: ["mrpCustomerOrder", orderId] });
@@ -153,6 +198,19 @@ export default function CustomerOrderDetailsPage() {
     }
   };
 
+  const toDateInputValue = (dateVal: any) => {
+    if (!dateVal) return "";
+    try {
+      const d = new Date(dateVal);
+      if (isNaN(d.getTime())) {
+        return typeof dateVal === "string" ? dateVal.substring(0, 10) : "";
+      }
+      return format(d, "yyyy-MM-dd");
+    } catch {
+      return "";
+    }
+  };
+
   if (isLoading) {
     return <div className="p-8 text-center text-gray-500">Loading order details...</div>;
   }
@@ -170,13 +228,15 @@ export default function CustomerOrderDetailsPage() {
           <div className="px-6 py-4 flex-1 flex flex-col">
             {/* Header */}
             <div className="flex items-center justify-between mb-4">
-              <h1 className="text-xl font-bold text-gray-900">{isNew ? "Create Customer Order" : `Customer order ${order.order_number} details`}</h1>
-              <Button 
-                onClick={() => window.open(`${API_BASE}/mrp/crm/customer-orders/${orderId}/pdf`, "_blank")}
-                variant="outline" size="sm" className="h-8 bg-gray-50 text-gray-700 text-xs font-medium border-gray-300">
-                <Download className="h-3 w-3 mr-1.5" />
-                PDF
-              </Button>
+              <h1 className="text-xl font-bold text-gray-900">{isNew ? "Create Customer Order" : `Customer order ${order?.order_number || ''} details`}</h1>
+              {!isNew && (
+                <Button 
+                  onClick={() => window.open(`${API_BASE}/mrp/crm/customer-orders/${orderId}/pdf`, "_blank")}
+                  variant="outline" size="sm" className="h-8 bg-gray-50 text-gray-700 text-xs font-medium border-gray-300">
+                  <Download className="h-3 w-3 mr-1.5" />
+                  PDF
+                </Button>
+              )}
             </div>
 
             {/* Top Toolbar */}
@@ -223,12 +283,13 @@ export default function CustomerOrderDetailsPage() {
                 </div>
                 <div className="grid grid-cols-[120px_1fr] items-center gap-2">
                   <label className="text-xs text-right text-gray-600 font-medium">Status *</label>
-                  <Select value={order.status} onValueChange={(val) => setFormData({ ...formData, status: val })}>
+                  <Select value={order?.status || "Quotation"} onValueChange={(val) => setFormData({ ...formData, status: val })}>
                     <SelectTrigger className="h-7 text-xs bg-gray-50">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="Quotation">Quotation</SelectItem>
+                      <SelectItem value="Waiting for confirmation">Waiting for confirmation</SelectItem>
                       <SelectItem value="Confirmed">Confirmed</SelectItem>
                       <SelectItem value="Waiting for production">Waiting for production</SelectItem>
                       <SelectItem value="In production">In production</SelectItem>
@@ -242,7 +303,12 @@ export default function CustomerOrderDetailsPage() {
                 </div>
                 <div className="grid grid-cols-[120px_1fr] items-center gap-2">
                   <label className="text-xs text-right text-gray-600 font-medium">Delivery date</label>
-                  <Input type="date" defaultValue={order.due_date ? new Date(order.due_date).toISOString().split('T')[0] : ""} className="h-7 text-xs bg-gray-50" />
+                  <Input 
+                    type="date" 
+                    value={toDateInputValue(formData.due_date !== undefined ? formData.due_date : (formData.delivery_date !== undefined ? formData.delivery_date : (order?.due_date || order?.delivery_date || "")))} 
+                    onChange={(e) => setFormData({ ...formData, due_date: e.target.value, delivery_date: e.target.value })} 
+                    className="h-7 text-xs bg-gray-50" 
+                  />
                 </div>
                 <div className="grid grid-cols-[120px_1fr] items-center gap-2">
                   <label className="text-xs text-right text-gray-600 font-medium">Files</label>
@@ -254,7 +320,11 @@ export default function CustomerOrderDetailsPage() {
                 </div>
                 <div className="grid grid-cols-[120px_1fr] items-center gap-2">
                   <label className="text-xs text-right text-gray-600 font-medium uppercase">PO NUMBER</label>
-                  <Input defaultValue="" className="h-7 text-xs bg-gray-50" />
+                  <Input 
+                    value={formData.po !== undefined ? formData.po : (formData.po_number !== undefined ? formData.po_number : (order?.po || order?.po_number || ""))} 
+                    onChange={(e) => setFormData({ ...formData, po: e.target.value, po_number: e.target.value })}
+                    className="h-7 text-xs bg-gray-50" 
+                  />
                 </div>
               </div>
 
@@ -269,11 +339,21 @@ export default function CustomerOrderDetailsPage() {
                 </div>
                 <div className="grid grid-cols-[120px_1fr] items-center gap-2">
                   <label className="text-xs text-right text-gray-600 font-medium">Reference</label>
-                  <Input defaultValue="-" className="h-7 text-xs bg-gray-50" />
+                  <Input 
+                    value={formData.reference !== undefined ? formData.reference : (order?.reference ?? "")} 
+                    onChange={(e) => setFormData({ ...formData, reference: e.target.value })}
+                    placeholder="-" 
+                    className="h-7 text-xs bg-gray-50" 
+                  />
                 </div>
                 <div className="grid grid-cols-[120px_1fr] items-center gap-2">
                   <label className="text-xs text-right text-gray-600 font-medium">Delivery terms</label>
-                  <Input placeholder="Incoterms, or free text" className="h-7 text-xs bg-gray-50" />
+                  <Input 
+                    placeholder="Incoterms, or free text" 
+                    value={formData.delivery_terms !== undefined ? formData.delivery_terms : (order?.delivery_terms ?? "")} 
+                    onChange={(e) => setFormData({ ...formData, delivery_terms: e.target.value })}
+                    className="h-7 text-xs bg-gray-50" 
+                  />
                 </div>
                 <div className="grid grid-cols-[120px_1fr] items-start gap-2">
                   <label className="text-xs text-right text-gray-600 font-medium pt-1.5">Shipping address</label>
@@ -303,14 +383,14 @@ export default function CustomerOrderDetailsPage() {
             </div>
 
             {/* Items Table */}
-            <div className="border border-gray-200 rounded-sm overflow-visible mb-6">
+            <div id="order-items-table" className="border border-gray-200 rounded-sm overflow-visible mb-6">
               <table className="w-full text-[11px] text-left">
                 <thead className="bg-[#e2e8f0] text-gray-700">
                   <tr>
                     <th className="px-2 py-2 font-semibold">Product group</th>
                     <th className="px-2 py-2 font-semibold">Product</th>
                     <th className="px-2 py-2 font-semibold">Quantity</th>
-                    <th className="px-2 py-2 font-semibold">Price per UoM</th>
+                    <th className="px-2 py-2 font-semibold">Price per UoM <span className="text-red-500">*</span></th>
                     <th className="px-2 py-2 font-semibold">Discount</th>
                     <th className="px-2 py-2 font-semibold">Subtotal</th>
                     <th className="px-2 py-2 font-semibold">Delivery date</th>
@@ -381,9 +461,29 @@ export default function CustomerOrderDetailsPage() {
                       </td>
                       <td className="px-2 py-3 align-top">
                         <div className="flex items-center gap-1">
-                          <Input className="h-6 w-16 text-[11px]" value={item.price || ""} onChange={e => updateItem(i, "price", e.target.value)} />
+                          <Input 
+                            id={`item-price-input-${i}`}
+                            className={`h-6 w-16 text-[11px] transition-all duration-200 ${
+                              invalidPriceIndices.includes(i)
+                                ? "border-red-500 ring-2 ring-red-400 bg-red-50 text-red-900"
+                                : ""
+                            }`} 
+                            value={item.price || ""} 
+                            onChange={e => {
+                              const val = e.target.value;
+                              if (!isPriceInvalid(val)) {
+                                setInvalidPriceIndices(prev => prev.filter(idx => idx !== i));
+                              }
+                              updateItem(i, "price", val);
+                            }} 
+                          />
                           <span className="text-gray-500">{order.currency || 'AUD'}</span>
                         </div>
+                        {invalidPriceIndices.includes(i) && (
+                          <span className="text-[10px] text-red-600 font-semibold block mt-0.5 whitespace-nowrap">
+                            Price required *
+                          </span>
+                        )}
                       </td>
                       <td className="px-2 py-3 align-top">
                         <div className="flex items-center gap-1">
@@ -395,7 +495,12 @@ export default function CustomerOrderDetailsPage() {
                         {item.subtotal ? Number(item.subtotal).toFixed(2) : ''} <span className="font-normal text-gray-500 ml-1">{order.currency || 'AUD'}</span>
                       </td>
                       <td className="px-2 py-3 align-top">
-                        <Input type="date" className="h-6 w-24 text-[11px] text-gray-500" value={item.delivery_date || ""} onChange={e => updateItem(i, "delivery_date", e.target.value)} />
+                        <Input 
+                          type="date" 
+                          className="h-6 w-24 text-[11px] text-gray-500" 
+                          value={toDateInputValue(item.delivery_date)} 
+                          onChange={e => updateItem(i, "delivery_date", e.target.value)} 
+                        />
                       </td>
                       <td className="px-2 py-3 align-top">{item.cost ? Number(item.cost).toFixed(2) : ''}</td>
                       <td className="px-2 py-3 align-top">{item.profit ? Number(item.profit).toFixed(2) : ''}</td>
@@ -504,9 +609,18 @@ export default function CustomerOrderDetailsPage() {
               <div className="flex gap-2">
                 <Button variant="outline" size="sm" onClick={() => router.back()} className="h-7 px-4 text-xs font-medium text-blue-600 border-blue-200 bg-blue-50 hover:bg-blue-100">Back</Button>
                 <Button size="sm" onClick={handleSave} className="h-7 px-4 text-xs font-medium bg-blue-600 hover:bg-blue-700 text-white">Save</Button>
-                <Button variant="outline" size="sm" className="h-7 px-4 text-xs font-medium text-red-600 border-red-200 bg-red-50 hover:bg-red-100">Delete</Button>
-                <Button variant="outline" size="sm" className="h-7 px-4 text-xs font-medium text-blue-600 border-blue-200 bg-blue-50 hover:bg-blue-100">Reports</Button>
-                <Button variant="outline" size="sm" className="h-7 px-4 text-xs font-medium text-blue-600 border-blue-200 bg-blue-50 hover:bg-blue-100">Copy</Button>
+                <Button 
+                  onClick={handleDelete}
+                  disabled={isNew}
+                  variant="outline" size="sm" className="h-7 px-4 text-xs font-medium text-red-600 border-red-200 bg-red-50 hover:bg-red-100 disabled:opacity-50">
+                  Delete
+                </Button>
+                <Button 
+                  onClick={() => router.push(`/dashboard/mrp/crm/customer-orders/new?copyFrom=${orderId}`)}
+                  disabled={isNew}
+                  variant="outline" size="sm" className="h-7 px-4 text-xs font-medium text-blue-600 border-blue-200 bg-blue-50 hover:bg-blue-100 disabled:opacity-50">
+                  Copy
+                </Button>
               </div>
               <div className="flex gap-4">
                 <button className="text-xs text-blue-600 hover:underline">Check stock and book items</button>
