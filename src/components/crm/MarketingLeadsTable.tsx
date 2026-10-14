@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { fetchContacts, fetchOwners, syncLeadsNow } from "@/services/api";
+import { fetchContacts, fetchOwners, syncLeadsNow, fetchContactCountries } from "@/services/api";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -25,11 +25,9 @@ import {
   Ban,
   Filter,
   Globe,
-  Layers,
-  Wrench,
-  FileText,
-  CalendarCheck,
-  Tag
+  MapPin,
+  Tag,
+  RotateCcw
 } from "lucide-react";
 
 export default function MarketingLeadsTable() {
@@ -39,6 +37,7 @@ export default function MarketingLeadsTable() {
   const [search, setSearch] = useState("");
   const [lifecycleFilter, setLifecycleFilter] = useState("lead");
   const [sourceFilter, setSourceFilter] = useState("all");
+  const [countryFilter, setCountryFilter] = useState("all");
 
   // Conversion & Disqualification modal states
   const [convertingContact, setConvertingContact] = useState<any | null>(null);
@@ -48,14 +47,16 @@ export default function MarketingLeadsTable() {
 
   const queryLifecycle = lifecycleFilter === "all" ? "" : lifecycleFilter;
   const querySource = sourceFilter === "all" ? "" : sourceFilter;
+  const queryCountry = countryFilter === "all" ? "" : countryFilter;
 
   const { data, isLoading } = useQuery({
-    queryKey: ["crm-contacts-leads", { page, search, lifecycle: queryLifecycle, source: querySource }],
+    queryKey: ["crm-contacts-leads", { page, search, lifecycle: queryLifecycle, source: querySource, country: queryCountry }],
     queryFn: () => fetchContacts({ 
       page, 
       search, 
       lifecycle: queryLifecycle || undefined,
       source: querySource || undefined,
+      country: queryCountry || undefined,
       limit: 50 
     }),
     placeholderData: (previousData) => previousData,
@@ -66,9 +67,14 @@ export default function MarketingLeadsTable() {
     queryFn: fetchOwners,
   });
 
+  const { data: availableCountries = [] } = useQuery({
+    queryKey: ["crm-contact-countries"],
+    queryFn: fetchContactCountries,
+  });
+
   const syncMutation = useMutation({
     mutationFn: syncLeadsNow,
-    onSuccess: (data: any) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["crm-contacts-leads"] });
       queryClient.invalidateQueries({ queryKey: ["crm-contacts"] });
       toast.success("Websites synced successfully! Ingested latest inquiries.");
@@ -99,7 +105,7 @@ export default function MarketingLeadsTable() {
     else if (ft === "demo_request") formTypeLabel = "Demo";
     else if (ft === "book_repair") formTypeLabel = "Repair";
     else if (ft === "contact_form") formTypeLabel = "Contact";
-    else if (ft === "csv_import") formTypeLabel = "CSV";
+    else if (ft === "csv_import") formTypeLabel = "Marketing";
 
     switch (s) {
       case "pipeboss":
@@ -208,12 +214,24 @@ export default function MarketingLeadsTable() {
     }
   };
 
+  const hasActiveFilters = sourceFilter !== "all" || lifecycleFilter !== "lead" || countryFilter !== "all" || search !== "";
+
+  const handleResetFilters = () => {
+    setSourceFilter("all");
+    setLifecycleFilter("lead");
+    setCountryFilter("all");
+    setSearch("");
+    setPage(1);
+  };
+
   return (
     <div className="space-y-4">
-      {/* Top search & sync bar */}
-      <div className="flex flex-col gap-3">
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
-          <div className="relative w-full sm:w-80">
+      {/* Top Filter Controls Bar with Dropdowns */}
+      <div className="flex flex-col gap-3 bg-card p-3 rounded-lg border shadow-sm">
+        <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3">
+          
+          {/* Search Input */}
+          <div className="relative flex-1 min-w-[240px]">
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
               placeholder="Search leads by name, email, company, product..."
@@ -222,15 +240,88 @@ export default function MarketingLeadsTable() {
                 setSearch(e.target.value);
                 setPage(1);
               }}
-              className="pl-9 h-9"
+              className="pl-9 h-9 text-xs"
             />
           </div>
 
-          <div className="flex items-center gap-3 w-full sm:w-auto justify-between sm:justify-end">
-            <div className="text-xs text-muted-foreground font-medium">
-              Total Leads: <span className="font-semibold text-foreground">{pagination.total.toLocaleString()}</span>
+          {/* Filter Dropdowns */}
+          <div className="flex flex-wrap items-center gap-2">
+            
+            {/* Source Website Dropdown */}
+            <div className="relative min-w-[150px]">
+              <Globe className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-muted-foreground pointer-events-none" />
+              <select
+                value={sourceFilter}
+                onChange={(e) => {
+                  setSourceFilter(e.target.value);
+                  setPage(1);
+                }}
+                className="flex h-9 w-full rounded-md border border-input bg-background pl-8 pr-7 py-1 text-xs shadow-sm focus:outline-none focus:ring-1 focus:ring-primary font-medium cursor-pointer"
+              >
+                <option value="all">All Sources</option>
+                <option value="websites_only">All Websites (Live)</option>
+                <option value="vaclift">Vaclift</option>
+                <option value="pipeboss">Pipeboss</option>
+                <option value="blue_water">Blue Water</option>
+                <option value="digital_marketing">Marketing</option>
+              </select>
             </div>
 
+            {/* Lifecycle / Status Dropdown */}
+            <div className="relative min-w-[160px]">
+              <Filter className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-muted-foreground pointer-events-none" />
+              <select
+                value={lifecycleFilter}
+                onChange={(e) => {
+                  setLifecycleFilter(e.target.value);
+                  setPage(1);
+                }}
+                className="flex h-9 w-full rounded-md border border-input bg-background pl-8 pr-7 py-1 text-xs shadow-sm focus:outline-none focus:ring-1 focus:ring-primary font-medium cursor-pointer"
+              >
+                <option value="lead">Inbound Leads</option>
+                <option value="salesqualifiedlead">Qualified (SQL)</option>
+                <option value="opportunity">In Pipeline (Deal)</option>
+                <option value="customer">Converted (Customers)</option>
+                <option value="other">Disqualified / Lost</option>
+                <option value="all">All Stages</option>
+              </select>
+            </div>
+
+            {/* Country Dropdown */}
+            <div className="relative min-w-[145px]">
+              <MapPin className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-muted-foreground pointer-events-none" />
+              <select
+                value={countryFilter}
+                onChange={(e) => {
+                  setCountryFilter(e.target.value);
+                  setPage(1);
+                }}
+                className="flex h-9 w-full rounded-md border border-input bg-background pl-8 pr-7 py-1 text-xs shadow-sm focus:outline-none focus:ring-1 focus:ring-primary font-medium cursor-pointer"
+              >
+                <option value="all">All Countries</option>
+                {availableCountries.map((c: string) => (
+                  <option key={c} value={c}>
+                    {c}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Reset Filters Button */}
+            {hasActiveFilters && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleResetFilters}
+                className="h-9 px-2 text-xs text-muted-foreground hover:text-foreground gap-1"
+                title="Reset all filters to defaults"
+              >
+                <RotateCcw className="h-3 w-3" />
+                Reset
+              </Button>
+            )}
+
+            {/* Sync Websites Button */}
             <Button
               variant="outline"
               size="sm"
@@ -240,143 +331,29 @@ export default function MarketingLeadsTable() {
               title="Automatically syncs every 5 minutes. Click to sync instantly."
             >
               <RefreshCw className={`h-3.5 w-3.5 ${syncMutation.isPending ? 'animate-spin text-primary' : ''}`} />
-              {syncMutation.isPending ? "Syncing..." : "Sync Websites"}
+              {syncMutation.isPending ? "Syncing..." : "Sync"}
             </Button>
           </div>
         </div>
 
-        {/* Website Source Filter Pills */}
-        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs border-b pb-2">
-          <span className="text-muted-foreground mr-1 text-xs font-semibold flex items-center gap-1">
-            <Globe className="h-3.5 w-3.5 text-primary" /> Source:
-          </span>
-          <button
-            onClick={() => { setSourceFilter("all"); setPage(1); }}
-            className={`px-2.5 py-1 rounded-full text-xs font-medium transition-colors ${
-              sourceFilter === "all" 
-                ? "bg-foreground text-background shadow-sm" 
-                : "bg-muted text-muted-foreground hover:bg-muted/80"
-            }`}
-          >
-            All Sources
-          </button>
-          <button
-            onClick={() => { setSourceFilter("websites_only"); setPage(1); }}
-            className={`px-2.5 py-1 rounded-full text-xs font-medium transition-colors ${
-              sourceFilter === "websites_only" 
-                ? "bg-blue-600 text-white shadow-sm" 
-                : "bg-muted text-muted-foreground hover:bg-muted/80"
-            }`}
-          >
-            All Websites (Live)
-          </button>
-          <button
-            onClick={() => { setSourceFilter("vaclift"); setPage(1); }}
-            className={`px-2.5 py-1 rounded-full text-xs font-medium transition-colors ${
-              sourceFilter === "vaclift" 
-                ? "bg-cyan-600 text-white shadow-sm" 
-                : "bg-cyan-500/10 text-cyan-700 dark:text-cyan-300 hover:bg-cyan-500/20"
-            }`}
-          >
-            Vaclift
-          </button>
-          <button
-            onClick={() => { setSourceFilter("pipeboss"); setPage(1); }}
-            className={`px-2.5 py-1 rounded-full text-xs font-medium transition-colors ${
-              sourceFilter === "pipeboss" 
-                ? "bg-amber-600 text-white shadow-sm" 
-                : "bg-amber-500/10 text-amber-700 dark:text-amber-300 hover:bg-amber-500/20"
-            }`}
-          >
-            Pipeboss
-          </button>
-          <button
-            onClick={() => { setSourceFilter("blue_water"); setPage(1); }}
-            className={`px-2.5 py-1 rounded-full text-xs font-medium transition-colors ${
-              sourceFilter === "blue_water" 
-                ? "bg-teal-600 text-white shadow-sm" 
-                : "bg-teal-500/10 text-teal-700 dark:text-teal-300 hover:bg-teal-500/20"
-            }`}
-          >
-            Blue Water
-          </button>
-          <button
-            onClick={() => { setSourceFilter("digital_marketing"); setPage(1); }}
-            className={`px-2.5 py-1 rounded-full text-xs font-medium transition-colors ${
-              sourceFilter === "digital_marketing" 
-                ? "bg-emerald-600 text-white shadow-sm" 
-                : "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-500/20"
-            }`}
-          >
-            Marketing
-          </button>
-        </div>
-
-        {/* Lifecycle Stage Filter Tabs */}
-        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs">
-          <span className="text-muted-foreground mr-1 text-xs font-medium flex items-center gap-1">
-            <Filter className="h-3 w-3" /> Status:
-          </span>
-          <button
-            onClick={() => { setLifecycleFilter("lead"); setPage(1); }}
-            className={`px-2.5 py-1 rounded-full text-xs font-medium transition-colors ${
-              lifecycleFilter === "lead" 
-                ? "bg-blue-600 text-white shadow-sm" 
-                : "bg-muted text-muted-foreground hover:bg-muted/80"
-            }`}
-          >
-            Inbound Leads
-          </button>
-          <button
-            onClick={() => { setLifecycleFilter("salesqualifiedlead"); setPage(1); }}
-            className={`px-2.5 py-1 rounded-full text-xs font-medium transition-colors ${
-              lifecycleFilter === "salesqualifiedlead" 
-                ? "bg-indigo-600 text-white shadow-sm" 
-                : "bg-muted text-muted-foreground hover:bg-muted/80"
-            }`}
-          >
-            Qualified
-          </button>
-          <button
-            onClick={() => { setLifecycleFilter("opportunity"); setPage(1); }}
-            className={`px-2.5 py-1 rounded-full text-xs font-medium transition-colors ${
-              lifecycleFilter === "opportunity" 
-                ? "bg-amber-600 text-white shadow-sm" 
-                : "bg-muted text-muted-foreground hover:bg-muted/80"
-            }`}
-          >
-            In Pipeline (Deal)
-          </button>
-          <button
-            onClick={() => { setLifecycleFilter("customer"); setPage(1); }}
-            className={`px-2.5 py-1 rounded-full text-xs font-medium transition-colors ${
-              lifecycleFilter === "customer" 
-                ? "bg-emerald-600 text-white shadow-sm" 
-                : "bg-muted text-muted-foreground hover:bg-muted/80"
-            }`}
-          >
-            Converted (Customers)
-          </button>
-          <button
-            onClick={() => { setLifecycleFilter("other"); setPage(1); }}
-            className={`px-2.5 py-1 rounded-full text-xs font-medium transition-colors ${
-              lifecycleFilter === "other" 
-                ? "bg-rose-600 text-white shadow-sm" 
-                : "bg-muted text-muted-foreground hover:bg-muted/80"
-            }`}
-          >
-            Disqualified / Lost
-          </button>
-          <button
-            onClick={() => { setLifecycleFilter("all"); setPage(1); }}
-            className={`px-2.5 py-1 rounded-full text-xs font-medium transition-colors ${
-              lifecycleFilter === "all" 
-                ? "bg-foreground text-background shadow-sm" 
-                : "bg-muted text-muted-foreground hover:bg-muted/80"
-            }`}
-          >
-            All Stages
-          </button>
+        {/* Count summary bar */}
+        <div className="flex items-center justify-between text-xs text-muted-foreground px-1 pt-2 border-t">
+          <div className="flex items-center gap-2 flex-wrap">
+            <span>
+              Source: <span className="font-semibold text-foreground capitalize">{sourceFilter === "all" ? "All Sources" : sourceFilter.replace('_', ' ')}</span>
+            </span>
+            <span>•</span>
+            <span>
+              Status: <span className="font-semibold text-foreground capitalize">{lifecycleFilter === "all" ? "All Stages" : lifecycleFilter}</span>
+            </span>
+            <span>•</span>
+            <span>
+              Country: <span className="font-semibold text-foreground">{countryFilter === "all" ? "All Countries" : countryFilter}</span>
+            </span>
+          </div>
+          <div>
+            Total: <span className="font-bold text-foreground">{pagination.total.toLocaleString()}</span> leads
+          </div>
         </div>
       </div>
 
@@ -411,7 +388,7 @@ export default function MarketingLeadsTable() {
                   <div className="flex flex-col items-center justify-center gap-2">
                     <UserCircle2 className="h-8 w-8 text-muted-foreground/50" />
                     <p className="font-medium">No leads found in this view</p>
-                    <p className="text-xs text-muted-foreground">Try adjusting your source website or status filter.</p>
+                    <p className="text-xs text-muted-foreground">Try adjusting your filters or search query.</p>
                   </div>
                 </TableCell>
               </TableRow>

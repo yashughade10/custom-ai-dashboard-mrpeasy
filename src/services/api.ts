@@ -97,11 +97,11 @@ async function fetchCrmStats() {
   return (await response.json()).data;
 }
 
-async function fetchContacts(params?: { page?: number; search?: string; lifecycle?: string; source?: string; limit?: number }) {
+async function fetchContacts(params?: { page?: number; search?: string; lifecycle?: string; source?: string; country?: string; limit?: number }) {
   const cleanParams: Record<string, string> = {};
   if (params) {
     for (const [k, v] of Object.entries(params)) {
-      if (v !== undefined && v !== null && v !== "" && v !== "undefined") {
+      if (v !== undefined && v !== null && v !== "" && v !== "undefined" && v !== "all") {
         cleanParams[k] = String(v);
       }
     }
@@ -118,6 +118,17 @@ async function syncLeadsNow() {
   });
   if (!response.ok) throw new Error("Failed to sync leads");
   return await response.json();
+}
+
+async function fetchContactCountries(): Promise<string[]> {
+  try {
+    const response = await apiFetch(`${API_BASE_URL}/crm/contacts/countries`);
+    if (!response.ok) return ['Australia', 'India', 'Jordan', 'United States'];
+    const result = await response.json();
+    return result.data && result.data.length > 0 ? result.data : ['Australia', 'India', 'Jordan', 'United States'];
+  } catch (e) {
+    return ['Australia', 'India', 'Jordan', 'United States'];
+  }
 }
 
 async function fetchContact(id: string) {
@@ -613,6 +624,7 @@ export {
   fetchCrmStats,
   fetchContacts,
   syncLeadsNow,
+  fetchContactCountries,
   fetchContact,
   updateContact,
   fetchCompanies,
