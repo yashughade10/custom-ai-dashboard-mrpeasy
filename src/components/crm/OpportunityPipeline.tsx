@@ -17,17 +17,19 @@ import {
 } from "@dnd-kit/core";
 import {
   SortableContext,
-  arrayMove,
   sortableKeyboardCoordinates,
   verticalListSortingStrategy,
   useSortable
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { Badge } from "@/components/ui/badge";
+import { useRouter } from "next/navigation";
+import GraduateCustomerDialog from "./GraduateCustomerDialog";
+import OpportunityLossDialog from "./OpportunityLossDialog";
 
 const STAGES = ['prospecting', 'qualification', 'proposal', 'negotiation', 'closed_won', 'closed_lost'];
 
-function SortableOpportunityCard({ opp }: { opp: any }) {
+function SortableOpportunityCard({ opp, onSelect }: { opp: any; onSelect?: (id: string) => void }) {
   const {
     setNodeRef,
     attributes,
@@ -64,23 +66,24 @@ function SortableOpportunityCard({ opp }: { opp: any }) {
       style={style}
       {...attributes}
       {...listeners}
-      className="bg-card border rounded-md p-3 mb-2 shadow-sm cursor-grab active:cursor-grabbing hover:border-primary/50"
+      onClick={() => onSelect?.(opp.id.toString())}
+      className="bg-card border rounded-md p-3 mb-2 shadow-sm cursor-grab active:cursor-grabbing hover:border-primary/60 hover:shadow-md transition-all group"
     >
-      <div className="font-semibold text-sm">{opp.name}</div>
+      <div className="font-semibold text-sm group-hover:text-primary transition-colors">{opp.name}</div>
       {opp.company_name && (
-        <div className="text-xs text-muted-foreground mt-1">{opp.company_name}</div>
+        <div className="text-xs text-muted-foreground mt-1 truncate">{opp.company_name}</div>
       )}
       <div className="flex justify-between items-center mt-3">
-        <span className="text-xs font-medium text-green-600 dark:text-green-400">
-          ${parseFloat(opp.expected_value).toLocaleString(undefined, {minimumFractionDigits: 0})}
+        <span className="text-xs font-semibold text-emerald-600 dark:text-emerald-400">
+          ${parseFloat(opp.expected_value || 0).toLocaleString(undefined, {minimumFractionDigits: 0})}
         </span>
-        <Badge variant="secondary" className="text-[10px] h-5">{opp.probability}%</Badge>
+        <Badge variant="secondary" className="text-[10px] h-5 font-normal">{opp.probability || 0}%</Badge>
       </div>
     </div>
   );
 }
 
-function PipelineColumn({ stage, opps }: { stage: string, opps: any[] }) {
+function PipelineColumn({ stage, opps, onSelect }: { stage: string; opps: any[]; onSelect?: (id: string) => void }) {
   const { setNodeRef } = useSortable({
     id: stage,
     data: {
@@ -96,11 +99,11 @@ function PipelineColumn({ stage, opps }: { stage: string, opps: any[] }) {
       <div className="p-3 border-b">
         <div className="font-semibold capitalize flex justify-between items-center mb-1">
           {stage.replace('_', ' ')}
-          <Badge variant="secondary" className="rounded-full w-6 h-6 p-0 flex items-center justify-center">
+          <Badge variant="secondary" className="rounded-full w-6 h-6 p-0 flex items-center justify-center text-xs">
             {opps.length}
           </Badge>
         </div>
-        <div className="text-xs text-muted-foreground">
+        <div className="text-xs text-muted-foreground font-medium">
           ${totalValue.toLocaleString(undefined, {minimumFractionDigits: 0})}
         </div>
       </div>
@@ -110,7 +113,7 @@ function PipelineColumn({ stage, opps }: { stage: string, opps: any[] }) {
       >
         <SortableContext items={opps.map(o => o.id.toString())} strategy={verticalListSortingStrategy}>
           {opps.map((opp) => (
-            <SortableOpportunityCard key={opp.id} opp={opp} />
+            <SortableOpportunityCard key={opp.id} opp={opp} onSelect={onSelect} />
           ))}
         </SortableContext>
       </div>
@@ -119,7 +122,13 @@ function PipelineColumn({ stage, opps }: { stage: string, opps: any[] }) {
 }
 
 export default function OpportunityPipeline() {
+  const router = useRouter();
   const queryClient = useQueryClient();
+
+  // Drag-and-drop dialog states
+  const [dialogOpp, setDialogOpp] = useState<any | null>(null);
+  const [graduateOpen, setGraduateOpen] = useState(false);
+  const [lossOpen, setLossOpen] = useState(false);
   
   const { data, isLoading } = useQuery({
     queryKey: ["crm-opportunities", { limit: 1000 }],
@@ -171,6 +180,7 @@ export default function OpportunityPipeline() {
     const isActiveOpp = active.data.current?.type === "Opportunity";
     if (!isActiveOpp) return;
 
+    const draggedOpp = active.data.current?.opp;
     const oppId = active.id.toString();
     let targetStage = "";
 
@@ -181,10 +191,22 @@ export default function OpportunityPipeline() {
       targetStage = over.data.current.stage;
     }
 
-    const currentStage = active.data.current?.opp?.stage;
+    const currentStage = draggedOpp?.stage;
     
     if (targetStage && currentStage !== targetStage) {
-      // Optimistic update
+      if (targetStage === "closed_won") {
+        setDialogOpp(draggedOpp);
+        setGraduateOpen(true);
+        return;
+      }
+
+      if (targetStage === "closed_lost") {
+        setDialogOpp(draggedOpp);
+        setLossOpen(true);
+        return;
+      }
+
+      // Optimistic update for standard pipeline moves
       queryClient.setQueryData(["crm-opportunities", { limit: 1000 }], (old: any) => {
         if (!old) return old;
         return {
@@ -197,32 +219,57 @@ export default function OpportunityPipeline() {
     }
   };
 
+  const handleSelectOpp = (id: string) => {
+    router.push(`/dashboard/crm/opportunities/${id}`);
+  };
+
   if (isLoading) {
     return <div className="p-8 text-center text-muted-foreground">Loading pipeline...</div>;
   }
 
   return (
-    <DndContext
-      sensors={sensors}
-      collisionDetection={closestCorners}
-      onDragStart={onDragStart}
-      onDragOver={onDragOver}
-      onDragEnd={onDragEnd}
-    >
-      <div className="flex gap-4 overflow-x-auto pb-4 pt-2 px-1">
-        {columns.map((col) => (
-          <PipelineColumn key={col.stage} stage={col.stage} opps={col.opps} />
-        ))}
-      </div>
+    <>
+      <DndContext
+        sensors={sensors}
+        collisionDetection={closestCorners}
+        onDragStart={onDragStart}
+        onDragOver={onDragOver}
+        onDragEnd={onDragEnd}
+      >
+        <div className="flex gap-4 overflow-x-auto pb-4 pt-2 px-1">
+          {columns.map((col) => (
+            <PipelineColumn 
+              key={col.stage} 
+              stage={col.stage} 
+              opps={col.opps} 
+              onSelect={handleSelectOpp}
+            />
+          ))}
+        </div>
 
-      <DragOverlay>
-        {activeOpp ? (
-          <div className="bg-card border-2 border-primary rounded-md p-3 shadow-lg opacity-80 cursor-grabbing w-[260px]">
-            <div className="font-semibold text-sm">{activeOpp.name}</div>
-            <div className="text-xs text-muted-foreground mt-1">{activeOpp.company_name}</div>
-          </div>
-        ) : null}
-      </DragOverlay>
-    </DndContext>
+        <DragOverlay>
+          {activeOpp ? (
+            <div className="bg-card border-2 border-primary rounded-md p-3 shadow-lg opacity-80 cursor-grabbing w-[260px]">
+              <div className="font-semibold text-sm">{activeOpp.name}</div>
+              <div className="text-xs text-muted-foreground mt-1">{activeOpp.company_name}</div>
+            </div>
+          ) : null}
+        </DragOverlay>
+      </DndContext>
+
+      {/* Deal Won - Graduate to MRPeasy customer modal */}
+      <GraduateCustomerDialog
+        opportunity={dialogOpp}
+        open={graduateOpen}
+        onOpenChange={setGraduateOpen}
+      />
+
+      {/* Deal Lost modal */}
+      <OpportunityLossDialog
+        opportunity={dialogOpp}
+        open={lossOpen}
+        onOpenChange={setLossOpen}
+      />
+    </>
   );
 }

@@ -45,8 +45,8 @@ export default function GlobalSearch() {
     switch (type) {
       case "contact": return `/dashboard/crm/contacts?id=${id}`;
       case "company": return `/dashboard/crm/companies?id=${id}`;
-      case "deal": return `/dashboard/crm/deals?id=${id}`;
-      case "lead": return `/dashboard/crm/leads?id=${id}`;
+      case "deal": return `/dashboard/crm/opportunities/${id}`;
+      case "lead": return `/dashboard/crm/leads/${id}`;
       default: return `/dashboard`;
     }
   };

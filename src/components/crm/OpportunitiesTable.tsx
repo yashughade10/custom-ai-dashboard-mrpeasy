@@ -11,8 +11,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
-import OpportunityDetailSheet from "./OpportunityDetailSheet";
-import { Plus, MoreHorizontal, Pencil, Trash2, Loader2 } from "lucide-react";
+import { useRouter } from "next/navigation";
+import GraduateCustomerDialog from "./GraduateCustomerDialog";
+import OpportunityLossDialog from "./OpportunityLossDialog";
+import { Plus, MoreHorizontal, Pencil, Trash2, Loader2, CheckCircle2, XCircle } from "lucide-react";
 import { toast } from "sonner";
 
 const STAGE_OPTIONS = ["prospecting", "qualification", "proposal", "negotiation", "closed_won", "closed_lost"] as const;
@@ -42,12 +44,15 @@ const emptyForm = {
 };
 
 export default function OpportunitiesTable({ onOpenCreate }: { onOpenCreate?: (fn: () => void) => void }) {
+  const router = useRouter();
   const queryClient = useQueryClient();
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
   const [stageFilter, setStageFilter] = useState("");
-  const [selectedOppId, setSelectedOppId] = useState<string | null>(null);
-  const [sheetOpen, setSheetOpen] = useState(false);
+
+  const handleRowClick = (id: string) => {
+    router.push(`/dashboard/crm/opportunities/${id}`);
+  };
 
   // Create / Edit dialog
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -58,6 +63,12 @@ export default function OpportunitiesTable({ onOpenCreate }: { onOpenCreate?: (f
   // Delete confirmation
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deletingOppId, setDeletingOppId] = useState<string | null>(null);
+
+  // Graduate & Loss modals
+  const [graduatingOpp, setGraduatingOpp] = useState<any | null>(null);
+  const [graduateOpen, setGraduateOpen] = useState(false);
+  const [losingOpp, setLosingOpp] = useState<any | null>(null);
+  const [lossOpen, setLossOpen] = useState(false);
 
   const { data, isLoading, isFetching } = useQuery({
     queryKey: ["crm-opportunities", { page, search, stage: stageFilter }],
@@ -172,11 +183,6 @@ export default function OpportunitiesTable({ onOpenCreate }: { onOpenCreate?: (f
     }
   };
 
-  const handleRowClick = (id: string) => {
-    setSelectedOppId(id);
-    setSheetOpen(true);
-  };
-
   const formatCurrency = (val: number | string) => {
     const num = typeof val === "string" ? parseFloat(val) : val;
     if (!num || isNaN(num)) return "$0";
@@ -280,10 +286,36 @@ export default function OpportunitiesTable({ onOpenCreate }: { onOpenCreate?: (f
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={(e) => { e.stopPropagation(); openEditDialog(opp); }}>
+                        <DropdownMenuItem onClick={(e) => { e.stopPropagation(); router.push(`/dashboard/crm/opportunities/${opp.id}`); }}>
                           <Pencil className="h-4 w-4 mr-2" />
-                          Edit
+                          View & Edit
                         </DropdownMenuItem>
+                        {opp.stage !== "closed_won" && (
+                          <DropdownMenuItem
+                            className="text-emerald-600 focus:text-emerald-700 font-medium"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setGraduatingOpp(opp);
+                              setGraduateOpen(true);
+                            }}
+                          >
+                            <CheckCircle2 className="h-4 w-4 mr-2" />
+                            Mark Won & Graduate Customer
+                          </DropdownMenuItem>
+                        )}
+                        {opp.stage !== "closed_lost" && (
+                          <DropdownMenuItem
+                            className="text-rose-600 focus:text-rose-700"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setLosingOpp(opp);
+                              setLossOpen(true);
+                            }}
+                          >
+                            <XCircle className="h-4 w-4 mr-2" />
+                            Mark Closed-Lost
+                          </DropdownMenuItem>
+                        )}
                         <DropdownMenuSeparator />
                         <DropdownMenuItem
                           className="text-red-600 focus:text-red-600"
@@ -318,9 +350,6 @@ export default function OpportunitiesTable({ onOpenCreate }: { onOpenCreate?: (f
           </div>
         </div>
       )}
-
-      {/* Detail Sheet */}
-      <OpportunityDetailSheet opportunityId={selectedOppId} open={sheetOpen} onOpenChange={setSheetOpen} />
 
       {/* Create / Edit Dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
@@ -520,6 +549,20 @@ export default function OpportunitiesTable({ onOpenCreate }: { onOpenCreate?: (f
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Graduate to MRPeasy customer modal */}
+      <GraduateCustomerDialog
+        opportunity={graduatingOpp}
+        open={graduateOpen}
+        onOpenChange={setGraduateOpen}
+      />
+
+      {/* Deal Lost modal */}
+      <OpportunityLossDialog
+        opportunity={losingOpp}
+        open={lossOpen}
+        onOpenChange={setLossOpen}
+      />
     </div>
   );
 }
