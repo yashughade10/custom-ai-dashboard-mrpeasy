@@ -1,6 +1,6 @@
 "use client";
 
-import ContactsTable from "@/components/crm/ContactsTable";
+import CustomerContactsTable from "@/components/crm/CustomerContactsTable";
 import { RouteGuard } from "@/components/auth/RouteGuard";
 
 function ContactsPage() {
@@ -9,10 +9,11 @@ function ContactsPage() {
       <div>
         <h1 className="text-xl font-bold">Contacts</h1>
         <p className="text-sm text-muted-foreground">
-          Manage your CRM contacts, lifecycles, and ownership.
+          Manage your customer accounts, company contacts, and trading details.
         </p>
       </div>
-      <ContactsTable />
+
+      <CustomerContactsTable />
     </div>
   );
 }
@@ -24,3 +25,5 @@ export default function ContactsPageGuarded() {
     </RouteGuard>
   );
 }
+
+

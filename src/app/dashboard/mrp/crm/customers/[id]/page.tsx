@@ -35,6 +35,14 @@ export default function CustomerDetailsPage() {
     enabled: !isNew,
   });
 
+  const { data: contactsResponse } = useQuery({
+    queryKey: ["mrpCustomerContacts", customerId],
+    queryFn: () => mrpApi.getCustomerContacts(customerId),
+    enabled: !isNew,
+  });
+
+  const contactsList = contactsResponse?.data || [];
+
   const queryClient = useQueryClient();
 
   const customer = isNew 
@@ -342,18 +350,40 @@ export default function CustomerDetailsPage() {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-100">
-                      <tr onClick={() => router.push(`/dashboard/mrp/crm/customers/${customerId}/contacts/paul-turner`)} className="hover:bg-gray-50 cursor-pointer">
-                        <td className="px-3 py-2 text-gray-600 uppercase">PAUL TURNER</td>
-                        <td className="px-3 py-2"></td>
-                        <td className="px-3 py-2"></td>
-                        <td className="px-3 py-2"></td>
-                        <td className="px-3 py-2"></td>
-                        <td className="px-3 py-2 text-right">
-                          <button onClick={() => router.push(`/dashboard/mrp/crm/customers/${customerId}/contacts/paul-turner`)} className="p-1 hover:bg-gray-200 rounded text-blue-600 bg-white border border-gray-200 shadow-sm transition-colors">
-                            <Pencil className="w-3.5 h-3.5" />
-                          </button>
-                        </td>
-                      </tr>
+                      {contactsList.length === 0 ? (
+                        <tr>
+                          <td colSpan={6} className="px-3 py-3 text-center text-gray-400 italic">
+                            No contact persons found. Click + to add one.
+                          </td>
+                        </tr>
+                      ) : (
+                        contactsList.map((c: any) => (
+                          <tr 
+                            key={c.id} 
+                            onClick={() => router.push(`/dashboard/mrp/crm/customers/${customerId}/contacts/${c.id}`)} 
+                            className="hover:bg-gray-50 cursor-pointer"
+                          >
+                            <td className="px-3 py-2 text-gray-800 uppercase font-medium">
+                              {c.name || "-"}
+                            </td>
+                            <td className="px-3 py-2 text-gray-600">{c.position || "-"}</td>
+                            <td className="px-3 py-2 text-gray-600">{c.phone || "-"}</td>
+                            <td className="px-3 py-2 text-gray-600">{c.teams || "-"}</td>
+                            <td className="px-3 py-2 text-blue-600">{c.email || "-"}</td>
+                            <td className="px-3 py-2 text-right">
+                              <button 
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  router.push(`/dashboard/mrp/crm/customers/${customerId}/contacts/${c.id}`);
+                                }} 
+                                className="p-1 hover:bg-gray-200 rounded text-blue-600 bg-white border border-gray-200 shadow-sm transition-colors"
+                              >
+                                <Pencil className="w-3.5 h-3.5" />
+                              </button>
+                            </td>
+                          </tr>
+                        ))
+                      )}
                     </tbody>
                   </table>
                 </div>

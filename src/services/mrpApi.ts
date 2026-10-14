@@ -128,6 +128,46 @@ export const mrpApi = {
     return res.json();
   },
 
+  getCustomerContacts: async (customerId: string) => {
+    const res = await fetch(`${API_BASE}/mrp/crm/customers/${customerId}/contacts`);
+    if (!res.ok) throw new Error("Failed to fetch customer contacts");
+    return res.json();
+  },
+
+  getCustomerContactById: async (customerId: string, contactId: string) => {
+    const res = await fetch(`${API_BASE}/mrp/crm/customers/${customerId}/contacts/${contactId}`);
+    if (!res.ok) throw new Error("Failed to fetch customer contact");
+    return res.json();
+  },
+
+  createCustomerContact: async (customerId: string, data: any) => {
+    const res = await fetch(`${API_BASE}/mrp/crm/customers/${customerId}/contacts`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    });
+    if (!res.ok) throw new Error("Failed to create customer contact");
+    return res.json();
+  },
+
+  updateCustomerContact: async (customerId: string, contactId: string, data: any) => {
+    const res = await fetch(`${API_BASE}/mrp/crm/customers/${customerId}/contacts/${contactId}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    });
+    if (!res.ok) throw new Error("Failed to update customer contact");
+    return res.json();
+  },
+
+  deleteCustomerContact: async (customerId: string, contactId: string) => {
+    const res = await fetch(`${API_BASE}/mrp/crm/customers/${customerId}/contacts/${contactId}`, {
+      method: "DELETE",
+    });
+    if (!res.ok) throw new Error("Failed to delete customer contact");
+    return res.json();
+  },
+
   getCustomerStatistics: async (page = 1, limit = 100) => {
     const res = await fetch(`${API_BASE}/mrp/crm/customer-statistics?page=${page}&limit=${limit}`);
     if (!res.ok) throw new Error("Failed to fetch customer statistics");

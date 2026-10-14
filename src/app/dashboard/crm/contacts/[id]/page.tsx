@@ -1,0 +1,456 @@
+"use client";
+
+import { useState, useEffect } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { mrpApi } from "@/services/mrpApi";
+import { useParams, useRouter } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import { RouteGuard } from "@/components/auth/RouteGuard";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Trash2, GripVertical, Plus, Pencil, ArrowLeft } from "lucide-react";
+import { toast } from "sonner";
+
+export default function CrmCustomerDetailsPage() {
+  const params = useParams();
+  const router = useRouter();
+  const customerId = params.id as string;
+
+  const isNew = customerId === "new";
+
+  const { data: response, isLoading } = useQuery({
+    queryKey: ["mrpCustomer", customerId],
+    queryFn: () => mrpApi.getCustomerById(customerId),
+    enabled: !isNew,
+  });
+
+  const { data: contactsResponse } = useQuery({
+    queryKey: ["mrpCustomerContacts", customerId],
+    queryFn: () => mrpApi.getCustomerContacts(customerId),
+    enabled: !isNew,
+  });
+
+  const contactsList = contactsResponse?.data || [];
+
+  const queryClient = useQueryClient();
+
+  const customer = isNew 
+    ? { customer_number: "NEW", name: "", status: "Active", phone: "", email: "", address: "", first_name: "", last_name: "" } 
+    : response?.data;
+
+  const [formData, setFormData] = useState<any>({});
+
+  useEffect(() => {
+    if (customer) {
+      setFormData(customer);
+    }
+  }, [JSON.stringify(customer)]);
+
+  const handleSave = async () => {
+    try {
+      if (isNew) {
+        await mrpApi.createCustomer(formData);
+        toast.success("Customer created successfully");
+      } else {
+        await mrpApi.updateCustomer(customerId, formData);
+        toast.success("Customer updated successfully");
+      }
+      queryClient.invalidateQueries({ queryKey: ["mrpCustomers"] });
+      queryClient.invalidateQueries({ queryKey: ["mrpCustomer", customerId] });
+      router.push("/dashboard/crm/contacts");
+    } catch (error) {
+      console.error("Failed to save customer:", error);
+      toast.error("Failed to save customer");
+    }
+  };
+
+  const handleDelete = async () => {
+    if (confirm("Are you sure you want to delete this customer?")) {
+      try {
+        await mrpApi.deleteCustomer(customerId);
+        queryClient.invalidateQueries({ queryKey: ["mrpCustomers"] });
+        toast.success("Customer deleted successfully");
+        router.push("/dashboard/crm/contacts");
+      } catch (error) {
+        console.error("Failed to delete customer:", error);
+        toast.error("Failed to delete customer");
+      }
+    }
+  };
+
+  if (isLoading) {
+    return <div className="p-8 text-center text-gray-500">Loading customer details...</div>;
+  }
+
+  if (!customer && !isNew) {
+    return <div className="p-8 text-center text-red-500">Customer not found.</div>;
+  }
+
+  return (
+    <RouteGuard module="crm" fallback={<div>Access Denied</div>}>
+      <div className="flex flex-col h-full bg-[#f4f7fb] min-h-[calc(100vh-4rem)] p-4 -m-4 sm:-m-6 lg:-m-8">
+        <div className="bg-white rounded-md shadow-sm overflow-hidden flex flex-col min-h-[80vh]">
+          <div className="px-6 py-4 flex-1 flex flex-col">
+            {/* Header */}
+            <div className="flex items-center justify-between mb-4">
+              <h1 className="text-xl font-bold text-gray-900">
+                {isNew ? "Create Customer" : `Customer ${customer.customer_number} ${customer.name} details`}
+              </h1>
+            </div>
+
+            {/* Top Toolbar */}
+            <div className="flex gap-2 mb-6">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => router.push("/dashboard/crm/contacts")} 
+                className="h-7 px-4 text-xs font-medium text-blue-600 border-blue-200 bg-blue-50 hover:bg-blue-100"
+              >
+                Back
+              </Button>
+              <Button 
+                size="sm" 
+                onClick={handleSave} 
+                className="h-7 px-4 text-xs font-medium bg-blue-600 hover:bg-blue-700 text-white"
+              >
+                Save
+              </Button>
+              <Button 
+                onClick={handleDelete}
+                disabled={isNew}
+                variant="outline" 
+                size="sm" 
+                className="h-7 px-4 text-xs font-medium text-red-600 border-red-200 bg-red-50 hover:bg-red-100 disabled:opacity-50"
+              >
+                Delete
+              </Button>
+              <Button size="sm" className="h-7 px-4 text-xs font-medium bg-blue-600 hover:bg-blue-700 text-white">
+                Reports
+              </Button>
+            </div>
+
+            {/* Form Fields */}
+            <div className="grid grid-cols-2 gap-12 w-full mb-8">
+              <div className="space-y-3">
+                <div className="grid grid-cols-[140px_1fr] items-center gap-2">
+                  <label className="text-xs text-right text-gray-600 font-medium">Number *</label>
+                  <Input readOnly value={customer.customer_number} className="h-7 text-xs bg-gray-100" />
+                </div>
+                <div className="grid grid-cols-[140px_1fr] items-center gap-2">
+                  <label className="text-xs text-right text-gray-600 font-medium">Name *</label>
+                  <Input value={formData.name || ""} onChange={e => setFormData({ ...formData, name: e.target.value })} className="h-7 text-xs bg-gray-50" />
+                </div>
+                <div className="grid grid-cols-[140px_1fr] items-center gap-2">
+                  <label className="text-xs text-right text-gray-600 font-medium">Status</label>
+                  <Select value={formData.status || "Active"} onValueChange={v => setFormData({ ...formData, status: v })}>
+                    <SelectTrigger className="h-7 text-xs bg-gray-50">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Active">Active</SelectItem>
+                      <SelectItem value="Inactive">Inactive</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="grid grid-cols-[140px_1fr] items-center gap-2">
+                  <label className="text-xs text-right text-gray-600 font-medium">Reg no.</label>
+                  <Input defaultValue="" className="h-7 text-xs bg-gray-50" />
+                </div>
+                <div className="grid grid-cols-[140px_1fr] items-center gap-2">
+                  <label className="text-xs text-right text-gray-600 font-medium">Tax/VAT number</label>
+                  <Input defaultValue="" className="h-7 text-xs bg-gray-50" />
+                </div>
+                
+                <div className="grid grid-cols-[140px_1fr] items-start gap-2 pt-2">
+                  <label className="text-xs text-right text-gray-600 font-medium pt-1.5">Contact information</label>
+                  <div className="border-t border-gray-100 pt-2 w-full">
+                    <div className="grid grid-cols-[100px_1fr_40px] gap-2 mb-1">
+                      <span className="text-[11px] text-gray-500 font-semibold pl-1">Type</span>
+                      <span className="text-[11px] text-gray-500 font-semibold pl-1">Value</span>
+                    </div>
+                    {/* Phone */}
+                    <div className="grid grid-cols-[100px_1fr_40px] gap-2 items-center mb-2">
+                      <Select defaultValue="Phone">
+                        <SelectTrigger className="h-7 text-xs bg-gray-50">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="Phone">Phone</SelectItem>
+                          <SelectItem value="E-mail">E-mail</SelectItem>
+                          <SelectItem value="Address">Address</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <Input value={formData.phone || ""} onChange={e => setFormData({ ...formData, phone: e.target.value })} className="h-7 text-xs bg-gray-50" />
+                      <div className="flex gap-1 items-center justify-end text-gray-400">
+                        <Trash2 className="w-3.5 h-3.5 cursor-pointer hover:text-red-500" />
+                        <GripVertical className="w-3.5 h-3.5 cursor-move" />
+                      </div>
+                    </div>
+                    {/* E-mail */}
+                    <div className="grid grid-cols-[100px_1fr_40px] gap-2 items-center mb-2">
+                      <Select defaultValue="E-mail">
+                        <SelectTrigger className="h-7 text-xs bg-gray-50">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="Phone">Phone</SelectItem>
+                          <SelectItem value="E-mail">E-mail</SelectItem>
+                          <SelectItem value="Address">Address</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <Input value={formData.email || ""} onChange={e => setFormData({ ...formData, email: e.target.value })} className="h-7 text-xs bg-gray-50" />
+                      <div className="flex gap-1 items-center justify-end text-gray-400">
+                        <Trash2 className="w-3.5 h-3.5 cursor-pointer hover:text-red-500" />
+                        <GripVertical className="w-3.5 h-3.5 cursor-move" />
+                      </div>
+                    </div>
+                    {/* Address block */}
+                    <div className="grid grid-cols-[100px_1fr_40px] gap-2 items-start mb-2">
+                      <Select defaultValue="Address">
+                        <SelectTrigger className="h-7 text-xs bg-gray-50">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="Phone">Phone</SelectItem>
+                          <SelectItem value="E-mail">E-mail</SelectItem>
+                          <SelectItem value="Address">Address</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <div className="space-y-1">
+                        <Input placeholder="First name" value={formData.first_name || ""} onChange={e => setFormData({ ...formData, first_name: e.target.value })} className="h-7 text-xs bg-gray-50" />
+                        <Input placeholder="Last name" value={formData.last_name || ""} onChange={e => setFormData({ ...formData, last_name: e.target.value })} className="h-7 text-xs bg-gray-50" />
+                        <Input placeholder="Company name" value={formData.name || ""} onChange={e => setFormData({ ...formData, name: e.target.value })} className="h-7 text-xs bg-gray-50" />
+                        <Textarea value={formData.address || ""} onChange={e => setFormData({ ...formData, address: e.target.value })} placeholder="Full Address" className="min-h-[60px] text-xs bg-gray-50" />
+                      </div>
+                      <div className="flex gap-1 items-center justify-end text-gray-400 mt-1">
+                        <Trash2 className="w-3.5 h-3.5 cursor-pointer hover:text-red-500" />
+                        <GripVertical className="w-3.5 h-3.5 cursor-move" />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-[140px_1fr] items-center gap-2">
+                  <label className="text-xs text-right text-gray-600 font-medium">Files</label>
+                  <div className="flex gap-2">
+                    <div className="w-5 h-5 bg-blue-100 text-blue-600 rounded flex items-center justify-center font-bold text-[10px]">A</div>
+                    <div className="w-5 h-5 bg-blue-100 text-blue-600 rounded flex items-center justify-center font-bold text-[10px]">B</div>
+                    <div className="w-5 h-5 bg-blue-100 text-blue-600 rounded flex items-center justify-center font-bold text-[10px]">C</div>
+                  </div>
+                </div>
+                <div className="grid grid-cols-[140px_1fr] items-center gap-2">
+                  <label className="text-xs text-right text-gray-600 font-medium">P.O.</label>
+                  <Input defaultValue="" className="h-7 text-xs bg-gray-50" />
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                <div className="grid grid-cols-[140px_1fr_20px] items-center gap-2">
+                  <label className="text-xs text-right text-gray-600 font-medium">Contact started *</label>
+                  <Input type="date" defaultValue="2025-06-12" className="h-7 text-xs bg-gray-50" />
+                </div>
+                <div className="grid grid-cols-[140px_1fr_20px] items-center gap-2">
+                  <label className="text-xs text-right text-gray-600 font-medium">Next contact</label>
+                  <Input type="date" className="h-7 text-xs bg-gray-50" />
+                </div>
+                <div className="grid grid-cols-[140px_1fr] items-center gap-2">
+                  <label className="text-xs text-right text-gray-600 font-medium">Account manager</label>
+                  <Select defaultValue="none">
+                    <SelectTrigger className="h-7 text-xs bg-gray-50">
+                      <SelectValue placeholder="" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">--</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="grid grid-cols-[140px_1fr] items-center gap-2">
+                  <label className="text-xs text-right text-gray-600 font-medium">Tax rate</label>
+                  <div className="flex items-center gap-1">
+                    <Input defaultValue="" className="h-7 text-xs bg-gray-50" />
+                    <span className="text-gray-500 text-xs">%</span>
+                  </div>
+                </div>
+                <div className="grid grid-cols-[140px_1fr] items-center gap-2">
+                  <label className="text-xs text-right text-gray-600 font-medium">Default discount</label>
+                  <div className="flex items-center gap-1">
+                    <Input defaultValue="" className="h-7 text-xs bg-gray-50" />
+                    <span className="text-gray-500 text-xs">%</span>
+                  </div>
+                </div>
+                <div className="grid grid-cols-[140px_1fr] items-center gap-2">
+                  <label className="text-xs text-right text-gray-600 font-medium">Payment period</label>
+                  <div className="flex items-center gap-2 text-xs text-gray-500">
+                    <Input defaultValue="" className="h-7 w-20 text-xs bg-gray-50" />
+                    <span>days after</span>
+                  </div>
+                </div>
+                <div className="grid grid-cols-[140px_1fr] items-center gap-2">
+                  <label className="text-xs text-right text-gray-600 font-medium"></label>
+                  <Select defaultValue="invoice">
+                    <SelectTrigger className="h-7 text-xs bg-gray-50">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="invoice">the invoice date</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="grid grid-cols-[140px_1fr] items-center gap-2">
+                  <label className="text-xs text-right text-gray-600 font-medium">Trade credit limit</label>
+                  <div className="flex items-center gap-1">
+                    <Input defaultValue="" className="h-7 text-xs bg-gray-50" />
+                    <span className="text-gray-500 text-xs">$</span>
+                  </div>
+                </div>
+                <div className="grid grid-cols-[140px_1fr] items-center gap-2">
+                  <label className="text-xs text-right text-gray-600 font-medium">Language</label>
+                  <Select defaultValue="English">
+                    <SelectTrigger className="h-7 text-xs bg-gray-50">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="English">English</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="grid grid-cols-[140px_1fr] items-center gap-2">
+                  <label className="text-xs text-right text-gray-600 font-medium">Currency</label>
+                  <Select defaultValue="AUD">
+                    <SelectTrigger className="h-7 text-xs bg-gray-50">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="AUD">$</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </div>
+
+            {/* Bottom Toolbar */}
+            <div className="flex gap-2 mb-8">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => router.push("/dashboard/crm/contacts")} 
+                className="h-7 px-4 text-xs font-medium text-blue-600 border-blue-200 bg-blue-50 hover:bg-blue-100"
+              >
+                Back
+              </Button>
+              <Button 
+                size="sm" 
+                onClick={handleSave} 
+                className="h-7 px-4 text-xs font-medium bg-blue-600 hover:bg-blue-700 text-white"
+              >
+                Save
+              </Button>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={handleDelete}
+                disabled={isNew}
+                className="h-7 px-4 text-xs font-medium text-red-600 border-red-200 bg-red-50 hover:bg-red-100 disabled:opacity-50"
+              >
+                Delete
+              </Button>
+              <Button size="sm" className="h-7 px-4 text-xs font-medium bg-blue-600 hover:bg-blue-700 text-white">
+                Reports
+              </Button>
+            </div>
+
+            {/* Sub-tables */}
+            <div className="space-y-6">
+              {/* Contacts */}
+              <div>
+                <h3 className="text-sm font-bold text-gray-900 mb-2">Contacts</h3>
+                <div className="border border-gray-200 rounded-sm">
+                  <table className="w-full text-[11px] text-left">
+                    <thead className="bg-[#f1f5f9] text-gray-700 border-b border-gray-200">
+                      <tr>
+                        <th className="px-3 py-2 font-semibold">Name ↑</th>
+                        <th className="px-3 py-2 font-semibold">Position</th>
+                        <th className="px-3 py-2 font-semibold">Phone</th>
+                        <th className="px-3 py-2 font-semibold">Teams</th>
+                        <th className="px-3 py-2 font-semibold">E-mail</th>
+                        <th className="px-3 py-2 font-semibold text-right">
+                          <button onClick={() => router.push(`/dashboard/crm/contacts/${customerId}/contacts/new`)} className="p-1 hover:bg-gray-200 rounded text-blue-600 bg-white border border-gray-200 shadow-sm transition-colors">
+                            <Plus className="w-4 h-4" />
+                          </button>
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100">
+                      {contactsList.length === 0 ? (
+                        <tr>
+                          <td colSpan={6} className="px-3 py-3 text-center text-gray-400 italic">
+                            No contact persons found. Click + to add one.
+                          </td>
+                        </tr>
+                      ) : (
+                        contactsList.map((c: any) => (
+                          <tr 
+                            key={c.id} 
+                            onClick={() => router.push(`/dashboard/crm/contacts/${customerId}/contacts/${c.id}`)} 
+                            className="hover:bg-gray-50 cursor-pointer"
+                          >
+                            <td className="px-3 py-2 text-gray-800 uppercase font-medium">
+                              {c.name || "-"}
+                            </td>
+                            <td className="px-3 py-2 text-gray-600">{c.position || "-"}</td>
+                            <td className="px-3 py-2 text-gray-600">{c.phone || "-"}</td>
+                            <td className="px-3 py-2 text-gray-600">{c.teams || "-"}</td>
+                            <td className="px-3 py-2 text-blue-600">{c.email || "-"}</td>
+                            <td className="px-3 py-2 text-right">
+                              <button 
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  router.push(`/dashboard/crm/contacts/${customerId}/contacts/${c.id}`);
+                                }}
+                                className="p-1 hover:bg-gray-200 rounded text-blue-600 bg-white border border-gray-200 shadow-sm transition-colors"
+                              >
+                                <Pencil className="w-3.5 h-3.5" />
+                              </button>
+                            </td>
+                          </tr>
+                        ))
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              {/* Notes */}
+              <div>
+                <h3 className="text-sm font-bold text-gray-900 mb-2">Notes</h3>
+                <div className="border border-gray-200 rounded-sm">
+                  <table className="w-full text-[11px] text-left">
+                    <thead className="bg-[#f1f5f9] text-gray-700 border-b border-gray-200">
+                      <tr>
+                        <th className="px-3 py-2 font-semibold w-32 cursor-pointer">Created ↓</th>
+                        <th className="px-3 py-2 font-semibold w-32">Modified</th>
+                        <th className="px-3 py-2 font-semibold">Note</th>
+                        <th className="px-3 py-2 w-10 text-right">
+                          <button className="p-1 hover:bg-gray-200 rounded text-blue-600 bg-white border border-gray-200 shadow-sm transition-colors">
+                            <Plus className="w-4 h-4" />
+                          </button>
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100">
+                      <tr className="hover:bg-gray-50">
+                        <td colSpan={4} className="px-3 py-2 text-gray-400 italic">No notes found.</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </RouteGuard>
+  );
+}
