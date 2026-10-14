@@ -8,6 +8,7 @@ import { RouteGuard } from "@/components/auth/RouteGuard";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -29,7 +30,13 @@ import {
   CheckCircle2, 
   TrendingUp,
   Clock,
-  ShieldCheck
+  ShieldCheck,
+  Globe,
+  Tag,
+  Wrench,
+  CalendarCheck,
+  FileText,
+  Info
 } from "lucide-react";
 
 function LeadDetailPage() {
@@ -60,6 +67,27 @@ function LeadDetailPage() {
     company: "",
     lifecycle_stage: "lead",
     owner_id: "",
+    source_website: "",
+    form_type: "",
+    subject: "",
+    message: "",
+    heard_from: "",
+    location: "",
+    city: "",
+    country: "",
+    product: "",
+    quantity: 1,
+    item_to_lift: "",
+    size_capacity: "",
+    preferred_power_source: "",
+    lifting_options: "",
+    demo_date: "",
+    demo_time: "",
+    serial_number: "",
+    issue_description: "",
+    preferred_repair_location: "",
+    preferred_service_date: "",
+    preferred_contact_time: "",
   });
 
   useEffect(() => {
@@ -72,6 +100,27 @@ function LeadDetailPage() {
         company: contact.company_name || contact.company || "",
         lifecycle_stage: contact.lifecycle_stage || "lead",
         owner_id: contact.owner_id ? contact.owner_id.toString() : "",
+        source_website: contact.source_website || "",
+        form_type: contact.form_type || "",
+        subject: contact.subject || "",
+        message: contact.message || "",
+        heard_from: contact.heard_from || "",
+        location: contact.location || "",
+        city: contact.city || "",
+        country: contact.country || "",
+        product: contact.product || "",
+        quantity: contact.quantity || 1,
+        item_to_lift: contact.item_to_lift || "",
+        size_capacity: contact.size_capacity || "",
+        preferred_power_source: contact.preferred_power_source || "",
+        lifting_options: contact.lifting_options || "",
+        demo_date: contact.demo_date ? String(contact.demo_date).substring(0, 10) : "",
+        demo_time: contact.demo_time || "",
+        serial_number: contact.serial_number || "",
+        issue_description: contact.issue_description || "",
+        preferred_repair_location: contact.preferred_repair_location || "",
+        preferred_service_date: contact.preferred_service_date || "",
+        preferred_contact_time: contact.preferred_contact_time || "",
       });
     }
   }, [contact]);
@@ -101,6 +150,40 @@ function LeadDetailPage() {
   const isCustomer = formData.lifecycle_stage === "customer";
   const isOpportunity = formData.lifecycle_stage === "opportunity";
   const isLost = formData.lifecycle_stage === "other" || formData.lifecycle_stage === "lost" || formData.lifecycle_stage === "disqualified";
+
+  const getSourceBadge = () => {
+    const s = (formData.source_website || "").toLowerCase();
+    switch (s) {
+      case "pipeboss":
+        return <Badge className="bg-amber-500/10 text-amber-700 dark:text-amber-300 border-amber-500/30">Pipeboss Website</Badge>;
+      case "vaclift":
+        return <Badge className="bg-cyan-500/10 text-cyan-700 dark:text-cyan-300 border-cyan-500/30">Vaclift Website</Badge>;
+      case "blue_water":
+        return <Badge className="bg-teal-500/10 text-teal-700 dark:text-teal-300 border-teal-500/30">Blue Water Engineering</Badge>;
+      case "digital_marketing":
+        return <Badge className="bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border-emerald-500/30">Marketing</Badge>;
+      default:
+        return formData.source_website ? <Badge variant="outline">{formData.source_website}</Badge> : null;
+    }
+  };
+
+  const getFormTypeBadge = () => {
+    const ft = (formData.form_type || "").toLowerCase();
+    switch (ft) {
+      case "quote_request":
+        return <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">Quote Request</Badge>;
+      case "demo_request":
+        return <Badge variant="outline" className="bg-purple-50 text-purple-700 border-purple-200">Demo Request</Badge>;
+      case "book_repair":
+        return <Badge variant="outline" className="bg-orange-50 text-orange-700 border-orange-200">Book Repair / Service</Badge>;
+      case "contact_form":
+        return <Badge variant="outline" className="bg-slate-100 text-slate-700 border-slate-200">Contact Inquiry</Badge>;
+      case "csv_import":
+        return <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200">Marketing Lead</Badge>;
+      default:
+        return formData.form_type ? <Badge variant="outline">{formData.form_type}</Badge> : null;
+    }
+  };
 
   const getBadge = () => {
     if (isCustomer) return <Badge className="bg-emerald-600 text-white font-medium">Customer</Badge>;
@@ -150,6 +233,8 @@ function LeadDetailPage() {
             <div className="flex items-center gap-2 flex-wrap">
               <h1 className="text-xl font-bold tracking-tight text-foreground">{fullName}</h1>
               {getBadge()}
+              {getSourceBadge()}
+              {getFormTypeBadge()}
             </div>
             {formData.company && (
               <p className="text-xs text-muted-foreground flex items-center gap-1 font-medium">
@@ -198,9 +283,194 @@ function LeadDetailPage() {
 
       {/* Main Content Form */}
       <form onSubmit={handleSave} className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left Column: Lead & Qualification Details (2 Cols) */}
+        {/* Left Column (2 Cols) */}
         <div className="lg:col-span-2 space-y-6">
-          {/* Card 1: Contact Information */}
+
+          {/* Card 1: Website Inquiry & Technical Specifications (Unified from Website Form) */}
+          <Card className="border-primary/20 shadow-sm">
+            <CardHeader className="pb-3 bg-muted/20 border-b">
+              <div className="flex items-center justify-between flex-wrap gap-2">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <Globe className="h-4 w-4 text-primary" />
+                  Website Inquiry & Specifications
+                </CardTitle>
+                <div className="flex items-center gap-1.5">
+                  {getSourceBadge()}
+                  {getFormTypeBadge()}
+                </div>
+              </div>
+              <CardDescription className="text-xs">
+                Inbound requirements and equipment specs submitted through website forms or digital marketing.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4 pt-4">
+              {/* Subject & Inbound Message */}
+              {(formData.subject || formData.message) && (
+                <div className="space-y-3 p-3.5 rounded-lg bg-muted/40 border text-xs">
+                  {formData.subject && (
+                    <div>
+                      <span className="font-semibold text-foreground">Inquiry Subject: </span>
+                      <span className="text-foreground">{formData.subject}</span>
+                    </div>
+                  )}
+                  {formData.message && (
+                    <div>
+                      <span className="font-semibold text-foreground block mb-1">Customer Message / Requirements:</span>
+                      <p className="text-muted-foreground whitespace-pre-wrap leading-relaxed bg-background p-2.5 rounded border">
+                        {formData.message}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Inquiry Specification Grid */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="grid gap-1.5">
+                  <Label htmlFor="product" className="text-xs font-semibold">Product / Equipment Interest</Label>
+                  <Input
+                    id="product"
+                    value={formData.product}
+                    onChange={(e) => setFormData({ ...formData, product: e.target.value })}
+                    className="h-9 text-xs"
+                    placeholder="e.g. VacLift 500, Waterjet, Pipeboss"
+                  />
+                </div>
+
+                <div className="grid gap-1.5">
+                  <Label htmlFor="quantity" className="text-xs font-semibold">Quantity</Label>
+                  <Input
+                    id="quantity"
+                    type="number"
+                    value={formData.quantity}
+                    onChange={(e) => setFormData({ ...formData, quantity: parseInt(e.target.value) || 1 })}
+                    className="h-9 text-xs"
+                    placeholder="1"
+                  />
+                </div>
+
+                {formData.item_to_lift && (
+                  <div className="grid gap-1.5">
+                    <Label htmlFor="item_to_lift" className="text-xs font-semibold">Item To Lift / Material</Label>
+                    <Input
+                      id="item_to_lift"
+                      value={formData.item_to_lift}
+                      onChange={(e) => setFormData({ ...formData, item_to_lift: e.target.value })}
+                      className="h-9 text-xs"
+                      placeholder="e.g. Glass, Steel Plates"
+                    />
+                  </div>
+                )}
+
+                {formData.size_capacity && (
+                  <div className="grid gap-1.5">
+                    <Label htmlFor="size_capacity" className="text-xs font-semibold">Size / Lifting Capacity</Label>
+                    <Input
+                      id="size_capacity"
+                      value={formData.size_capacity}
+                      onChange={(e) => setFormData({ ...formData, size_capacity: e.target.value })}
+                      className="h-9 text-xs"
+                      placeholder="e.g. 500kg, 1000kg"
+                    />
+                  </div>
+                )}
+
+                {formData.preferred_power_source && (
+                  <div className="grid gap-1.5">
+                    <Label htmlFor="power_source" className="text-xs font-semibold">Preferred Power Source</Label>
+                    <Input
+                      id="power_source"
+                      value={formData.preferred_power_source}
+                      onChange={(e) => setFormData({ ...formData, preferred_power_source: e.target.value })}
+                      className="h-9 text-xs"
+                    />
+                  </div>
+                )}
+
+                {formData.lifting_options && (
+                  <div className="grid gap-1.5">
+                    <Label htmlFor="lifting_options" className="text-xs font-semibold">Lifting Options</Label>
+                    <Input
+                      id="lifting_options"
+                      value={formData.lifting_options}
+                      onChange={(e) => setFormData({ ...formData, lifting_options: e.target.value })}
+                      className="h-9 text-xs"
+                    />
+                  </div>
+                )}
+              </div>
+
+              {/* Demo / Repair Details if present */}
+              {(formData.demo_date || formData.serial_number || formData.preferred_service_date || formData.location) && (
+                <div className="pt-2 border-t space-y-3">
+                  <h4 className="text-xs font-semibold text-foreground flex items-center gap-1.5">
+                    <CalendarCheck className="h-3.5 w-3.5 text-primary" />
+                    Demo & Service Logistics
+                  </h4>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+                    {formData.demo_date && (
+                      <div className="grid gap-1.5">
+                        <Label htmlFor="demo_date" className="text-xs font-semibold">Requested Demo Date</Label>
+                        <Input
+                          id="demo_date"
+                          type="date"
+                          value={formData.demo_date}
+                          onChange={(e) => setFormData({ ...formData, demo_date: e.target.value })}
+                          className="h-9 text-xs"
+                        />
+                      </div>
+                    )}
+                    {formData.demo_time && (
+                      <div className="grid gap-1.5">
+                        <Label htmlFor="demo_time" className="text-xs font-semibold">Preferred Time</Label>
+                        <Input
+                          id="demo_time"
+                          value={formData.demo_time}
+                          onChange={(e) => setFormData({ ...formData, demo_time: e.target.value })}
+                          className="h-9 text-xs"
+                        />
+                      </div>
+                    )}
+                    {formData.serial_number && (
+                      <div className="grid gap-1.5">
+                        <Label htmlFor="serial_number" className="text-xs font-semibold">Equipment Serial #</Label>
+                        <Input
+                          id="serial_number"
+                          value={formData.serial_number}
+                          onChange={(e) => setFormData({ ...formData, serial_number: e.target.value })}
+                          className="h-9 text-xs"
+                        />
+                      </div>
+                    )}
+                    {formData.preferred_service_date && (
+                      <div className="grid gap-1.5">
+                        <Label htmlFor="service_date" className="text-xs font-semibold">Preferred Service Date</Label>
+                        <Input
+                          id="service_date"
+                          value={formData.preferred_service_date}
+                          onChange={(e) => setFormData({ ...formData, preferred_service_date: e.target.value })}
+                          className="h-9 text-xs"
+                        />
+                      </div>
+                    )}
+                    {formData.location && (
+                      <div className="grid gap-1.5 sm:col-span-2">
+                        <Label htmlFor="location" className="text-xs font-semibold">Location / Site Address</Label>
+                        <Input
+                          id="location"
+                          value={formData.location}
+                          onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+                          className="h-9 text-xs"
+                        />
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Card 2: Contact Information */}
           <Card>
             <CardHeader className="pb-3">
               <CardTitle className="text-base flex items-center gap-2">
@@ -267,7 +537,7 @@ function LeadDetailPage() {
             </CardContent>
           </Card>
 
-          {/* Card 2: Company & Business Details (MRPeasy Customer Fields) */}
+          {/* Card 3: Company & Business Details */}
           <Card>
             <CardHeader className="pb-3">
               <CardTitle className="text-base flex items-center gap-2">
@@ -295,7 +565,7 @@ function LeadDetailPage() {
             </CardContent>
           </Card>
 
-          {/* Card 3: Lead Qualification & Lifecycle Stage */}
+          {/* Card 4: Lead Qualification & Lifecycle Stage */}
           <Card>
             <CardHeader className="pb-3">
               <CardTitle className="text-base flex items-center gap-2">
@@ -402,20 +672,27 @@ function LeadDetailPage() {
                     className="w-full bg-amber-600 hover:bg-amber-700 text-white text-xs h-8"
                     onClick={() => router.push("/dashboard/crm/opportunities")}
                   >
-                    View Sales Pipeline
+                    Open Opportunity Pipeline
                   </Button>
+                </div>
+              ) : isLost ? (
+                <div className="p-3 rounded-lg bg-muted text-muted-foreground space-y-2">
+                  <p className="font-semibold text-foreground">Lead Disqualified</p>
+                  <p className="text-[11px]">
+                    To reopen, set stage to "Inbound Lead" or "Sales Qualified" and click "Convert to Opportunity".
+                  </p>
                 </div>
               ) : (
                 <div className="space-y-3">
-                  <p className="text-muted-foreground">
-                    When qualified, convert this lead into an active sales opportunity with deal value and close dates.
+                  <p className="text-muted-foreground text-[11px] leading-relaxed">
+                    Convert this lead when initial interest is qualified and ready for quotation or pipeline management.
                   </p>
                   <Button
                     type="button"
-                    className="w-full bg-blue-600 hover:bg-blue-700 text-white text-xs h-9 gap-1.5 font-medium shadow-sm"
+                    className="w-full bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold h-8 shadow-sm"
                     onClick={() => setConvertOpen(true)}
                   >
-                    <Sparkles className="h-4 w-4" />
+                    <Sparkles className="h-3.5 w-3.5 mr-1.5" />
                     Convert to Opportunity
                   </Button>
                 </div>
@@ -423,73 +700,53 @@ function LeadDetailPage() {
             </CardContent>
           </Card>
 
-          {/* Associated Deals */}
+          {/* Quick Info & Audit Details */}
           <Card>
             <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-semibold flex items-center gap-2">
-                <Briefcase className="h-4 w-4 text-primary" />
-                Associated Opportunities & Deals
+              <CardTitle className="text-sm font-semibold flex items-center gap-1.5">
+                <Clock className="h-4 w-4 text-muted-foreground" />
+                Audit Trail & Origin
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-3">
-              {contact.deals && contact.deals.length > 0 ? (
-                contact.deals.map((deal: any) => (
-                  <div
-                    key={deal.id}
-                    onClick={() => router.push(`/dashboard/crm/opportunities/${deal.id}`)}
-                    className="p-3 border rounded-lg hover:border-primary/50 transition-colors cursor-pointer group bg-card"
-                  >
-                    <div className="flex justify-between items-center mb-1">
-                      <span className="font-semibold text-xs group-hover:text-primary transition-colors truncate max-w-[150px]">
-                        {deal.dealname}
-                      </span>
-                      <span className="text-xs font-bold text-primary">
-                        ${Number(deal.amount || 0).toLocaleString()}
-                      </span>
-                    </div>
-                    <div className="flex justify-between items-center text-[10px] text-muted-foreground mt-2">
-                      <Badge variant="secondary" className="text-[10px] h-4 font-normal capitalize">
-                        {deal.dealstage?.replace(/_/g, " ") || "In Progress"}
-                      </Badge>
-                      <span className="uppercase tracking-wider">{deal.pipeline || "Sales Pipeline"}</span>
-                    </div>
-                  </div>
-                ))
-              ) : (
-                <div className="py-6 text-center text-muted-foreground text-xs space-y-1">
-                  <Briefcase className="h-6 w-6 mx-auto text-muted-foreground/40 mb-1" />
-                  <p className="font-medium">No active opportunities yet</p>
-                  <p className="text-[11px]">Convert this lead to start a deal.</p>
+            <CardContent className="space-y-3 text-xs">
+              <div className="flex justify-between items-center py-1 border-b">
+                <span className="text-muted-foreground">Source Website</span>
+                <span className="font-medium text-foreground">{formData.source_website || "Direct"}</span>
+              </div>
+              <div className="flex justify-between items-center py-1 border-b">
+                <span className="text-muted-foreground">Form Type</span>
+                <span className="font-medium text-foreground">{formData.form_type || "Contact"}</span>
+              </div>
+              {formData.heard_from && (
+                <div className="flex justify-between items-center py-1 border-b">
+                  <span className="text-muted-foreground">Discovered From</span>
+                  <span className="font-medium text-foreground">{formData.heard_from}</span>
                 </div>
               )}
-            </CardContent>
-          </Card>
-
-          {/* Lead Meta Card */}
-          <Card>
-            <CardContent className="pt-5 space-y-3 text-xs text-muted-foreground">
-              <div className="flex justify-between">
-                <span>Lead ID:</span>
-                <span className="font-mono font-medium text-foreground">{contact.id}</span>
+              {formData.city && (
+                <div className="flex justify-between items-center py-1 border-b">
+                  <span className="text-muted-foreground">City / Country</span>
+                  <span className="font-medium text-foreground">{formData.city} {formData.country ? `(${formData.country})` : ''}</span>
+                </div>
+              )}
+              <div className="flex justify-between items-center py-1 border-b">
+                <span className="text-muted-foreground">Contact Record ID</span>
+                <span className="font-mono text-xs">{contact.id}</span>
               </div>
-              <div className="flex justify-between">
-                <span>Created Date:</span>
-                <span className="font-medium text-foreground">
-                  {contact.createdate ? new Date(contact.createdate).toLocaleDateString() : "-"}
-                </span>
+              <div className="flex justify-between items-center py-1 border-b">
+                <span className="text-muted-foreground">Created On</span>
+                <span>{contact.createdate ? new Date(contact.createdate).toLocaleDateString() : "-"}</span>
               </div>
-              <div className="flex justify-between">
-                <span>Last Activity:</span>
-                <span className="font-medium text-foreground">
-                  {contact.lastmodifieddate ? new Date(contact.lastmodifieddate).toLocaleDateString() : "-"}
-                </span>
+              <div className="flex justify-between items-center py-1">
+                <span className="text-muted-foreground">Last Modified</span>
+                <span>{contact.lastmodifieddate ? new Date(contact.lastmodifieddate).toLocaleDateString() : "-"}</span>
               </div>
             </CardContent>
           </Card>
         </div>
       </form>
 
-      {/* Convert lead dialog */}
+      {/* Convert lead to opportunity dialog */}
       <ConvertLeadDialog
         contact={contact}
         open={convertOpen}

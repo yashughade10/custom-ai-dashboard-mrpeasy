@@ -1,13 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { fetchContacts, fetchOwners } from "@/services/api";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { fetchContacts, fetchOwners, syncLeadsNow } from "@/services/api";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import ConvertLeadDialog from "./ConvertLeadDialog";
 import DisqualifyLeadDialog from "./DisqualifyLeadDialog";
 import { 
@@ -22,14 +23,22 @@ import {
   UserCheck,
   Sparkles,
   Ban,
-  Filter
+  Filter,
+  Globe,
+  Layers,
+  Wrench,
+  FileText,
+  CalendarCheck,
+  Tag
 } from "lucide-react";
 
 export default function MarketingLeadsTable() {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
   const [lifecycleFilter, setLifecycleFilter] = useState("lead");
+  const [sourceFilter, setSourceFilter] = useState("all");
 
   // Conversion & Disqualification modal states
   const [convertingContact, setConvertingContact] = useState<any | null>(null);
@@ -38,13 +47,15 @@ export default function MarketingLeadsTable() {
   const [disqualifyOpen, setDisqualifyOpen] = useState(false);
 
   const queryLifecycle = lifecycleFilter === "all" ? "" : lifecycleFilter;
+  const querySource = sourceFilter === "all" ? "" : sourceFilter;
 
   const { data, isLoading } = useQuery({
-    queryKey: ["crm-contacts-leads", { page, search, lifecycle: queryLifecycle }],
+    queryKey: ["crm-contacts-leads", { page, search, lifecycle: queryLifecycle, source: querySource }],
     queryFn: () => fetchContacts({ 
       page, 
       search, 
-      lifecycle: queryLifecycle || undefined, 
+      lifecycle: queryLifecycle || undefined,
+      source: querySource || undefined,
       limit: 50 
     }),
     placeholderData: (previousData) => previousData,
@@ -53,6 +64,18 @@ export default function MarketingLeadsTable() {
   const { data: owners } = useQuery({
     queryKey: ["crm-owners"],
     queryFn: fetchOwners,
+  });
+
+  const syncMutation = useMutation({
+    mutationFn: syncLeadsNow,
+    onSuccess: (data: any) => {
+      queryClient.invalidateQueries({ queryKey: ["crm-contacts-leads"] });
+      queryClient.invalidateQueries({ queryKey: ["crm-contacts"] });
+      toast.success("Websites synced successfully! Ingested latest inquiries.");
+    },
+    onError: (err: any) => {
+      toast.error("Website sync notice: " + (err.message || "Failed to sync"));
+    }
   });
 
   const leads = data?.data || [];
@@ -65,6 +88,78 @@ export default function MarketingLeadsTable() {
   const handleEditClick = (e: React.MouseEvent, id: string) => {
     e.stopPropagation();
     router.push(`/dashboard/crm/leads/${id}`);
+  };
+
+  const getSourceBadge = (source?: string, formType?: string) => {
+    const s = (source || "").toLowerCase();
+    const ft = (formType || "").toLowerCase();
+
+    let formTypeLabel = "";
+    if (ft === "quote_request") formTypeLabel = "Quote";
+    else if (ft === "demo_request") formTypeLabel = "Demo";
+    else if (ft === "book_repair") formTypeLabel = "Repair";
+    else if (ft === "contact_form") formTypeLabel = "Contact";
+    else if (ft === "csv_import") formTypeLabel = "CSV";
+
+    switch (s) {
+      case "pipeboss":
+        return (
+          <div className="flex flex-col gap-1 items-start">
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
+              <span className="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+              Pipeboss
+            </span>
+            {formTypeLabel && (
+              <span className="text-[10px] text-muted-foreground font-medium pl-1">
+                {formTypeLabel}
+              </span>
+            )}
+          </div>
+        );
+      case "vaclift":
+        return (
+          <div className="flex flex-col gap-1 items-start">
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 border border-cyan-500/20">
+              <span className="w-1.5 h-1.5 rounded-full bg-cyan-500"></span>
+              Vaclift
+            </span>
+            {formTypeLabel && (
+              <span className="text-[10px] text-muted-foreground font-medium pl-1">
+                {formTypeLabel}
+              </span>
+            )}
+          </div>
+        );
+      case "blue_water":
+        return (
+          <div className="flex flex-col gap-1 items-start">
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-teal-500/10 text-teal-600 dark:text-teal-400 border border-teal-500/20">
+              <span className="w-1.5 h-1.5 rounded-full bg-teal-500"></span>
+              Blue Water
+            </span>
+            {formTypeLabel && (
+              <span className="text-[10px] text-muted-foreground font-medium pl-1">
+                {formTypeLabel}
+              </span>
+            )}
+          </div>
+        );
+      case "digital_marketing":
+        return (
+          <div className="flex flex-col gap-1 items-start">
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+              Marketing
+            </span>
+          </div>
+        );
+      default:
+        return (
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium bg-muted text-muted-foreground">
+            Inbound
+          </span>
+        );
+    }
   };
 
   const getLifecycleBadge = (stage: string) => {
@@ -115,13 +210,13 @@ export default function MarketingLeadsTable() {
 
   return (
     <div className="space-y-4">
-      {/* Top search & status filter bar */}
+      {/* Top search & sync bar */}
       <div className="flex flex-col gap-3">
         <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
           <div className="relative w-full sm:w-80">
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder="Search leads by name, email, company..."
+              placeholder="Search leads by name, email, company, product..."
               value={search}
               onChange={(e) => {
                 setSearch(e.target.value);
@@ -131,15 +226,96 @@ export default function MarketingLeadsTable() {
             />
           </div>
 
-          <div className="text-xs text-muted-foreground font-medium">
-            Total Records: <span className="font-semibold text-foreground">{pagination.total.toLocaleString()}</span>
+          <div className="flex items-center gap-3 w-full sm:w-auto justify-between sm:justify-end">
+            <div className="text-xs text-muted-foreground font-medium">
+              Total Leads: <span className="font-semibold text-foreground">{pagination.total.toLocaleString()}</span>
+            </div>
+
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => syncMutation.mutate()}
+              disabled={syncMutation.isPending}
+              className="h-9 gap-1.5 text-xs font-medium border-border/80"
+              title="Automatically syncs every 5 minutes. Click to sync instantly."
+            >
+              <RefreshCw className={`h-3.5 w-3.5 ${syncMutation.isPending ? 'animate-spin text-primary' : ''}`} />
+              {syncMutation.isPending ? "Syncing..." : "Sync Websites"}
+            </Button>
           </div>
+        </div>
+
+        {/* Website Source Filter Pills */}
+        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs border-b pb-2">
+          <span className="text-muted-foreground mr-1 text-xs font-semibold flex items-center gap-1">
+            <Globe className="h-3.5 w-3.5 text-primary" /> Source:
+          </span>
+          <button
+            onClick={() => { setSourceFilter("all"); setPage(1); }}
+            className={`px-2.5 py-1 rounded-full text-xs font-medium transition-colors ${
+              sourceFilter === "all" 
+                ? "bg-foreground text-background shadow-sm" 
+                : "bg-muted text-muted-foreground hover:bg-muted/80"
+            }`}
+          >
+            All Sources
+          </button>
+          <button
+            onClick={() => { setSourceFilter("websites_only"); setPage(1); }}
+            className={`px-2.5 py-1 rounded-full text-xs font-medium transition-colors ${
+              sourceFilter === "websites_only" 
+                ? "bg-blue-600 text-white shadow-sm" 
+                : "bg-muted text-muted-foreground hover:bg-muted/80"
+            }`}
+          >
+            All Websites (Live)
+          </button>
+          <button
+            onClick={() => { setSourceFilter("vaclift"); setPage(1); }}
+            className={`px-2.5 py-1 rounded-full text-xs font-medium transition-colors ${
+              sourceFilter === "vaclift" 
+                ? "bg-cyan-600 text-white shadow-sm" 
+                : "bg-cyan-500/10 text-cyan-700 dark:text-cyan-300 hover:bg-cyan-500/20"
+            }`}
+          >
+            Vaclift
+          </button>
+          <button
+            onClick={() => { setSourceFilter("pipeboss"); setPage(1); }}
+            className={`px-2.5 py-1 rounded-full text-xs font-medium transition-colors ${
+              sourceFilter === "pipeboss" 
+                ? "bg-amber-600 text-white shadow-sm" 
+                : "bg-amber-500/10 text-amber-700 dark:text-amber-300 hover:bg-amber-500/20"
+            }`}
+          >
+            Pipeboss
+          </button>
+          <button
+            onClick={() => { setSourceFilter("blue_water"); setPage(1); }}
+            className={`px-2.5 py-1 rounded-full text-xs font-medium transition-colors ${
+              sourceFilter === "blue_water" 
+                ? "bg-teal-600 text-white shadow-sm" 
+                : "bg-teal-500/10 text-teal-700 dark:text-teal-300 hover:bg-teal-500/20"
+            }`}
+          >
+            Blue Water
+          </button>
+          <button
+            onClick={() => { setSourceFilter("digital_marketing"); setPage(1); }}
+            className={`px-2.5 py-1 rounded-full text-xs font-medium transition-colors ${
+              sourceFilter === "digital_marketing" 
+                ? "bg-emerald-600 text-white shadow-sm" 
+                : "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-500/20"
+            }`}
+          >
+            Marketing
+          </button>
         </div>
 
         {/* Lifecycle Stage Filter Tabs */}
         <div className="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs">
           <span className="text-muted-foreground mr-1 text-xs font-medium flex items-center gap-1">
-            <Filter className="h-3 w-3" /> Filter:
+            <Filter className="h-3 w-3" /> Status:
           </span>
           <button
             onClick={() => { setLifecycleFilter("lead"); setPage(1); }}
@@ -199,7 +375,7 @@ export default function MarketingLeadsTable() {
                 : "bg-muted text-muted-foreground hover:bg-muted/80"
             }`}
           >
-            All Records
+            All Stages
           </button>
         </div>
       </div>
@@ -209,14 +385,14 @@ export default function MarketingLeadsTable() {
         <Table>
           <TableHeader className="bg-muted/50">
             <TableRow>
-              <TableHead className="min-w-[170px] font-semibold">Lead Name</TableHead>
-              <TableHead className="min-w-[170px] font-semibold">Email</TableHead>
-              <TableHead className="w-[130px] font-semibold">Phone</TableHead>
-              <TableHead className="min-w-[160px] font-semibold">Company</TableHead>
-              <TableHead className="w-[120px] font-semibold">Lifecycle</TableHead>
-              <TableHead className="w-[130px] font-semibold">Owner</TableHead>
-              <TableHead className="w-[110px] font-semibold">Last Modified</TableHead>
-              <TableHead className="w-[180px] text-right font-semibold">Actions</TableHead>
+              <TableHead className="min-w-[170px] font-semibold">Lead Contact</TableHead>
+              <TableHead className="w-[125px] font-semibold">Source & Form</TableHead>
+              <TableHead className="min-w-[170px] font-semibold">Email & Phone</TableHead>
+              <TableHead className="min-w-[150px] font-semibold">Company / Inquiry</TableHead>
+              <TableHead className="w-[110px] font-semibold">Lifecycle</TableHead>
+              <TableHead className="w-[120px] font-semibold">Owner</TableHead>
+              <TableHead className="w-[110px] font-semibold">Date</TableHead>
+              <TableHead className="w-[170px] text-right font-semibold">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -235,7 +411,7 @@ export default function MarketingLeadsTable() {
                   <div className="flex flex-col items-center justify-center gap-2">
                     <UserCircle2 className="h-8 w-8 text-muted-foreground/50" />
                     <p className="font-medium">No leads found in this view</p>
-                    <p className="text-xs text-muted-foreground">Try adjusting your status filter or search query.</p>
+                    <p className="text-xs text-muted-foreground">Try adjusting your source website or status filter.</p>
                   </div>
                 </TableCell>
               </TableRow>
@@ -254,70 +430,90 @@ export default function MarketingLeadsTable() {
                     <TableCell className="font-medium text-foreground">
                       <div className="flex items-center gap-2">
                         <UserCircle2 className="h-4 w-4 text-blue-600 shrink-0" />
-                        <span className="truncate max-w-[180px]">{fullName}</span>
+                        <span className="truncate max-w-[170px] font-semibold">{fullName}</span>
                       </div>
                     </TableCell>
-                    <TableCell className="text-sm">
-                      {contact.email ? (
-                        <a
-                          href={`mailto:${contact.email}`}
-                          onClick={(e) => e.stopPropagation()}
-                          className="text-blue-600 hover:underline flex items-center gap-1 truncate max-w-[180px]"
-                        >
-                          <Mail className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-                          <span className="truncate">{contact.email}</span>
-                        </a>
-                      ) : (
-                        <span className="text-muted-foreground">-</span>
-                      )}
+
+                    <TableCell>
+                      {getSourceBadge(contact.source_website, contact.form_type)}
                     </TableCell>
-                    <TableCell className="text-sm">
-                      {contact.phone ? (
-                        <a
-                          href={`tel:${contact.phone}`}
-                          onClick={(e) => e.stopPropagation()}
-                          className="hover:underline flex items-center gap-1 text-muted-foreground hover:text-foreground"
-                        >
-                          <Phone className="h-3.5 w-3.5 shrink-0" />
-                          <span>{contact.phone}</span>
-                        </a>
-                      ) : (
-                        <span className="text-muted-foreground">-</span>
-                      )}
+
+                    <TableCell className="text-xs">
+                      <div className="space-y-1">
+                        {contact.email ? (
+                          <a
+                            href={`mailto:${contact.email}`}
+                            onClick={(e) => e.stopPropagation()}
+                            className="text-blue-600 hover:underline flex items-center gap-1 truncate max-w-[170px]"
+                          >
+                            <Mail className="h-3 w-3 shrink-0 text-muted-foreground" />
+                            <span className="truncate">{contact.email}</span>
+                          </a>
+                        ) : (
+                          <span className="text-muted-foreground">-</span>
+                        )}
+                        {contact.phone && (
+                          <a
+                            href={`tel:${contact.phone}`}
+                            onClick={(e) => e.stopPropagation()}
+                            className="hover:underline flex items-center gap-1 text-muted-foreground hover:text-foreground"
+                          >
+                            <Phone className="h-3 w-3 shrink-0" />
+                            <span>{contact.phone}</span>
+                          </a>
+                        )}
+                      </div>
                     </TableCell>
-                    <TableCell className="text-sm text-foreground">
-                      {contact.company_name || contact.company ? (
-                        <div className="flex items-center gap-1.5">
-                          <Building2 className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-                          <span className="truncate max-w-[160px]">{contact.company_name || contact.company}</span>
-                        </div>
-                      ) : (
-                        <span className="text-muted-foreground">-</span>
-                      )}
+
+                    <TableCell className="text-xs text-foreground">
+                      <div className="space-y-0.5">
+                        {contact.company_name || contact.company ? (
+                          <div className="flex items-center gap-1 font-medium truncate max-w-[160px]">
+                            <Building2 className="h-3 w-3 text-muted-foreground shrink-0" />
+                            <span className="truncate">{contact.company_name || contact.company}</span>
+                          </div>
+                        ) : null}
+                        {contact.product ? (
+                          <div className="text-[11px] text-muted-foreground truncate max-w-[160px] flex items-center gap-1">
+                            <Tag className="h-2.5 w-2.5 shrink-0" />
+                            <span className="truncate">{contact.product}</span>
+                          </div>
+                        ) : contact.subject ? (
+                          <div className="text-[11px] text-muted-foreground truncate max-w-[160px]">
+                            {contact.subject}
+                          </div>
+                        ) : !contact.company ? (
+                          <span className="text-muted-foreground">-</span>
+                        ) : null}
+                      </div>
                     </TableCell>
+
                     <TableCell>
                       {getLifecycleBadge(contact.lifecycle_stage)}
                     </TableCell>
-                    <TableCell className="text-sm text-muted-foreground">
+
+                    <TableCell className="text-xs text-muted-foreground">
                       {contact.owner_name ? (
                         <div className="flex items-center gap-1">
-                          <UserCheck className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                          <UserCheck className="h-3 w-3 text-muted-foreground shrink-0" />
                           <span className="truncate max-w-[110px]">{contact.owner_name}</span>
                         </div>
                       ) : (
                         "-"
                       )}
                     </TableCell>
+
                     <TableCell className="text-xs text-muted-foreground">
-                      {contact.lastmodifieddate ? (
+                      {contact.createdate || contact.lastmodifieddate ? (
                         <div className="flex items-center gap-1">
-                          <Calendar className="h-3.5 w-3.5 shrink-0 text-muted-foreground/60" />
-                          <span>{new Date(contact.lastmodifieddate).toLocaleDateString()}</span>
+                          <Calendar className="h-3 w-3 shrink-0 text-muted-foreground/60" />
+                          <span>{new Date(contact.createdate || contact.lastmodifieddate).toLocaleDateString()}</span>
                         </div>
                       ) : (
                         "-"
                       )}
                     </TableCell>
+
                     <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
                       <div className="flex items-center justify-end gap-1">
                         {!isCustomer && !isLost && (

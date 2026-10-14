@@ -97,11 +97,27 @@ async function fetchCrmStats() {
   return (await response.json()).data;
 }
 
-async function fetchContacts(params?: { page?: number; search?: string; lifecycle?: string; limit?: number }) {
-  const q = new URLSearchParams(params as any).toString();
+async function fetchContacts(params?: { page?: number; search?: string; lifecycle?: string; source?: string; limit?: number }) {
+  const cleanParams: Record<string, string> = {};
+  if (params) {
+    for (const [k, v] of Object.entries(params)) {
+      if (v !== undefined && v !== null && v !== "" && v !== "undefined") {
+        cleanParams[k] = String(v);
+      }
+    }
+  }
+  const q = new URLSearchParams(cleanParams).toString();
   const response = await apiFetch(`${API_BASE_URL}/crm/contacts?${q}`);
   if (!response.ok) throw new Error("Failed to fetch contacts");
   return await response.json(); // { data, pagination }
+}
+
+async function syncLeadsNow() {
+  const response = await apiFetch(`${API_BASE_URL}/crm/leads/sync-now`, {
+    method: "POST"
+  });
+  if (!response.ok) throw new Error("Failed to sync leads");
+  return await response.json();
 }
 
 async function fetchContact(id: string) {
@@ -596,6 +612,7 @@ export {
   loginDashboard,
   fetchCrmStats,
   fetchContacts,
+  syncLeadsNow,
   fetchContact,
   updateContact,
   fetchCompanies,
