@@ -27,8 +27,10 @@ import {
   Globe,
   MapPin,
   Tag,
-  RotateCcw
+  RotateCcw,
+  ArrowUpDown
 } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 export default function MarketingLeadsTable() {
   const router = useRouter();
@@ -38,6 +40,7 @@ export default function MarketingLeadsTable() {
   const [lifecycleFilter, setLifecycleFilter] = useState("lead");
   const [sourceFilter, setSourceFilter] = useState("all");
   const [countryFilter, setCountryFilter] = useState("all");
+  const [sortOrder, setSortOrder] = useState("newest");
 
   // Conversion & Disqualification modal states
   const [convertingContact, setConvertingContact] = useState<any | null>(null);
@@ -50,13 +53,14 @@ export default function MarketingLeadsTable() {
   const queryCountry = countryFilter === "all" ? "" : countryFilter;
 
   const { data, isLoading } = useQuery({
-    queryKey: ["crm-contacts-leads", { page, search, lifecycle: queryLifecycle, source: querySource, country: queryCountry }],
+    queryKey: ["crm-contacts-leads", { page, search, lifecycle: queryLifecycle, source: querySource, country: queryCountry, sort: sortOrder }],
     queryFn: () => fetchContacts({ 
       page, 
       search, 
       lifecycle: queryLifecycle || undefined,
       source: querySource || undefined,
       country: queryCountry || undefined,
+      sort: sortOrder || undefined,
       limit: 50 
     }),
     placeholderData: (previousData) => previousData,
@@ -214,12 +218,61 @@ export default function MarketingLeadsTable() {
     }
   };
 
-  const hasActiveFilters = sourceFilter !== "all" || lifecycleFilter !== "lead" || countryFilter !== "all" || search !== "";
+  const getLeadRecencyBadge = (contact: any) => {
+    // If contact has already progressed past lead stage, don't show new badge
+    const stage = (contact.lifecycle_stage || "").toLowerCase();
+    if (stage && !["lead", "subscriber"].includes(stage)) {
+      return null;
+    }
+
+    const dateVal = contact.createdate || contact.lastmodifieddate;
+    if (!dateVal) return null;
+
+    const createdTime = new Date(dateVal).getTime();
+    if (isNaN(createdTime)) return null;
+
+    const now = new Date().getTime();
+    const diffHours = (now - createdTime) / (1000 * 60 * 60);
+    const diffDays = diffHours / 24;
+
+    if (diffHours >= 0 && diffHours <= 24) {
+      return (
+        <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border border-emerald-500/30 shrink-0">
+          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping" />
+          NEW TODAY
+        </span>
+      );
+    }
+
+    if (diffDays >= 0 && diffDays <= 7) {
+      return (
+        <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/15 text-amber-700 dark:text-amber-400 border border-amber-500/30 shrink-0">
+          <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+          NEW
+        </span>
+      );
+    }
+
+    if (diffDays >= 0 && diffDays <= 14) {
+      return (
+        <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-medium bg-blue-500/10 text-blue-700 dark:text-blue-400 border border-blue-500/20 shrink-0">
+          Recent
+        </span>
+      );
+    }
+
+    return null;
+  };
+
+  const newLeadsCount = leads.filter((c: any) => Boolean(getLeadRecencyBadge(c))).length;
+
+  const hasActiveFilters = sourceFilter !== "all" || lifecycleFilter !== "lead" || countryFilter !== "all" || sortOrder !== "newest" || search !== "";
 
   const handleResetFilters = () => {
     setSourceFilter("all");
     setLifecycleFilter("lead");
     setCountryFilter("all");
+    setSortOrder("newest");
     setSearch("");
     setPage(1);
   };
@@ -307,6 +360,23 @@ export default function MarketingLeadsTable() {
               </select>
             </div>
 
+            {/* Sort Dropdown */}
+            <div className="relative min-w-[145px]">
+              <ArrowUpDown className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-muted-foreground pointer-events-none" />
+              <select
+                value={sortOrder}
+                onChange={(e) => {
+                  setSortOrder(e.target.value);
+                  setPage(1);
+                }}
+                className="flex h-9 w-full rounded-md border border-input bg-background pl-8 pr-7 py-1 text-xs shadow-sm focus:outline-none focus:ring-1 focus:ring-primary font-medium cursor-pointer"
+              >
+                <option value="newest">Newest First</option>
+                <option value="oldest">Oldest First</option>
+                <option value="recently_updated">Recently Updated</option>
+              </select>
+            </div>
+
             {/* Reset Filters Button */}
             {hasActiveFilters && (
               <Button
@@ -350,9 +420,21 @@ export default function MarketingLeadsTable() {
             <span>
               Country: <span className="font-semibold text-foreground">{countryFilter === "all" ? "All Countries" : countryFilter}</span>
             </span>
+            <span>•</span>
+            <span>
+              Sort: <span className="font-semibold text-foreground capitalize">{sortOrder === "newest" ? "Newest First" : sortOrder === "oldest" ? "Oldest First" : "Recently Updated"}</span>
+            </span>
           </div>
-          <div>
-            Total: <span className="font-bold text-foreground">{pagination.total.toLocaleString()}</span> leads
+          <div className="flex items-center gap-2">
+            {newLeadsCount > 0 && (
+              <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-700 dark:text-amber-400 border border-amber-500/30">
+                <Sparkles className="h-3 w-3" />
+                {newLeadsCount} New to review
+              </span>
+            )}
+            <div>
+              Total: <span className="font-bold text-foreground">{pagination.total.toLocaleString()}</span> leads
+            </div>
           </div>
         </div>
       </div>
@@ -398,16 +480,23 @@ export default function MarketingLeadsTable() {
                 const isLost = contact.lifecycle_stage === "other" || contact.lifecycle_stage === "lost" || contact.lifecycle_stage === "disqualified";
                 const isCustomer = contact.lifecycle_stage === "customer";
 
+                const recencyBadge = getLeadRecencyBadge(contact);
+                const isNew = Boolean(recencyBadge);
+
                 return (
                   <TableRow
                     key={contact.id}
-                    className="cursor-pointer hover:bg-muted/50 transition-colors"
+                    className={cn(
+                      "cursor-pointer hover:bg-muted/50 transition-colors",
+                      isNew && "bg-amber-500/[0.04] dark:bg-amber-500/[0.07]"
+                    )}
                     onClick={() => handleRowClick(contact.id.toString())}
                   >
                     <TableCell className="font-medium text-foreground">
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 flex-wrap">
                         <UserCircle2 className="h-4 w-4 text-blue-600 shrink-0" />
-                        <span className="truncate max-w-[170px] font-semibold">{fullName}</span>
+                        <span className="truncate max-w-[150px] font-semibold">{fullName}</span>
+                        {recencyBadge}
                       </div>
                     </TableCell>
 

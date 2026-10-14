@@ -97,7 +97,7 @@ async function fetchCrmStats() {
   return (await response.json()).data;
 }
 
-async function fetchContacts(params?: { page?: number; search?: string; lifecycle?: string; source?: string; country?: string; limit?: number }) {
+async function fetchContacts(params?: { page?: number; search?: string; lifecycle?: string; source?: string; country?: string; sort?: string; limit?: number }) {
   const cleanParams: Record<string, string> = {};
   if (params) {
     for (const [k, v] of Object.entries(params)) {
