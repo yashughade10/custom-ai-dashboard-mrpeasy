@@ -1,5 +1,5 @@
 import jsPDF from "jspdf";
-import { addBWEHeader } from "@/utils/pdfHeader";
+import { addBWEHeader } from "./pdfHeader";
 import autoTable from "jspdf-autotable";
 
 export const generateInternalPdf = (poData: any) => {
@@ -7,17 +7,17 @@ export const generateInternalPdf = (poData: any) => {
   const doc = new jsPDF();
   const yOffset = addBWEHeader(doc, false) - 15;
   const originalText = doc.text.bind(doc);
-  (doc as any).text = function(text: any, x: any, y: any, options: any) {
+  (doc as any).text = function (text: any, x: any, y: any, options: any) {
     return originalText(text, x, typeof y === 'number' ? y + yOffset : y, options);
   };
   // Title
   doc.setFontSize(18);
   doc.text(`Purchase order ${order.po_number || ''}`, 14, 22);
-  
+
   // Metadata
   doc.setFontSize(10);
   doc.setFont("helvetica", "bold");
-  
+
   // Column 1
   doc.text("Number:", 14, 40);
   doc.text("Vendor:", 14, 46);
@@ -26,7 +26,7 @@ export const generateInternalPdf = (poData: any) => {
   doc.text("Created:", 14, 64);
   doc.text("Created by:", 14, 70);
   doc.text("Expected date:", 14, 76);
-  
+
   doc.setFont("helvetica", "normal");
   doc.text(order.po_number || '', 45, 40);
   doc.text(order.vendor_name || '', 45, 46);
@@ -45,7 +45,7 @@ export const generateInternalPdf = (poData: any) => {
   doc.text("Due date:", 110, 64);
   doc.text("Shipped on:", 110, 70);
   doc.text("Arrival date:", 110, 76);
-  
+
   doc.setFont("helvetica", "normal");
   doc.text(order.order_id || '', 140, 40);
   doc.text(formatDate(order.order_date), 140, 46);
@@ -78,7 +78,7 @@ export const generateInternalPdf = (poData: any) => {
   });
 
   const finalY = (doc as any).lastAutoTable.finalY + 10;
-  
+
   // Totals
   const total = calculateTotal(items);
   const tax = total * 0.1; // 10% tax mock
@@ -88,18 +88,18 @@ export const generateInternalPdf = (poData: any) => {
   doc.setFont("helvetica", "bold");
   doc.text("Total:", 14, finalY);
   doc.text(`${order.currency || '$'} ${formatCurrency(total)}`, 160, finalY);
-  
+
   doc.setFillColor(230, 230, 230);
   doc.rect(14, finalY + 2, 182, 6, 'F');
   doc.text("Taxable fees:", 16, finalY + 6.5);
   doc.text(`${order.currency || '$'} 0.00`, 160, finalY + 6.5);
-  
+
   doc.text("Tax:", 16, finalY + 12.5);
   doc.setFont("helvetica", "normal");
   doc.text("10%", 100, finalY + 12.5);
   doc.setFont("helvetica", "bold");
   doc.text(`${order.currency || '$'} ${formatCurrency(tax)}`, 160, finalY + 12.5);
-  
+
   doc.rect(14, finalY + 16, 182, 6, 'F');
   doc.text("Additional fees:", 16, finalY + 20.5);
   doc.text(`${order.currency || '$'} 0.00`, 160, finalY + 20.5);
@@ -115,28 +115,17 @@ export const generateVendorPdf = (poData: any) => {
   const doc = new jsPDF();
   const yOffset = addBWEHeader(doc, false) - 15;
   const originalText = doc.text.bind(doc);
-  (doc as any).text = function(text: any, x: any, y: any, options: any) {
+  (doc as any).text = function (text: any, x: any, y: any, options: any) {
     return originalText(text, x, typeof y === 'number' ? y + yOffset : y, options);
   };
-  // Logos Placeholder (Right aligned)
-  doc.setFontSize(14);
-  doc.setFont("helvetica", "bolditalic");
-  doc.setTextColor(50, 150, 50);
-  doc.text("PIPEBOSS", 100, 20);
-  doc.setTextColor(200, 150, 0);
-  doc.text("VacLift", 135, 20);
-  doc.setTextColor(0, 100, 200);
-  doc.text("BWE", 170, 20);
-  
-  doc.setTextColor(0, 0, 0);
   // Title
   doc.setFontSize(18);
   doc.setFont("helvetica", "bold");
   doc.text(`Purchase order ${order.po_number || ''}`, 14, 40);
-  
+
   // Metadata
   doc.setFontSize(8);
-  
+
   // Vendor Info
   doc.setFont("helvetica", "bold");
   doc.text("Vendor:", 14, 55);
@@ -204,19 +193,19 @@ export const generateVendorPdf = (poData: any) => {
 
   const finalY = (doc as any).lastAutoTable.finalY + 5;
   const total = calculateTotal(items);
-  const tax = total * 0.1; 
+  const tax = total * 0.1;
   const grandTotal = total + tax;
 
   doc.setFont("helvetica", "bold");
   doc.text("Total:", 14, finalY + 5);
   doc.text(`${order.currency || '$'} ${formatCurrency(total)}`, 160, finalY + 5);
-  
+
   doc.text("Tax:", 14, finalY + 10);
   doc.setFont("helvetica", "normal");
   doc.text("10%", 100, finalY + 10);
   doc.setFont("helvetica", "bold");
   doc.text(`${order.currency || '$'} ${formatCurrency(tax)}`, 160, finalY + 10);
-  
+
   doc.text("Grand total:", 14, finalY + 15);
   doc.text(`${order.currency || '$'} ${formatCurrency(grandTotal)}`, 160, finalY + 15);
 
@@ -228,26 +217,16 @@ export const generateDeliveryNotePdf = (poData: any) => {
   const doc = new jsPDF();
   const yOffset = addBWEHeader(doc, false) - 15;
   const originalText = doc.text.bind(doc);
-  (doc as any).text = function(text: any, x: any, y: any, options: any) {
+  (doc as any).text = function (text: any, x: any, y: any, options: any) {
     return originalText(text, x, typeof y === 'number' ? y + yOffset : y, options);
   };
-  // Logos Placeholder (Right aligned)
-  doc.setFontSize(14);
-  doc.setFont("helvetica", "bolditalic");
-  doc.setTextColor(50, 150, 50);
-  doc.text("PIPEBOSS", 100, 20);
-  doc.setTextColor(200, 150, 0);
-  doc.text("VacLift", 135, 20);
-  doc.setTextColor(0, 100, 200);
-  doc.text("BWE", 170, 20);
-  
-  doc.setTextColor(0, 0, 0);
+  // Title
   doc.setFontSize(18);
   doc.setFont("helvetica", "bold");
   doc.text(`Delivery note PO${order.po_number || ''}`, 14, 40);
-  
+
   doc.setFontSize(8);
-  
+
   // Vendor Info
   doc.setFont("helvetica", "bold");
   doc.text("Vendor:", 14, 55);
@@ -319,27 +298,17 @@ export const generateRfqPdf = (poData: any) => {
   const doc = new jsPDF();
   const yOffset = addBWEHeader(doc, false) - 15;
   const originalText = doc.text.bind(doc);
-  (doc as any).text = function(text: any, x: any, y: any, options: any) {
+  (doc as any).text = function (text: any, x: any, y: any, options: any) {
     return originalText(text, x, typeof y === 'number' ? y + yOffset : y, options);
   };
-  // Logos
-  doc.setFontSize(14);
-  doc.setFont("helvetica", "bolditalic");
-  doc.setTextColor(50, 150, 50);
-  doc.text("PIPEBOSS", 100, 20);
-  doc.setTextColor(200, 150, 0);
-  doc.text("VacLift", 135, 20);
-  doc.setTextColor(0, 100, 200);
-  doc.text("BWE", 170, 20);
-  
-  doc.setTextColor(0, 0, 0);
+  // Title
   doc.setFontSize(18);
   doc.setFont("helvetica", "bold");
   doc.text(`Request for Quote ${order.po_number || ''}`, 14, 40);
-  
+
   // Metadata
   doc.setFontSize(8);
-  
+
   // Vendor Info
   doc.setFont("helvetica", "bold");
   doc.text("Vendor:", 14, 55);
@@ -442,8 +411,8 @@ export const generateLabelsPdf = (items: any[], order: any, labelCountOverride?:
 
   items.forEach((item: any) => {
     const qtyNum = parseFloat(item.quantity || item.expected_quantity);
-    const labelCount = labelCountOverride !== undefined 
-      ? labelCountOverride 
+    const labelCount = labelCountOverride !== undefined
+      ? labelCountOverride
       : (isNaN(qtyNum) ? 1 : Math.max(1, Math.ceil(qtyNum)));
 
     for (let i = 0; i < labelCount; i++) {
@@ -461,47 +430,47 @@ export const generateLabelsPdf = (items: any[], order: any, labelCountOverride?:
       doc.setFontSize(9);
       doc.setFont("helvetica", "bold");
       doc.text("Blue Water Engineering Group Pty Ltd", 4, 7);
-      
+
       // Line 1
       doc.line(2, 9, 98, 9);
-      
+
       // Lot & Printed
       doc.setFontSize(7);
       doc.setFont("helvetica", "normal");
       doc.text("Lot:", 4, 12);
       doc.text("Printed:", 65, 12);
-      
+
       doc.setFontSize(9);
       doc.setFont("helvetica", "bold");
       doc.text(item.target_lot || item.lot || '', 4, 16);
       doc.setFont("helvetica", "normal");
       doc.text(formatDate(new Date().toISOString()), 65, 16);
-      
+
       // Vertical divider
       doc.line(63, 9, 63, 25);
-      
+
       // Line 2
       doc.line(2, 18, 98, 18);
-      
+
       // Part No & Quantity
       doc.setFontSize(7);
       doc.text("Part No.:", 4, 21);
       doc.text("Quantity:", 65, 21);
-      
+
       doc.setFontSize(10);
       doc.setFont("helvetica", "bold");
       doc.text(item.part_no || item.item_id || '', 4, 25);
       doc.setFontSize(9);
       doc.setFont("helvetica", "normal");
       doc.text(`${item.quantity || item.expected_quantity || ''} ${item.uom || item.unit || ''}`.trim(), 65, 25);
-      
+
       // Line 3
       doc.line(2, 27, 98, 27);
-      
+
       // Description
       doc.setFontSize(7);
       doc.text("Part description:", 4, 31);
-      
+
       doc.setFontSize(8);
       const desc = item.description || item.part_description || item.free_text || '';
       const splitDesc = doc.splitTextToSize(desc, 90);

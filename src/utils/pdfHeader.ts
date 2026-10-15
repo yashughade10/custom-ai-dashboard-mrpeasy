@@ -5,10 +5,9 @@ export const addBWEHeader = (doc: any, isLandscape: boolean = false) => {
   const pageWidth = doc.internal.pageSize.getWidth();
   
   // Header Logo (Left)
-  // Approximate logo dimensions: adjust w/h based on aspect ratio
   const logoWidth = 60;
-  const logoHeight = (logoWidth * 163) / 300; // rough aspect ratio
-  doc.addImage(BWE_LOGO_BASE64, 'PNG', 14, 10, logoWidth, logoHeight);
+  const logoHeight = (logoWidth * 683) / 1280;
+  doc.addImage(BWE_LOGO_BASE64, 'JPEG', 14, 10, logoWidth, logoHeight);
 
   // Header Text (Right)
   doc.setFontSize(9);
