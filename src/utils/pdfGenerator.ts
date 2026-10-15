@@ -36,7 +36,7 @@ export const generateInternalPdf = (poData: any) => {
   doc.text(order.created_by || 'Admin', 45, 70);
   doc.text(formatDate(order.expected_date), 45, 76);
 
-  // Column 2
+  // Column 2 dummy
   doc.setFont("helvetica", "bold");
   doc.text("Order ID:", 110, 40);
   doc.text("Order date:", 110, 46);
