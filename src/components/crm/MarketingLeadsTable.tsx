@@ -11,6 +11,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import ConvertLeadDialog from "./ConvertLeadDialog";
 import DisqualifyLeadDialog from "./DisqualifyLeadDialog";
+import ImportLeadsDialog from "./ImportLeadsDialog";
 import { 
   Search, 
   Building2, 
@@ -28,7 +29,8 @@ import {
   MapPin,
   Tag,
   RotateCcw,
-  ArrowUpDown
+  ArrowUpDown,
+  Upload
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -42,11 +44,12 @@ export default function MarketingLeadsTable() {
   const [countryFilter, setCountryFilter] = useState("all");
   const [sortOrder, setSortOrder] = useState("newest");
 
-  // Conversion & Disqualification modal states
+  // Conversion, Disqualification & Import modal states
   const [convertingContact, setConvertingContact] = useState<any | null>(null);
   const [convertDialogOpen, setConvertDialogOpen] = useState(false);
   const [disqualifyContact, setDisqualifyContact] = useState<any | null>(null);
   const [disqualifyOpen, setDisqualifyOpen] = useState(false);
+  const [importDialogOpen, setImportDialogOpen] = useState(false);
 
   const queryLifecycle = lifecycleFilter === "all" ? "" : lifecycleFilter;
   const querySource = sourceFilter === "all" ? "" : sourceFilter;
@@ -403,6 +406,18 @@ export default function MarketingLeadsTable() {
               <RefreshCw className={`h-3.5 w-3.5 ${syncMutation.isPending ? 'animate-spin text-primary' : ''}`} />
               {syncMutation.isPending ? "Syncing..." : "Sync"}
             </Button>
+
+            {/* Import CSV Leads Button */}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setImportDialogOpen(true)}
+              className="h-9 gap-1.5 text-xs font-medium border-blue-200 dark:border-blue-900 bg-blue-50/50 hover:bg-blue-100/60 dark:bg-blue-950/30 dark:hover:bg-blue-900/40 text-blue-700 dark:text-blue-300"
+              title="Import leads from CSV or Excel file"
+            >
+              <Upload className="h-3.5 w-3.5 text-blue-600 dark:text-blue-400" />
+              Import CSV
+            </Button>
           </div>
         </div>
 
@@ -675,6 +690,16 @@ export default function MarketingLeadsTable() {
         contact={disqualifyContact}
         open={disqualifyOpen}
         onOpenChange={setDisqualifyOpen}
+      />
+
+      {/* Import CSV leads dialog */}
+      <ImportLeadsDialog
+        open={importDialogOpen}
+        onOpenChange={setImportDialogOpen}
+        onSuccess={() => {
+          queryClient.invalidateQueries({ queryKey: ["crm-contacts-leads"] });
+          setPage(1);
+        }}
       />
     </div>
   );
