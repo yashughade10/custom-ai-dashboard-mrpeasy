@@ -33,6 +33,9 @@ const getFinalHtml = (rawBody: string) => {
 export default function NewsletterEmailSender() {
   const [loading, setLoading] = useState(false);
   const [contactsCount, setContactsCount] = useState(0);
+  const [crmCount, setCrmCount] = useState(0);
+  const [mrpCount, setMrpCount] = useState(0);
+  const [audienceFilter, setAudienceFilter] = useState<"all" | "mrp_only" | "crm_only">("all");
   const [templates, setTemplates] = useState<any[]>([]);
   const [selectedTemplate, setSelectedTemplate] = useState<string>("");
   const [message, setMessage] = useState("");
@@ -49,7 +52,9 @@ export default function NewsletterEmailSender() {
       .then((res) => res.json())
       .then((data) => {
         if (data.success) {
-          setContactsCount(data.allContactsCount);
+          setContactsCount(data.allContactsCount || 0);
+          setCrmCount(data.crmContactsCount || 0);
+          setMrpCount(data.mrpCustomersCount || 0);
         }
       })
       .catch((err) => console.error(err));
@@ -110,14 +115,15 @@ export default function NewsletterEmailSender() {
         body: JSON.stringify({ 
           template_id: selectedTemplate || undefined,
           subject: newTemplateSubject,
-          html_body: finalHtml
+          html_body: finalHtml,
+          audience_filter: audienceFilter
         }),
       });
       const data = await res.json();
       if (data.success) {
         setMessage(data.message);
       } else {
-        setMessage("Error sending newsletter.");
+        setMessage(data.error || "Error sending newsletter.");
       }
     } catch (err) {
       console.error(err);
@@ -134,8 +140,46 @@ export default function NewsletterEmailSender() {
           <CardTitle>Compose Newsletter</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="text-sm text-gray-500 mb-4">
-            Targeting {contactsCount} total contacts.
+          {/* Audience Breakdown Metric Badges */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 p-3.5 bg-muted/40 rounded-lg border text-xs">
+            <div className="space-y-0.5">
+              <span className="text-muted-foreground font-medium">All Combined Audience</span>
+              <p className="text-base font-bold text-foreground">
+                {contactsCount.toLocaleString()} <span className="text-xs font-normal text-muted-foreground">unique recipients</span>
+              </p>
+            </div>
+            <div className="space-y-0.5">
+              <span className="text-muted-foreground font-medium">MRPeasy Customers</span>
+              <p className="text-base font-bold text-emerald-600 dark:text-emerald-400">
+                {mrpCount.toLocaleString()} <span className="text-xs font-normal text-muted-foreground">accounts</span>
+              </p>
+            </div>
+            <div className="space-y-0.5">
+              <span className="text-muted-foreground font-medium">Website / CRM Inquiries</span>
+              <p className="text-base font-bold text-blue-600 dark:text-blue-400">
+                {crmCount.toLocaleString()} <span className="text-xs font-normal text-muted-foreground">contacts</span>
+              </p>
+            </div>
+          </div>
+
+          {/* Audience Filter Selector */}
+          <div className="space-y-1.5">
+            <Label className="text-xs font-semibold">Target Audience Segment</Label>
+            <select
+              className="w-full p-2 border rounded-md text-xs bg-background shadow-xs font-medium"
+              value={audienceFilter}
+              onChange={(e) => setAudienceFilter(e.target.value as any)}
+            >
+              <option value="all">
+                All Contacts ({contactsCount.toLocaleString()} unique recipients - Customers + Website Leads)
+              </option>
+              <option value="mrp_only">
+                Customers Only ({mrpCount.toLocaleString()} active customer accounts)
+              </option>
+              <option value="crm_only">
+                Website Leads / CRM Contacts Only ({crmCount.toLocaleString()} inbound contacts)
+              </option>
+            </select>
           </div>
           
           <div className="space-y-2">

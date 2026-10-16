@@ -11,6 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Trash2, GripVertical, Plus, Pencil, ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
+import Customer360History from "@/components/crm/Customer360History";
 
 export default function CrmCustomerDetailsPage() {
   const params = useParams();
@@ -89,8 +90,8 @@ export default function CrmCustomerDetailsPage() {
 
   return (
     <RouteGuard module="crm" fallback={<div>Access Denied</div>}>
-      <div className="flex flex-col h-full bg-[#f4f7fb] min-h-[calc(100vh-4rem)] p-4 -m-4 sm:-m-6 lg:-m-8">
-        <div className="bg-white rounded-md shadow-sm overflow-hidden flex flex-col min-h-[80vh]">
+      <div className="flex flex-col min-h-[calc(100vh-4rem)] bg-[#f4f7fb] p-4 sm:p-6 pb-24 -m-4 sm:-m-6 lg:-m-8">
+        <div className="bg-white rounded-md shadow-sm flex flex-col min-h-[80vh] pb-10">
           <div className="px-6 py-4 flex-1 flex flex-col">
             {/* Header */}
             <div className="flex items-center justify-between mb-4">
@@ -448,6 +449,10 @@ export default function CrmCustomerDetailsPage() {
               </div>
             </div>
 
+            {/* Customer 360: Order, Invoice & Lead History */}
+            {!isNew && customer?.customer_number && (
+              <Customer360History customerNumber={customer.customer_number} />
+            )}
           </div>
         </div>
       </div>

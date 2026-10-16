@@ -152,6 +152,17 @@ async function fetchContact(id: string) {
   return (await response.json()).data;
 }
 
+async function fetchContactLifecycleHistory(id: string) {
+  try {
+    const response = await apiFetch(`${API_BASE_URL}/crm/contacts/${id}/lifecycle-history`);
+    if (!response.ok) return [];
+    const result = await response.json();
+    return result.data || [];
+  } catch (e) {
+    return [];
+  }
+}
+
 async function updateContact(id: string, data: Record<string, any>) {
   const response = await apiFetch(`${API_BASE_URL}/crm/contacts/${id}`, {
     method: "PUT",
@@ -642,6 +653,7 @@ export {
   importCsvLeads,
   fetchContactCountries,
   fetchContact,
+  fetchContactLifecycleHistory,
   updateContact,
   fetchCompanies,
   fetchCompany,
