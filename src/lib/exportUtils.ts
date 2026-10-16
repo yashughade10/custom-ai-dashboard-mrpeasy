@@ -1,5 +1,6 @@
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
+import { addBWEHeader } from "@/utils/pdfHeader";
 
 export const exportToCSV = (data: any[], filename: string) => {
   if (!data || data.length === 0) return;
@@ -43,15 +44,18 @@ export const exportToPDF = (
 
   const doc = new jsPDF();
   
+  // Add BWE Logo Header
+  const startY = addBWEHeader(doc, false);
+
   // Title
   doc.setFontSize(14);
-  doc.text(title, 14, 15);
+  doc.text(title, 14, startY);
   doc.setFontSize(10);
-  doc.text(`Generated on ${new Date().toLocaleDateString()}`, 14, 22);
+  doc.text(`Generated on ${new Date().toLocaleDateString()}`, 14, startY + 7);
 
   // Table
   autoTable(doc, {
-    startY: 28,
+    startY: startY + 13,
     head: [columns.map((c) => c.header)],
     body: data.map((row) => columns.map((c) => row[c.dataKey] || "")),
     styles: { fontSize: 8 },
@@ -60,3 +64,4 @@ export const exportToPDF = (
 
   doc.save(`${filename}.pdf`);
 };
+
