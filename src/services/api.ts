@@ -120,6 +120,21 @@ async function syncLeadsNow() {
   return await response.json();
 }
 
+async function importCsvLeads(leads: any[]) {
+  const response = await apiFetch(`${API_BASE_URL}/crm/leads/import-csv`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(leads),
+  });
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({}));
+    throw new Error(err.message || "Failed to import leads from CSV");
+  }
+  return await response.json();
+}
+
 async function fetchContactCountries(): Promise<string[]> {
   try {
     const response = await apiFetch(`${API_BASE_URL}/crm/contacts/countries`);
@@ -624,6 +639,7 @@ export {
   fetchCrmStats,
   fetchContacts,
   syncLeadsNow,
+  importCsvLeads,
   fetchContactCountries,
   fetchContact,
   updateContact,
