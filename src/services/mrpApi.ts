@@ -382,6 +382,46 @@ export const mrpApi = {
     return res.json();
   },
 
+  getManufacturingOrderById: async (id: string | number) => {
+    const res = await fetch(`${API_BASE}/mrp/production/manufacturing-orders/${id}`);
+    if (!res.ok) throw new Error("Failed to fetch manufacturing order");
+    return res.json();
+  },
+
+  createManufacturingOrder: async (data: any) => {
+    const res = await fetch(`${API_BASE}/mrp/production/manufacturing-orders`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    });
+    if (!res.ok) {
+      const errData = await res.json().catch(() => ({}));
+      throw new Error(errData.error || "Failed to create manufacturing order");
+    }
+    return res.json();
+  },
+
+  updateManufacturingOrder: async (id: string | number, data: any) => {
+    const res = await fetch(`${API_BASE}/mrp/production/manufacturing-orders/${id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    });
+    if (!res.ok) {
+      const errData = await res.json().catch(() => ({}));
+      throw new Error(errData.error || "Failed to update manufacturing order");
+    }
+    return res.json();
+  },
+
+  deleteManufacturingOrder: async (id: string | number) => {
+    const res = await fetch(`${API_BASE}/mrp/production/manufacturing-orders/${id}`, {
+      method: "DELETE",
+    });
+    if (!res.ok) throw new Error("Failed to delete manufacturing order");
+    return res.json();
+  },
+
 
 
   getProductGroups: async () => {

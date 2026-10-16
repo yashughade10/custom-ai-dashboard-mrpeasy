@@ -6,7 +6,13 @@ import { mrpApi } from "@/services/mrpApi";
 import { Plus, Download, Flag, Edit2, Search, Settings2, CalendarDays } from "lucide-react";
 import { toast } from "sonner";
 
-export default function ProductionOrdersTable({ onOpenCreate }: { onOpenCreate?: (fn: (defaults?: any) => void) => void }) {
+export default function ProductionOrdersTable({ 
+  onEdit,
+  onOpenCreate 
+}: { 
+  onEdit?: (order: any) => void;
+  onOpenCreate?: (fn: (defaults?: any) => void) => void;
+}) {
   const [search, setSearch] = useState("");
   
   // Data fetching using the correct MRP backend endpoint
@@ -172,10 +178,22 @@ export default function ProductionOrdersTable({ onOpenCreate }: { onOpenCreate?:
               const rowTextColor = isRed ? "text-red-500" : (isOrange ? "text-orange-500" : "text-gray-800");
 
               return (
-                <tr key={order.id || i} className={`hover:bg-gray-50 border-b border-gray-100 ${rowTextColor}`}>
+                <tr 
+                  key={order.id || i} 
+                  className={`hover:bg-gray-50 border-b border-gray-100 ${rowTextColor}`}
+                  onDoubleClick={() => onEdit?.(order)}
+                >
                   <td className="p-1 text-center text-gray-400">{i + 1}</td>
                   <td className="p-1">{order.group_number}</td>
-                  <td className="p-1">{order.mo_number}</td>
+                  <td className="p-1">
+                    <span 
+                      onClick={() => onEdit?.(order)}
+                      className="text-blue-600 font-semibold hover:underline cursor-pointer"
+                      title="Click to edit manufacturing order"
+                    >
+                      {order.mo_number}
+                    </span>
+                  </td>
                   <td className="p-1">{order.group_name}</td>
                   <td className="p-1">{order.part_no}</td>
                   <td className="p-1">{order.part_description}</td>
@@ -206,7 +224,14 @@ export default function ProductionOrdersTable({ onOpenCreate }: { onOpenCreate?:
                   <td className="p-1"></td>
                   <td className="p-1 text-right">
                     <div className="flex items-center justify-end gap-3 pr-2">
-                      <Edit2 className="h-3.5 w-3.5 text-gray-400 hover:text-gray-600 cursor-pointer" />
+                      <button 
+                        type="button"
+                        onClick={() => onEdit?.(order)}
+                        title="Edit manufacturing order"
+                        className="p-0.5 hover:bg-gray-100 rounded text-gray-400 hover:text-blue-600 cursor-pointer transition-colors"
+                      >
+                        <Edit2 className="h-3.5 w-3.5" />
+                      </button>
                       {isRed && <Flag className="h-3.5 w-3.5 text-red-500 cursor-pointer" />}
                       {!isRed && <Flag className="h-3.5 w-3.5 text-gray-200 hover:text-gray-400 cursor-pointer" />}
                       <input type="checkbox" className="w-3.5 h-3.5 rounded-sm border-gray-300 accent-blue-600 cursor-pointer" />
