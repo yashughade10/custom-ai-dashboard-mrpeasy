@@ -44,7 +44,8 @@ export default function DisqualifyLeadDialog({
     mutationFn: async () => {
       if (!contact?.id) throw new Error("No contact selected");
       return await updateContact(contact.id.toString(), {
-        lifecycle_stage: "other" // Marks as disqualified / non-active
+        lifecycle_stage: "other", // Marks as disqualified / non-active
+        change_reason: `Disqualified / Lost: ${reason}${notes.trim() ? ` - ${notes.trim()}` : ""}`
       });
     },
     onSuccess: () => {

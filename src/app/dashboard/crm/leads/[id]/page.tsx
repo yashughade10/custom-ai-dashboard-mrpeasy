@@ -15,6 +15,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { toast } from "sonner";
 import ConvertLeadDialog from "@/components/crm/ConvertLeadDialog";
 import DisqualifyLeadDialog from "@/components/crm/DisqualifyLeadDialog";
+import LeadLifecycleHistoryTimeline from "@/components/crm/LeadLifecycleHistoryTimeline";
 import { 
   ArrowLeft, 
   Building2, 
@@ -626,6 +627,18 @@ function LeadDetailPage() {
               )}
             </CardContent>
           </Card>
+
+          {/* Lead Lifecycle History & Audit Timeline */}
+          <LeadLifecycleHistoryTimeline
+            contactId={leadId}
+            history={contact?.lifecycle_history}
+            createdDate={contact?.createdate}
+            sourceWebsite={formData.source_website || contact?.source_website}
+            currentStage={formData.lifecycle_stage}
+            onHistoryUpdated={() => {
+              queryClient.invalidateQueries({ queryKey: ["crm-contact", leadId] });
+            }}
+          />
         </div>
 
         {/* Right Column: Actions, Timeline & Pipeline Records */}
