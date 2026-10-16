@@ -187,8 +187,8 @@ export default function SelectiveEmailSender() {
                 value={sourceFilter}
                 onChange={handleSourceChange}
               >
-                <option value="all">All Contacts (MRPeasy + Website)</option>
-                <option value="mrp">MRPeasy Customers Only</option>
+                <option value="all">All Contacts (Customers + Website)</option>
+                <option value="mrp">Customers Only</option>
                 <option value="crm">Website Leads / CRM Only</option>
               </select>
             </div>

@@ -171,10 +171,10 @@ export default function NewsletterEmailSender() {
               onChange={(e) => setAudienceFilter(e.target.value as any)}
             >
               <option value="all">
-                All Contacts ({contactsCount.toLocaleString()} unique recipients - MRPeasy Customers + Website Leads)
+                All Contacts ({contactsCount.toLocaleString()} unique recipients - Customers + Website Leads)
               </option>
               <option value="mrp_only">
-                MRPeasy Customers Only ({mrpCount.toLocaleString()} active customer accounts)
+                Customers Only ({mrpCount.toLocaleString()} active customer accounts)
               </option>
               <option value="crm_only">
                 Website Leads / CRM Contacts Only ({crmCount.toLocaleString()} inbound contacts)
