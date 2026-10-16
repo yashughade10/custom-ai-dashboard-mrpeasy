@@ -7,7 +7,7 @@ export const addBWEHeader = (doc: any, isLandscape: boolean = false) => {
   // Header Logo (Left)
   const logoWidth = 60;
   const logoHeight = (logoWidth * 683) / 1280;
-  doc.addImage(BWE_LOGO_BASE64, 'JPEG', 14, 10, logoWidth, logoHeight);
+  doc.addImage(BWE_LOGO_BASE64, 'PNG', 14, 10, logoWidth, logoHeight);
 
   // Header Text (Right)
   doc.setFontSize(9);
