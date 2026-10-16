@@ -96,6 +96,12 @@ export const mrpApi = {
     return res.json();
   },
 
+  getCustomerHistory: async (id: string) => {
+    const res = await fetch(`${API_BASE}/mrp/crm/customers/${id}/history`);
+    if (!res.ok) throw new Error("Failed to fetch customer history");
+    return res.json();
+  },
+
   createCustomer: async (data: any) => {
     const res = await fetch(`${API_BASE}/mrp/crm/customers`, {
       method: "POST",

@@ -97,8 +97,8 @@ export default function CustomerDetailsPage() {
 
   return (
     <RouteGuard module="crm" fallback={<div>Access Denied</div>}>
-      <div className="flex flex-col h-full bg-[#f4f7fb] min-h-[calc(100vh-4rem)] p-4 -m-4 sm:-m-6 lg:-m-8">
-        <div className="bg-white rounded-md shadow-sm overflow-hidden flex flex-col min-h-[80vh]">
+      <div className="flex flex-col min-h-[calc(100vh-4rem)] bg-[#f4f7fb] p-4 sm:p-6 pb-24 -m-4 sm:-m-6 lg:-m-8">
+        <div className="bg-white rounded-md shadow-sm flex flex-col min-h-[80vh] pb-10">
           <MrpTabBar tabs={crmTabs} />
           
           <div className="px-6 py-4 flex-1 flex flex-col">
