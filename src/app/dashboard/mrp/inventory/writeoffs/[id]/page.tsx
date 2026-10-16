@@ -62,7 +62,11 @@ export default function WriteoffDetailPage({ params }: { params: Promise<{ id: s
           <div className="px-10 py-6 flex-1 bg-gray-50/50">
             <div className="flex justify-between items-center mb-6">
               <h1 className="text-2xl font-semibold text-gray-900">Write-off {wo.writeoff_number}</h1>
-              <Button variant="outline" className="gap-2">
+              <Button 
+                variant="outline" 
+                className="gap-2"
+                onClick={() => window.open(`${process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:4001/api"}/mrp/stock/writeoffs/${wo.writeoff_number}/pdf`, "_blank")}
+              >
                 <Download className="w-4 h-4" /> PDF
               </Button>
             </div>

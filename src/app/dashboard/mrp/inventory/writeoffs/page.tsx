@@ -86,10 +86,22 @@ export default function WriteoffsPage() {
           <div className="px-4 pb-4 flex-1">
             <div className="flex justify-between items-center mb-6 mt-4">
               <h1 className="text-2xl font-semibold text-gray-900">Write-offs</h1>
-              <button className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50">
-                <Download className="w-4 h-4" />
-                Export
-              </button>
+              <div className="flex items-center gap-2">
+                <button 
+                  className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50"
+                  onClick={() => window.open(`${process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:4001/api"}/mrp/stock/writeoffs/export/pdf`, "_blank")}
+                >
+                  <Download className="w-4 h-4" />
+                  PDF
+                </button>
+                <button 
+                  className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50"
+                  onClick={() => window.open(`${process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:4001/api"}/mrp/stock/writeoffs/export/csv`, "_blank")}
+                >
+                  <Download className="w-4 h-4" />
+                  Export
+                </button>
+              </div>
             </div>
 
             <div className="bg-white rounded-lg shadow-sm border border-gray-200">

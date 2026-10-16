@@ -22,7 +22,12 @@ const stockTabs = [
 export default function ShipmentsLayout({ children }: { children: ReactNode }) {
   const pathname = usePathname();
 
-  const isItemsTab = pathname.includes('/items');
+  const isItemsTab = pathname?.includes('/items');
+  const normalizedPath = pathname?.replace(/\/$/, "") || "";
+  const isListPage =
+    normalizedPath === "/dashboard/mrp/inventory/shipments" ||
+    normalizedPath === "/dashboard/mrp/inventory/shipments/items";
+  const isEditOrCreate = !isListPage;
 
   return (
     <RouteGuard module="inventory">
@@ -33,25 +38,27 @@ export default function ShipmentsLayout({ children }: { children: ReactNode }) {
           <div className="px-4 pb-4 flex-1 flex flex-col">
             <div className="flex items-center justify-between my-4">
               <h1 className="text-2xl text-[#1a2b49]">Shipments</h1>
-              <div className="flex items-center gap-2">
-                <Link href={isItemsTab ? "/dashboard/mrp/inventory/shipments/items/new" : "/dashboard/mrp/inventory/shipments/new"}>
-                  <button className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded hover:bg-blue-700">
-                    + Create
+              {!isEditOrCreate && (
+                <div className="flex items-center gap-2">
+                  <Link href={isItemsTab ? "/dashboard/mrp/inventory/shipments/items/new" : "/dashboard/mrp/inventory/shipments/new"}>
+                    <button className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded hover:bg-blue-700">
+                      + Create
+                    </button>
+                  </Link>
+                  <button 
+                    className="flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 text-sm font-medium rounded border border-gray-200 hover:bg-gray-200"
+                    onClick={() => window.open(`${process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:4001/api"}/mrp/stock/shipments/export/pdf`, "_blank")}
+                  >
+                    <Download className="w-4 h-4" /> PDF
                   </button>
-                </Link>
-                <button 
-                  className="flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 text-sm font-medium rounded border border-gray-200 hover:bg-gray-200"
-                  onClick={() => window.open(`${process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:4001/api"}/mrp/stock/shipments/export/pdf`, "_blank")}
-                >
-                  <Download className="w-4 h-4" /> PDF
-                </button>
-                <button 
-                  className="flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 text-sm font-medium rounded border border-gray-200 hover:bg-gray-200"
-                  onClick={() => window.open(`${process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:4001/api"}/mrp/stock/shipments/export/csv`, "_blank")}
-                >
-                  <Download className="w-4 h-4" /> CSV
-                </button>
-              </div>
+                  <button 
+                    className="flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 text-sm font-medium rounded border border-gray-200 hover:bg-gray-200"
+                    onClick={() => window.open(`${process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:4001/api"}/mrp/stock/shipments/export/csv`, "_blank")}
+                  >
+                    <Download className="w-4 h-4" /> CSV
+                  </button>
+                </div>
+              )}
             </div>
 
             {/* Sub-tabs for Shipments / Items */}
