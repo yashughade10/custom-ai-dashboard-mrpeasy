@@ -7,6 +7,7 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { API_BASE_URL } from "@/services/api";
+import { Badge } from "@/components/ui/badge";
 import RichTextEditor from "@/components/ui/RichTextEditor";
 import { Eye, EyeOff } from "lucide-react";
 
@@ -34,8 +35,9 @@ export default function SelectiveEmailSender() {
   const [contacts, setContacts] = useState<any[]>([]);
   const [tags, setTags] = useState<any[]>([]);
   const [selectedTag, setSelectedTag] = useState<string>("");
+  const [sourceFilter, setSourceFilter] = useState<"all" | "mrp" | "crm">("all");
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedContactIds, setSelectedContactIds] = useState<Set<number>>(new Set());
+  const [selectedContactIds, setSelectedContactIds] = useState<Set<string | number>>(new Set());
 
   const [templates, setTemplates] = useState<any[]>([]);
   const [selectedTemplate, setSelectedTemplate] = useState<string>("");
@@ -49,7 +51,7 @@ export default function SelectiveEmailSender() {
   useEffect(() => {
     fetchTags();
     fetchTemplates();
-    fetchContacts("");
+    fetchContacts("", "all");
   }, []);
 
   const fetchTags = () => {
@@ -63,21 +65,28 @@ export default function SelectiveEmailSender() {
       .catch((err) => console.error(err));
   };
 
-  const fetchContacts = (tagId: string) => {
-    const url = tagId 
-      ? `${API_BASE_URL}/crm/contacts?tagId=${tagId}&limit=all` 
-      : `${API_BASE_URL}/crm/contacts?limit=all`;
+  const fetchContacts = (tagId: string, source: string = sourceFilter) => {
+    let url = `${API_BASE_URL}/email/contacts?source=${source}`;
+    if (tagId) url += `&tagId=${tagId}`;
     
     apiFetch(url)
       .then((res) => res.json())
       .then((data) => {
         if (data.success) {
-          setContacts(data.data);
+          setContacts(data.contacts || data.data || []);
           // clear selections on filter change
           setSelectedContactIds(new Set());
         }
       })
-      .catch((err) => console.error(err));
+      .catch((err) => {
+        console.error(err);
+        // Fallback to crm/contacts if needed
+        apiFetch(`${API_BASE_URL}/crm/contacts?limit=all`)
+          .then(r => r.json())
+          .then(d => {
+            if (d.success) setContacts(d.data || []);
+          });
+      });
   };
 
   const fetchTemplates = () => {
@@ -94,10 +103,16 @@ export default function SelectiveEmailSender() {
   const handleTagChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const tagId = e.target.value;
     setSelectedTag(tagId);
-    fetchContacts(tagId);
+    fetchContacts(tagId, sourceFilter);
   };
 
-  const toggleContactSelection = (id: number) => {
+  const handleSourceChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const newSource = e.target.value as "all" | "mrp" | "crm";
+    setSourceFilter(newSource);
+    fetchContacts(selectedTag, newSource);
+  };
+
+  const toggleContactSelection = (id: string | number) => {
     const newSet = new Set(selectedContactIds);
     if (newSet.has(id)) {
       newSet.delete(id);
@@ -111,8 +126,9 @@ export default function SelectiveEmailSender() {
     if (!searchQuery) return true;
     const q = searchQuery.toLowerCase();
     const nameMatch = `${c.firstname || ""} ${c.lastname || ""}`.toLowerCase().includes(q);
+    const companyMatch = (c.company || "").toLowerCase().includes(q);
     const emailMatch = (c.email || "").toLowerCase().includes(q);
-    return nameMatch || emailMatch;
+    return nameMatch || companyMatch || emailMatch;
   });
 
   const toggleAllContacts = () => {
@@ -127,12 +143,16 @@ export default function SelectiveEmailSender() {
     setLoading(true);
     setMessage("");
     try {
+      const selectedList = contacts.filter(c => selectedContactIds.has(c.id));
+      const selectedEmails = selectedList.map(c => c.email).filter(Boolean);
+
       const finalHtml = getFinalHtml(newTemplateBody);
       const res = await apiFetch(`${API_BASE_URL}/email/send-selected`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ 
           contact_ids: Array.from(selectedContactIds),
+          emails: selectedEmails,
           template_id: selectedTemplate || undefined,
           subject: newTemplateSubject,
           html_body: finalHtml
@@ -159,36 +179,51 @@ export default function SelectiveEmailSender() {
           <CardTitle>Selective Send & Filtering</CardTitle>
         </CardHeader>
         <CardContent className="space-y-6">
-          <div className="flex flex-col md:flex-row items-center gap-4 border-b pb-4">
-            <div className="w-full md:w-64 space-y-2">
-              <Label>Filter by Tag</Label>
+          <div className="flex flex-col md:flex-row items-center gap-4 border-b pb-4 flex-wrap">
+            <div className="w-full md:w-64 space-y-1.5">
+              <Label className="text-xs font-semibold">Audience Source</Label>
               <select 
-                className="w-full p-2 border rounded-md text-sm"
+                className="w-full p-2 border rounded-md text-xs bg-background shadow-xs font-medium"
+                value={sourceFilter}
+                onChange={handleSourceChange}
+              >
+                <option value="all">All Contacts (MRPeasy + Website)</option>
+                <option value="mrp">MRPeasy Customers Only</option>
+                <option value="crm">Website Leads / CRM Only</option>
+              </select>
+            </div>
+
+            <div className="w-full md:w-56 space-y-1.5">
+              <Label className="text-xs font-semibold">Filter by Tag</Label>
+              <select 
+                className="w-full p-2 border rounded-md text-xs bg-background shadow-xs font-medium"
                 value={selectedTag}
                 onChange={handleTagChange}
+                disabled={sourceFilter === "mrp"}
               >
-                <option value="">All Contacts</option>
+                <option value="">All Tags</option>
                 {tags.map(t => (
                   <option key={t.id} value={t.id}>{t.name}</option>
                 ))}
               </select>
             </div>
             
-            <div className="w-full md:w-64 space-y-2">
-              <Label>Search</Label>
+            <div className="w-full md:w-64 space-y-1.5">
+              <Label className="text-xs font-semibold">Search</Label>
               <Input 
-                placeholder="Search by name or email..." 
+                placeholder="Search by name, company, email..." 
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
+                className="h-8 text-xs"
               />
             </div>
 
-            <div className="pt-6 text-sm text-muted-foreground ml-auto">
-              {filteredContacts.length} contacts found. {selectedContactIds.size} selected.
+            <div className="pt-5 text-xs text-muted-foreground ml-auto font-medium">
+              {filteredContacts.length} contacts found • <strong className="text-foreground">{selectedContactIds.size}</strong> selected
             </div>
           </div>
 
-          <div className="border rounded-md max-h-[300px] overflow-auto">
+          <div className="border rounded-md max-h-[350px] overflow-auto">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -200,38 +235,64 @@ export default function SelectiveEmailSender() {
                       onChange={toggleAllContacts}
                     />
                   </TableHead>
-                  <TableHead>Name</TableHead>
+                  <TableHead>Contact / Company</TableHead>
                   <TableHead>Email</TableHead>
+                  <TableHead>Source</TableHead>
                   <TableHead>Tags</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredContacts.map((c) => (
-                  <TableRow 
-                    key={c.id} 
-                    className="cursor-pointer hover:bg-muted/50 transition-colors"
-                    onClick={() => toggleContactSelection(c.id)}
-                  >
-                    <TableCell className="text-center">
-                      <input 
-                        type="checkbox" 
-                        className="pointer-events-none"
-                        checked={selectedContactIds.has(c.id)}
-                        readOnly
-                      />
-                    </TableCell>
-                    <TableCell className="font-medium">{c.firstname} {c.lastname}</TableCell>
-                    <TableCell>{c.email}</TableCell>
-                    <TableCell>
-                      {c.tags && c.tags.length > 0 
-                        ? c.tags.map((t: any) => t.name).join(", ") 
-                        : <span className="text-muted-foreground italic">None</span>}
-                    </TableCell>
-                  </TableRow>
-                ))}
+                {filteredContacts.map((c) => {
+                  const displayName = `${c.firstname || ""} ${c.lastname || ""}`.trim() || c.company || "Contact";
+                  const isMrp = c.source_type === "mrp";
+
+                  return (
+                    <TableRow 
+                      key={c.id} 
+                      className="cursor-pointer hover:bg-muted/50 transition-colors"
+                      onClick={() => toggleContactSelection(c.id)}
+                    >
+                      <TableCell className="text-center">
+                        <input 
+                          type="checkbox" 
+                          className="pointer-events-none"
+                          checked={selectedContactIds.has(c.id)}
+                          readOnly
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <div className="font-medium text-xs text-foreground">{displayName}</div>
+                        {c.company && displayName !== c.company && (
+                          <div className="text-[11px] text-muted-foreground">{c.company}</div>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-xs font-mono">{c.email}</TableCell>
+                      <TableCell>
+                        {isMrp ? (
+                          <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800 text-[10px]">
+                            MRPeasy Customer
+                          </Badge>
+                        ) : (
+                          <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/40 dark:text-blue-300 dark:border-blue-800 text-[10px]">
+                            Website Lead
+                          </Badge>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        {c.tags && c.tags.length > 0 
+                          ? c.tags.map((t: any) => (
+                              <span key={t.id || t.name} className="inline-block mr-1 text-[10px] bg-muted px-1.5 py-0.5 rounded border">
+                                {t.name}
+                              </span>
+                            ))
+                          : <span className="text-muted-foreground italic text-xs">None</span>}
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
                 {filteredContacts.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={4} className="text-center py-4 text-muted-foreground">
+                    <TableCell colSpan={5} className="text-center py-6 text-muted-foreground text-xs">
                       No contacts match your criteria.
                     </TableCell>
                   </TableRow>
