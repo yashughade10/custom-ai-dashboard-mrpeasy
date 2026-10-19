@@ -18,7 +18,7 @@ export default function ProcurementLayout({ children }: { children: React.ReactN
   return (
     <RouteGuard module="procurement" fallback={<div>Access Denied</div>}>
       <div className="flex flex-col h-full bg-[#f4f7fb] min-h-[calc(100vh-4rem)] p-4 -m-4 sm:-m-6 lg:-m-8">
-        <div className="bg-white rounded-md shadow-sm overflow-hidden flex flex-col min-h-[80vh]">
+        <div className="bg-white rounded-md shadow-sm flex flex-col min-h-[80vh]">
           <MrpTabBar tabs={procurementTabs} />
           
           <div className="flex-1 flex flex-col min-h-0">

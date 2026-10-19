@@ -17,6 +17,16 @@ export default function ForecastingTable() {
 
   const [activeFilters, setActiveFilters] = useState({});
 
+  const [limit, setLimit] = useState(50);
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setActiveFilters({ ...filters });
+      setLimit(50);
+    }, 300);
+    return () => clearTimeout(handler);
+  }, [filters]);
+  
+
   const [savedSearches, setSavedSearches] = useState<{name: string, filters: Record<string, string>}[]>([]);
   const [showSaveMenu, setShowSaveMenu] = useState(false);
   const [showSaveModal, setShowSaveModal] = useState(false);
@@ -62,12 +72,14 @@ export default function ForecastingTable() {
     localStorage.setItem('mrp_forecasts_saved_searches', JSON.stringify(newSearches));
   };
 
-  const { data: response, isLoading } = useQuery({
-    queryKey: ["mrpForecasts", activeFilters],
-    queryFn: () => mrpApi.getForecasts(activeFilters)
+  const { data: response, isLoading, isFetching } = useQuery({
+    queryKey: ["mrpForecasts", limit, activeFilters],
+    queryFn: () => mrpApi.getForecasts(1, limit, activeFilters)
   });
 
   const forecasts = response?.data || [];
+  const total = response?.total ?? forecasts.length;
+  const hasMore = total > forecasts.length;
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFilters(prev => ({ ...prev, [e.target.name]: e.target.value }));
@@ -273,6 +285,32 @@ export default function ForecastingTable() {
           </tbody>
         </table>
       </div>
+
+      {forecasts.length > 0 && (
+        <div className="mt-4 mb-2 flex flex-col sm:flex-row items-center justify-center gap-2 py-3">
+          {hasMore && (
+            <button
+              onClick={() => setLimit((prev) => prev + 50)}
+              disabled={isFetching}
+              className="text-blue-600 hover:text-blue-800 hover:underline text-sm font-medium cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed bg-transparent border-none py-1.5 px-4 rounded transition-colors inline-flex items-center gap-2"
+            >
+              {isFetching && limit > 50 ? (
+                <>
+                  <span className="inline-block w-3.5 h-3.5 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></span>
+                  <span>Loading more...</span>
+                </>
+              ) : (
+                "Load more"
+              )}
+            </button>
+          )}
+          {total > 0 && (
+            <span className="text-gray-400 text-xs">
+              (Showing {forecasts.length} of {total.toLocaleString()} forecasts)
+            </span>
+          )}
+        </div>
+      )}
     </div>
   );
 }

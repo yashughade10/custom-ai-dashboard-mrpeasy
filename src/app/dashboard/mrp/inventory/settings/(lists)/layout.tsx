@@ -26,8 +26,8 @@ export default function SettingsListsLayout({ children }: { children: React.Reac
   };
 
   return (
-    <div className="px-4 pb-4 flex-1 flex flex-col">
-      <div className="flex items-center gap-4 mb-6 mt-2">
+    <div className="px-4 pb-6 flex-1 flex flex-col">
+      <div className="flex items-center gap-4 mb-3 mt-2 shrink-0">
         <h1 className="text-2xl font-semibold text-gray-900">Stock settings</h1>
         <button 
           onClick={handleCreate}
@@ -61,7 +61,7 @@ export default function SettingsListsLayout({ children }: { children: React.Reac
         </div>
 
         {/* Main Content (Tables) */}
-        <div className="flex-1 overflow-auto">
+        <div className="flex-1 flex flex-col">
           {children}
         </div>
       </div>

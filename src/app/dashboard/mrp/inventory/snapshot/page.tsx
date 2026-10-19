@@ -1,12 +1,12 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useQuery, useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { mrpApi } from "@/services/mrpApi";
 import { RouteGuard } from "@/components/auth/RouteGuard";
 import { MrpTabBar } from "@/components/mrp/MrpTabBar";
 import { toast } from "sonner";
-import { Calendar, Download, Upload, Save } from "lucide-react";
+import { Download } from "lucide-react";
 import { format } from "date-fns";
 
 const stockTabs = [
@@ -32,15 +32,30 @@ export default function InventorySnapshotPage() {
   const [costMin, setCostMin] = useState("");
   const [costMax, setCostMax] = useState("");
   
-  // Pending edits
-  const [edits, setEdits] = useState<Record<string, string>>({});
-  
   // Search Filters
   const [searchPartNo, setSearchPartNo] = useState("");
   const [searchGroupNo, setSearchGroupNo] = useState("");
   const [searchGroupName, setSearchGroupName] = useState("");
   const [searchPartDesc, setSearchPartDesc] = useState("");
 
+  // Debounced filters
+  const [debouncedParams, setDebouncedParams] = useState({
+    qtyMin: "", qtyMax: "", costMin: "", costMax: "",
+    searchPartNo: "", searchGroupNo: "", searchGroupName: "", searchPartDesc: ""
+  });
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedParams({
+        qtyMin, qtyMax, costMin, costMax,
+        searchPartNo, searchGroupNo, searchGroupName, searchPartDesc
+      });
+    }, 300);
+    return () => clearTimeout(handler);
+  }, [qtyMin, qtyMax, costMin, costMax, searchPartNo, searchGroupNo, searchGroupName, searchPartDesc]);
+
+  // Pending edits
+  const [edits, setEdits] = useState<Record<string, string>>({});
   const limit = 50;
 
   const { data: locsRes } = useQuery({
@@ -51,6 +66,7 @@ export default function InventorySnapshotPage() {
   const { 
     data: invRes, 
     isLoading,
+    isFetching,
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage
@@ -58,19 +74,21 @@ export default function InventorySnapshotPage() {
     queryKey: [
       "mrpInventorySnapshot", 
       selectedLocation, 
-      qtyMin, qtyMax, costMin, costMax, 
-      searchPartNo, searchGroupNo, searchGroupName, searchPartDesc
+      debouncedParams
     ],
     initialPageParam: 1,
     queryFn: ({ pageParam = 1 }) => mrpApi.getInventorySnapshot({
       location: selectedLocation === "All locations" ? "" : selectedLocation,
       page: pageParam,
       limit,
-      qtyMin, qtyMax, costMin, costMax,
-      partNo: searchPartNo,
-      groupNo: searchGroupNo,
-      groupName: searchGroupName,
-      partDesc: searchPartDesc
+      qtyMin: debouncedParams.qtyMin,
+      qtyMax: debouncedParams.qtyMax,
+      costMin: debouncedParams.costMin,
+      costMax: debouncedParams.costMax,
+      partNo: debouncedParams.searchPartNo,
+      groupNo: debouncedParams.searchGroupNo,
+      groupName: debouncedParams.searchGroupName,
+      partDesc: debouncedParams.searchPartDesc
     }),
     getNextPageParam: (lastPage) => {
       if (lastPage.page < lastPage.totalPages) {
@@ -79,26 +97,27 @@ export default function InventorySnapshotPage() {
       return undefined;
     }
   });
-  
+
   const locations = locsRes?.data || [];
-  const inventory = invRes?.pages.flatMap((page: any) => page.data) || [];
-  
-  const totalQty = invRes?.pages[0]?.totalQty || 0;
-  const totalCost = invRes?.pages[0]?.totalCost || 0;
-  
+
+  const inventory = useMemo(() => {
+    if (!invRes?.pages) return [];
+    return invRes.pages.flatMap((page: any) => page.data || []);
+  }, [invRes]);
+
+  const totalQty = invRes?.pages?.[0]?.totalQty ?? 0;
+  const totalCost = invRes?.pages?.[0]?.totalCost ?? 0;
+  const totalCount = invRes?.pages?.[0]?.totalCount ?? 0;
+
   const updateMutation = useMutation({
-    mutationFn: (data: { part_no: string, new_quantity: number, location?: string }) => 
+    mutationFn: (data: { part_no: string; new_quantity: number; location?: string }) => 
       mrpApi.updatePhysicalQuantity(data),
-    onSuccess: (res) => {
-      if (res.message === 'No adjustment needed') {
-        toast.info(res.message);
-      } else {
-        toast.success(res.message);
-      }
+    onSuccess: () => {
+      toast.success("Physical quantity updated successfully");
       queryClient.invalidateQueries({ queryKey: ["mrpInventorySnapshot"] });
     },
-    onError: (err) => {
-      toast.error("Failed to update physical quantity");
+    onError: (err: any) => {
+      toast.error(err.message || "Failed to update quantity");
     }
   });
 
@@ -112,37 +131,9 @@ export default function InventorySnapshotPage() {
       location: selectedLocation === "All locations" ? undefined : selectedLocation
     });
     
-    // Clear the edit after save
     const newEdits = { ...edits };
     delete newEdits[partNo];
     setEdits(newEdits);
-  };
-  
-  const handleSaveAll = async () => {
-    const partNos = Object.keys(edits).filter(p => edits[p] !== "");
-    if (partNos.length === 0) return;
-    
-    let successCount = 0;
-    
-    // Process sequentially to not overload
-    for (const partNo of partNos) {
-      try {
-        await mrpApi.updatePhysicalQuantity({
-          part_no: partNo,
-          new_quantity: Number(edits[partNo]),
-          location: selectedLocation === "All locations" ? undefined : selectedLocation
-        });
-        successCount++;
-      } catch (err) {
-        console.error(err);
-      }
-    }
-    
-    if (successCount > 0) {
-      toast.success(`Successfully updated ${successCount} items`);
-      setEdits({});
-      queryClient.invalidateQueries({ queryKey: ["mrpInventorySnapshot"] });
-    }
   };
 
   const handleClearFilters = () => {
@@ -162,7 +153,7 @@ export default function InventorySnapshotPage() {
         <div className="bg-white rounded-md shadow-sm flex flex-col min-h-[80vh]">
           <MrpTabBar tabs={stockTabs} />
           
-          <div className="px-6 py-4 flex-1">
+          <div className="px-6 py-4 flex-1 flex flex-col w-full">
             {/* Header Area */}
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center gap-4">
@@ -197,27 +188,28 @@ export default function InventorySnapshotPage() {
               <div className="flex items-center gap-2">
                 <button 
                   className="flex items-center gap-2 px-3 py-1.5 bg-gray-100 text-gray-700 text-sm font-medium rounded border border-gray-200 hover:bg-gray-200"
-                  onClick={() => window.open(`${process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:4001/api"}/mrp/stock/inventory/export/pdf`, "_blank")}
+                  onClick={() => window.open(`${process.env.NEXT_PUBLIC_API_BASE_URL || "http://127.0.0.1:4000/api"}/mrp/stock/inventory/export/pdf`, "_blank")}
                 >
                   <Download className="w-4 h-4" /> PDF
                 </button>
                 <button 
                   className="flex items-center gap-2 px-3 py-1.5 bg-gray-100 text-gray-700 text-sm font-medium rounded border border-gray-200 hover:bg-gray-200"
-                  onClick={() => window.open(`${process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:4001/api"}/mrp/stock/inventory/export/csv`, "_blank")}
+                  onClick={() => window.open(`${process.env.NEXT_PUBLIC_API_BASE_URL || "http://127.0.0.1:4000/api"}/mrp/stock/inventory/export/csv`, "_blank")}
                 >
                   <Download className="w-4 h-4" /> CSV
                 </button>
-                {/* 
-                <button className="flex items-center gap-2 px-3 py-1.5 bg-gray-100 text-gray-700 text-sm font-medium rounded border border-gray-200 hover:bg-gray-200">
-                  <Upload className="w-4 h-4" /> Import from CSV
-                </button>
-                */}
               </div>
             </div>
             
             {/* Table Area */}
-            <div className="w-full overflow-auto bg-white border border-gray-200 shadow-sm">
-              <table className="w-full text-sm text-left">
+            <div className="w-full relative">
+              {isFetching && !isFetchingNextPage && (
+                <div className="absolute top-2 right-2 z-20 flex items-center gap-1.5 bg-white/90 border border-blue-200 px-2 py-1 rounded shadow-xs text-xs text-blue-600">
+                  <span className="inline-block w-3.5 h-3.5 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></span>
+                  <span>Searching...</span>
+                </div>
+              )}
+              <table className="w-full text-sm text-left border border-gray-200">
                 <thead className="bg-[#f0f4f8] text-gray-700 font-semibold border-b border-gray-300">
                   <tr>
                     <th className="px-3 py-2 w-10 border-r border-gray-300 text-center">#</th>
@@ -228,15 +220,7 @@ export default function InventorySnapshotPage() {
                     <th className="px-3 py-2 border-r border-gray-300 whitespace-nowrap w-32">Cost</th>
                     <th className="px-3 py-2 border-r border-gray-300 whitespace-nowrap">Part description</th>
                     <th className="px-3 py-2 border-r border-gray-300 whitespace-nowrap w-40 text-center">Physical quantity</th>
-                    <th className="px-3 py-2 border-r border-gray-300 whitespace-nowrap w-32 text-center">
-                      <button 
-                        onClick={handleSaveAll}
-                        disabled={Object.keys(edits).length === 0}
-                        className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-1 rounded disabled:opacity-50 font-medium text-xs w-full max-w-[80px]"
-                      >
-                        Save all
-                      </button>
-                    </th>
+                    <th className="px-3 py-2 border-r border-gray-300 whitespace-nowrap w-24 text-center">Actions</th>
                   </tr>
                   
                   {/* Search Row */}
@@ -330,15 +314,29 @@ export default function InventorySnapshotPage() {
             </div>
 
             {/* Load More Control */}
-            {hasNextPage && (
-              <div className="flex justify-center mt-6 mb-4">
-                <button
-                  onClick={() => fetchNextPage()}
-                  disabled={isFetchingNextPage}
-                  className="px-6 py-2 bg-white border border-gray-300 shadow-sm text-gray-700 rounded-md font-medium hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 transition-colors"
-                >
-                  {isFetchingNextPage ? 'Loading more...' : 'Load more items'}
-                </button>
+            {inventory.length > 0 && (
+              <div className="mt-4 mb-2 flex flex-col sm:flex-row items-center justify-center gap-2 py-3">
+                {hasNextPage && (
+                  <button
+                    onClick={() => fetchNextPage()}
+                    disabled={isFetchingNextPage}
+                    className="text-blue-600 hover:text-blue-800 hover:underline text-sm font-medium cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed bg-transparent border-none py-1.5 px-4 rounded transition-colors inline-flex items-center gap-2"
+                  >
+                    {isFetchingNextPage ? (
+                      <>
+                        <span className="inline-block w-3.5 h-3.5 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></span>
+                        <span>Loading more...</span>
+                      </>
+                    ) : (
+                      "Load more"
+                    )}
+                  </button>
+                )}
+                {totalCount > 0 && (
+                  <span className="text-gray-400 text-xs">
+                    (Showing {inventory.length} of {totalCount.toLocaleString()} items)
+                  </span>
+                )}
               </div>
             )}
             

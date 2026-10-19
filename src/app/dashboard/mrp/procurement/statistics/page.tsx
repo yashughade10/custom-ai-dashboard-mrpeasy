@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Calendar as CalendarIcon, Settings2, Search, Download } from "lucide-react";
@@ -93,6 +93,17 @@ export default function ProcurementStatisticsPage() {
   const [showColDropdown, setShowColDropdown] = useState(false);
   const [filters, setFilters] = useState<FilterState>({ ...emptyFilters });
   const [appliedFilters, setAppliedFilters] = useState<FilterState>({ ...emptyFilters });
+
+  const [limit, setLimit] = useState(50);
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setAppliedFilters({ ...filters });
+      setLimit(50);
+    }, 300);
+    return () => clearTimeout(handler);
+  }, [filters]);
+  
   const [dateFrom, setDateFrom] = useState(formatDate(new Date(new Date().getFullYear(), new Date().getMonth(), 1)));
   const [dateTo, setDateTo] = useState(formatDate(new Date()));
 
@@ -140,6 +151,8 @@ export default function ProcurementStatisticsPage() {
 
   const totalQuantity = materials.reduce((sum: number, item: any) => sum + (Number(item.quantity) || 0), 0);
   const totalCost = materials.reduce((sum: number, item: any) => sum + (Number(item.cost) || 0), 0);
+  const displayedMaterials = materials.slice(0, limit);
+  const hasMore = materials.length > displayedMaterials.length;
 
   const formatCurrency = (val: any) => {
     if (!val && val !== 0) return "";
@@ -263,7 +276,7 @@ export default function ProcurementStatisticsPage() {
   const visibleColumns = ALL_COLUMNS.filter(c => visibleCols[c.id]);
 
   return (
-    <div className="p-3 sm:p-4 lg:p-6 flex-1 flex flex-col overflow-hidden">
+    <div className="p-3 sm:p-4 lg:p-6 flex-1 flex flex-col">
       {/* Title */}
       <h1 className="text-xl font-bold text-[#0056b3] mb-3">Statistics</h1>
 
@@ -467,7 +480,7 @@ export default function ProcurementStatisticsPage() {
                   <td className="py-1.5 px-1"></td>
                 </tr>
                 {/* Data Rows */}
-                {materials.map((item: any, index: number) => (
+                {displayedMaterials.map((item: any, index: number) => (
                   <tr key={index} className="border-b border-gray-100 hover:bg-[#f8f9ff] transition-colors">
                     <td className="py-1.5 px-1 border-r border-gray-200 text-center text-[#5a8ec5] text-[11px]">{index + 1}</td>
                     {visibleCols.part_no && <td className="py-1.5 px-2 border-r border-gray-200 text-[#0056b3] cursor-pointer hover:underline text-[11px] overflow-hidden text-ellipsis">{item.part_no}</td>}
@@ -485,6 +498,24 @@ export default function ProcurementStatisticsPage() {
           </tbody>
         </table>
       </div>
+
+      {materials.length > 0 && (
+        <div className="mt-4 mb-2 flex flex-col sm:flex-row items-center justify-center gap-2 py-3">
+          {hasMore && (
+            <button
+              onClick={() => setLimit((prev) => prev + 50)}
+              className="text-blue-600 hover:text-blue-800 hover:underline text-sm font-medium cursor-pointer bg-transparent border-none py-1.5 px-4 rounded transition-colors inline-flex items-center gap-2"
+            >
+              Load more
+            </button>
+          )}
+          {materials.length > 0 && (
+            <span className="text-gray-400 text-xs">
+              (Showing {displayedMaterials.length} of {materials.length.toLocaleString()} items)
+            </span>
+          )}
+        </div>
+      )}
     </div>
   );
 }

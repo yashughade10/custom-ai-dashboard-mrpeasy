@@ -18,9 +18,10 @@ interface MrpDataTableProps<T> {
   className?: string;
   totals?: Record<string, React.ReactNode>;
   onFilterChange?: (filters: Record<string, string>, rangeFilters: Record<string, { min?: string; max?: string }>) => void;
+  startIndex?: number;
 }
 
-export function MrpDataTable<T>({ columns, data, onRowClick, className, totals, onFilterChange }: MrpDataTableProps<T>) {
+export function MrpDataTable<T>({ columns, data, onRowClick, className, totals, onFilterChange, startIndex }: MrpDataTableProps<T>) {
   const [filters, setFilters] = React.useState<Record<string, string>>({});
   const [rangeFilters, setRangeFilters] = React.useState<Record<string, { min?: string; max?: string }>>({});
 
@@ -86,8 +87,8 @@ export function MrpDataTable<T>({ columns, data, onRowClick, className, totals, 
   return (
     <div className={cn("w-full overflow-auto bg-white border border-gray-200 shadow-sm", className)}>
       <table className="w-full text-sm text-left">
-        <thead className="bg-[#f0f4f8] text-gray-700 font-semibold border-b border-gray-300">
-          <tr>
+        <thead className="bg-[#f0f4f8] text-gray-700 font-semibold border-b border-gray-300 sticky top-0 z-10 shadow-sm">
+          <tr className="bg-[#f0f4f8]">
             {/* Index Column */}
             <th className="px-3 py-2 w-10 border-r border-gray-300">#</th>
             {columns.map((col, idx) => (
@@ -163,7 +164,7 @@ export function MrpDataTable<T>({ columns, data, onRowClick, className, totals, 
                 className="border-b border-gray-200 hover:bg-[#f0f7ff] transition-colors cursor-pointer"
               >
                 <td className="px-3 py-1.5 border-r border-gray-200 text-gray-500 w-10">
-                  {rowIdx + 1}
+                  {startIndex !== undefined ? startIndex + rowIdx : rowIdx + 1}
                 </td>
                 {columns.map((col, colIdx) => {
                   const val = col.accessorKey ? (row as any)[col.accessorKey] : undefined;

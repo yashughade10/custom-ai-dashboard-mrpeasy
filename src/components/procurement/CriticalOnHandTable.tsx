@@ -51,6 +51,15 @@ export default function CriticalOnHandTable() {
   
   const [filters, setFilters] = useState(emptyFilters);
   const [activeFilters, setActiveFilters] = useState({});
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setActiveFilters({ ...filters });
+      setLimit(50);
+    }, 300);
+    return () => clearTimeout(handler);
+  }, [filters]);
+  
   const [visibleCols, setVisibleCols] = useState<Record<string, boolean>>(
     Object.fromEntries(ALL_COLUMNS.map(c => [c.id, true]))
   );
@@ -246,6 +255,7 @@ export default function CriticalOnHandTable() {
 
   const items = response?.data || [];
   const pagination = response?.pagination;
+  const total = pagination?.total ?? 0;
   const hasMore = pagination ? pagination.total > items.length : false;
 
   const formatCurrency = (val: any) => {
@@ -440,17 +450,31 @@ export default function CriticalOnHandTable() {
             })}
           </tbody>
         </table>
-        {hasMore && (
-          <div className="flex justify-center py-4 bg-white border-t border-gray-200">
-            <button 
-              className="text-blue-600 text-xs font-medium hover:underline cursor-pointer border-none bg-transparent"
-              onClick={() => setLimit(prev => prev + 50)}
+        {items.length > 0 && (
+        <div className="mt-4 mb-2 flex flex-col sm:flex-row items-center justify-center gap-2 py-3">
+          {hasMore && (
+            <button
+              onClick={() => setLimit((prev) => prev + 50)}
               disabled={isFetching}
+              className="text-blue-600 hover:text-blue-800 hover:underline text-sm font-medium cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed bg-transparent border-none py-1.5 px-4 rounded transition-colors inline-flex items-center gap-2"
             >
-              {isFetching ? "Loading..." : "Load more"}
+              {isFetching && limit > 50 ? (
+                <>
+                  <span className="inline-block w-3.5 h-3.5 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></span>
+                  <span>Loading more...</span>
+                </>
+              ) : (
+                "Load more"
+              )}
             </button>
-          </div>
-        )}
+          )}
+          {total > 0 && (
+            <span className="text-gray-400 text-xs">
+              (Showing {items.length} of {total.toLocaleString()} critical items)
+            </span>
+          )}
+        </div>
+      )}
       </div>
     </div>
   );

@@ -32,7 +32,7 @@ export default function ShipmentsLayout({ children }: { children: ReactNode }) {
   return (
     <RouteGuard module="inventory">
       <div className="flex flex-col h-full bg-[#f4f7fb] min-h-[calc(100vh-4rem)] p-4 -m-4 sm:-m-6 lg:-m-8">
-        <div className="bg-white rounded-md shadow-sm overflow-hidden flex flex-col min-h-[80vh]">
+        <div className="bg-white rounded-md shadow-sm flex flex-col min-h-[80vh]">
           <MrpTabBar tabs={stockTabs} />
           
           <div className="px-4 pb-4 flex-1 flex flex-col">

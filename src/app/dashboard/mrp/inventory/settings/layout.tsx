@@ -22,7 +22,7 @@ export default function SettingsRootLayout({ children }: { children: React.React
   return (
     <RouteGuard module="inventory" fallback={<div>Access Denied</div>}>
       <div className="flex flex-col h-full bg-[#f4f7fb] min-h-[calc(100vh-4rem)] p-4 -m-4 sm:-m-6 lg:-m-8">
-        <div className="bg-white rounded-md shadow-sm overflow-hidden flex flex-col min-h-[80vh]">
+        <div className="bg-white rounded-md shadow-sm flex flex-col flex-1 min-h-[80vh]">
           {/* Note: In stockTabs, we override Stock settings href to point to product-groups to keep it active */}
           <MrpTabBar tabs={stockTabs.map(t => ({
             ...t,

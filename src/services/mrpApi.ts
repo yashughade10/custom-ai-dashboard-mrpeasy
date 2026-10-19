@@ -7,12 +7,45 @@ export const mrpApi = {
     return res.json();
   },
   
-  getItems: async (page = 1, limit = 50, filters = {}) => {
+  getItems: async (
+    page = 1, 
+    limit = 50, 
+    searchOrFilters: string | Record<string, any> = "", 
+    filters: Record<string, string> = {}, 
+    rangeFilters: Record<string, { min?: string; max?: string }> = {}
+  ) => {
+    let search = "";
+    let effectiveFilters = { ...filters };
+    let effectiveRangeFilters = { ...rangeFilters };
+
+    if (typeof searchOrFilters === "object" && searchOrFilters !== null) {
+      if ("search" in searchOrFilters) {
+        search = (searchOrFilters as any).search || "";
+        const rest = { ...searchOrFilters };
+        delete rest.search;
+        effectiveFilters = { ...rest, ...effectiveFilters };
+      } else {
+        effectiveFilters = { ...searchOrFilters, ...effectiveFilters };
+      }
+    } else if (typeof searchOrFilters === "string") {
+      search = searchOrFilters;
+    }
+
     const searchParams = new URLSearchParams({
       page: page.toString(),
-      limit: limit.toString(),
-      ...filters
+      limit: limit.toString()
     });
+
+    if (search) {
+      searchParams.append("search", search);
+    }
+    if (Object.keys(effectiveFilters).length > 0) {
+      searchParams.append("filters", JSON.stringify(effectiveFilters));
+    }
+    if (Object.keys(effectiveRangeFilters).length > 0) {
+      searchParams.append("rangeFilters", JSON.stringify(effectiveRangeFilters));
+    }
+
     const res = await fetch(`${API_BASE}/mrp/stock/items?${searchParams.toString()}`);
     if (!res.ok) throw new Error("Failed to fetch items");
     return res.json();
@@ -50,23 +83,29 @@ export const mrpApi = {
     return res.json();
   },
 
-  getStockAging: async (page = 1, limit = 50, filters = {}) => {
+  getStockAging: async (page = 1, limit = 50, searchOrFilters: any = "", maybeFilters: any = {}) => {
+    let search = typeof searchOrFilters === 'string' ? searchOrFilters : '';
+    let filters = typeof searchOrFilters === 'object' && searchOrFilters !== null ? searchOrFilters : maybeFilters;
     const searchParams = new URLSearchParams({
       page: page.toString(),
       limit: limit.toString(),
-      filters: JSON.stringify(filters)
     });
+    if (search) searchParams.append("search", search);
+    if (filters && Object.keys(filters).length > 0) searchParams.append("filters", JSON.stringify(filters));
     const res = await fetch(`${API_BASE}/mrp/stock/aging?${searchParams.toString()}`);
     if (!res.ok) throw new Error("Failed to fetch stock aging report");
     return res.json();
   },
 
-  getCriticalOnHand: async (page = 1, limit = 50, filters = {}) => {
+  getCriticalOnHand: async (page = 1, limit = 50, searchOrFilters: any = "", maybeFilters: any = {}) => {
+    let search = typeof searchOrFilters === 'string' ? searchOrFilters : '';
+    let filters = typeof searchOrFilters === 'object' && searchOrFilters !== null ? searchOrFilters : maybeFilters;
     const searchParams = new URLSearchParams({
       page: page.toString(),
       limit: limit.toString(),
-      filters: JSON.stringify(filters)
     });
+    if (search) searchParams.append("search", search);
+    if (filters && Object.keys(filters).length > 0) searchParams.append("filters", JSON.stringify(filters));
     const res = await fetch(`${API_BASE}/mrp/stock/critical?${searchParams.toString()}`);
     if (!res.ok) throw new Error("Failed to fetch critical stock");
     return res.json();
@@ -302,8 +341,13 @@ export const mrpApi = {
     return res.json();
   },
 
-  getVendors: async () => {
-    const res = await fetch(`${API_BASE}/mrp/procurement/vendors`);
+  getVendors: async (page = 1, limit = 50, filters: any = {}) => {
+    const searchParams = new URLSearchParams({
+      page: page.toString(),
+      limit: limit.toString(),
+      ...filters
+    });
+    const res = await fetch(`${API_BASE}/mrp/procurement/vendors?${searchParams.toString()}`);
     if (!res.ok) throw new Error("Failed to fetch vendors");
     return res.json();
   },
@@ -384,8 +428,21 @@ export const mrpApi = {
 
 
 
-  getProductGroups: async () => {
-    const res = await fetch(`${API_BASE}/mrp/stock/groups`);
+  getProductGroups: async (
+    page = 1, 
+    limit = 1000, 
+    search = "", 
+    filters: Record<string, string> = {}
+  ) => {
+    const searchParams = new URLSearchParams({
+      page: page.toString(),
+      limit: limit.toString()
+    });
+    if (search) searchParams.append("search", search);
+    if (Object.keys(filters).length > 0) {
+      searchParams.append("filters", JSON.stringify(filters));
+    }
+    const res = await fetch(`${API_BASE}/mrp/stock/groups?${searchParams.toString()}`);
     if (!res.ok) throw new Error("Failed to fetch product groups");
     return res.json();
   },
@@ -415,8 +472,21 @@ export const mrpApi = {
     return res.json();
   },
 
-  getUoms: async () => {
-    const res = await fetch(`${API_BASE}/mrp/stock/uoms`);
+  getUoms: async (
+    page = 1, 
+    limit = 1000, 
+    search = "", 
+    filters: Record<string, string> = {}
+  ) => {
+    const searchParams = new URLSearchParams({
+      page: page.toString(),
+      limit: limit.toString()
+    });
+    if (search) searchParams.append("search", search);
+    if (Object.keys(filters).length > 0) {
+      searchParams.append("filters", JSON.stringify(filters));
+    }
+    const res = await fetch(`${API_BASE}/mrp/stock/uoms?${searchParams.toString()}`);
     if (!res.ok) throw new Error("Failed to fetch UOMs");
     return res.json();
   },
@@ -446,8 +516,21 @@ export const mrpApi = {
     return res.json();
   },
 
-  getStorageLocations: async () => {
-    const res = await fetch(`${API_BASE}/mrp/stock/locations`);
+  getStorageLocations: async (
+    page = 1, 
+    limit = 1000, 
+    search = "", 
+    filters: Record<string, string> = {}
+  ) => {
+    const searchParams = new URLSearchParams({
+      page: page.toString(),
+      limit: limit.toString()
+    });
+    if (search) searchParams.append("search", search);
+    if (Object.keys(filters).length > 0) {
+      searchParams.append("filters", JSON.stringify(filters));
+    }
+    const res = await fetch(`${API_BASE}/mrp/stock/locations?${searchParams.toString()}`);
     if (!res.ok) throw new Error("Failed to fetch storage locations");
     return res.json();
   },
@@ -924,12 +1007,15 @@ export const mrpApi = {
     return res.json();
   },
 
-  getForecasts: async (filters: any = {}) => {
-    // Filter out empty strings from filters
+  getForecasts: async (page = 1, limit = 50, filters: any = {}) => {
     const validFilters = Object.fromEntries(
-      Object.entries(filters).filter(([_, v]) => v !== "")
+      Object.entries(filters || {}).filter(([_, v]) => v !== "" && v !== null && v !== undefined)
     );
-    const searchParams = new URLSearchParams(validFilters as any);
+    const searchParams = new URLSearchParams({
+      page: page.toString(),
+      limit: limit.toString(),
+      ...validFilters as any
+    });
     const res = await fetch(`${API_BASE}/mrp/procurement/forecasting?${searchParams.toString()}`);
     if (!res.ok) throw new Error("Failed to fetch forecasts");
     return res.json();

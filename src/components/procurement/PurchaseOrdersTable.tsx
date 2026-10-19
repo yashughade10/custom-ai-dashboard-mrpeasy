@@ -117,6 +117,15 @@ export default function PurchaseOrdersTable() {
   });
   
   const [activeFilters, setActiveFilters] = useState({});
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setActiveFilters({ ...filters });
+      setLimit(50);
+    }, 300);
+    return () => clearTimeout(handler);
+  }, [filters]);
+  
   const [visibleCols, setVisibleCols] = useState<Record<string, boolean>>({
     total: true,
     po_number: true,
@@ -422,6 +431,7 @@ export default function PurchaseOrdersTable() {
 
   const orders = response?.data || [];
   const pagination = response?.pagination;
+  const total = pagination?.total ?? 0;
   const hasMore = pagination ? pagination.total > orders.length : false;
   
   const currencyTotals = response?.currency_summary || {};
@@ -1096,17 +1106,27 @@ export default function PurchaseOrdersTable() {
       </div>
 
       {orders.length > 0 && (
-        <div className="flex justify-center mt-4 pb-2 shrink-0 h-8">
-          {hasMore ? (
+        <div className="mt-4 mb-2 flex flex-col sm:flex-row items-center justify-center gap-2 py-3">
+          {hasMore && (
             <button
               onClick={() => setLimit((prev) => prev + 50)}
               disabled={isFetching}
-              className="text-blue-600 cursor-pointer font-medium text-[13px] hover:underline bg-transparent border-none disabled:opacity-50 disabled:cursor-not-allowed"
+              className="text-blue-600 hover:text-blue-800 hover:underline text-sm font-medium cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed bg-transparent border-none py-1.5 px-4 rounded transition-colors inline-flex items-center gap-2"
             >
-              {isFetching && limit > 50 ? "Loading..." : "Load more"}
+              {isFetching && limit > 50 ? (
+                <>
+                  <span className="inline-block w-3.5 h-3.5 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></span>
+                  <span>Loading more...</span>
+                </>
+              ) : (
+                "Load more"
+              )}
             </button>
-          ) : (
-            <span className="text-gray-400 text-[13px]">No more items</span>
+          )}
+          {total > 0 && (
+            <span className="text-gray-400 text-xs">
+              (Showing {orders.length} of {total.toLocaleString()} purchase orders)
+            </span>
           )}
         </div>
       )}

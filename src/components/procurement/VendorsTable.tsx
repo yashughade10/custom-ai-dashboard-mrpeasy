@@ -47,6 +47,18 @@ export default function VendorsTable() {
 
   const [filters, setFilters] = useState<any>({});
   const [activeFilters, setActiveFilters] = useState<any>({});
+  const [limit, setLimit] = useState(50);
+
+  // Debounce filter inputs
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setActiveFilters(filters);
+      setLimit(50);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [filters]);
+
+
 
   const [savedSearches, setSavedSearches] = useState<{name: string, filters: Record<string, string>}[]>([]);
   const [showSaveMenu, setShowSaveMenu] = useState(false);
@@ -91,12 +103,17 @@ export default function VendorsTable() {
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   
-  // Fake pagination
-  const [limit, setLimit] = useState(50);
+
   
   const { data: response, isLoading, isFetching } = useQuery({
-    queryKey: ['mrp-vendors'],
-    queryFn: () => mrpApi.getVendors(),
+    queryKey: ['mrp-vendors', limit, activeFilters],
+    queryFn: () => {
+      const valid: Record<string, string> = {};
+      Object.entries(activeFilters).forEach(([k, v]) => {
+        if (v !== "" && v !== null && v !== undefined) valid[k] = String(v);
+      });
+      return mrpApi.getVendors(1, limit, valid);
+    },
   });
 
   const toggleCol = (id: string) => {
@@ -209,6 +226,8 @@ export default function VendorsTable() {
 
   // Client side filtering since backend doesn't support it yet
   let vendors = response?.data || [];
+  const totalCount = response?.total ?? (response?.pagination?.total ?? vendors.length);
+  const hasMore = totalCount > vendors.length;
   
   if (Object.keys(activeFilters).length > 0) {
     vendors = vendors.filter((v: any) => {
@@ -249,8 +268,7 @@ export default function VendorsTable() {
 
   const exportData = vendors;
   
-  const totalCount = vendors.length;
-  vendors = vendors.slice(0, limit);
+  // backend paginated with limit
   
   const handleDownloadCSV = () => {
     if (exportData.length === 0) return;
@@ -750,16 +768,31 @@ export default function VendorsTable() {
           </div>
         )}
         
-        {totalCount > limit && (
-          <div className="w-full flex justify-center py-6 bg-white border-t border-gray-200">
-            <button 
-              onClick={() => setLimit(prev => prev + 50)} 
-              className="px-6 py-2 bg-[#f0f4fc] text-[#1e5aa0] hover:bg-[#e4ebf7] rounded font-medium text-[13px] transition-colors cursor-pointer border-none shadow-sm"
+        {vendors.length > 0 && (
+        <div className="mt-4 mb-2 flex flex-col sm:flex-row items-center justify-center gap-2 py-3">
+          {hasMore && (
+            <button
+              onClick={() => setLimit((prev) => prev + 50)}
+              disabled={isFetching}
+              className="text-blue-600 hover:text-blue-800 hover:underline text-sm font-medium cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed bg-transparent border-none py-1.5 px-4 rounded transition-colors inline-flex items-center gap-2"
             >
-              Load more
+              {isFetching && limit > 50 ? (
+                <>
+                  <span className="inline-block w-3.5 h-3.5 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></span>
+                  <span>Loading more...</span>
+                </>
+              ) : (
+                "Load more"
+              )}
             </button>
-          </div>
-        )}
+          )}
+          {totalCount > 0 && (
+            <span className="text-gray-400 text-xs">
+              (Showing {vendors.length} of {totalCount.toLocaleString()} vendors)
+            </span>
+          )}
+        </div>
+      )}
       </div>
     </div>
   );
