@@ -25,10 +25,40 @@ const crmTabs = [
 export default function TodayContactsPage() {
   const router = useRouter();
   const [limit, setLimit] = useState(50);
+  const [filters, setFilters] = useState({
+    customer_number: "",
+    name: "",
+    status: "",
+    phone: "",
+    email: ""
+  });
+  const [activeFilters, setActiveFilters] = useState({
+    customer_number: "",
+    name: "",
+    status: "",
+    phone: "",
+    email: ""
+  });
 
-  const { data: response, isLoading } = useQuery({
-    queryKey: ["mrpTodayContacts", limit],
-    queryFn: () => mrpApi.getTodayContacts(1, limit),
+  const handleSearch = () => {
+    setActiveFilters({ ...filters });
+  };
+
+  const handleClear = () => {
+    const empty = { customer_number: "", name: "", status: "", phone: "", email: "" };
+    setFilters(empty);
+    setActiveFilters(empty);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter") {
+      handleSearch();
+    }
+  };
+
+  const { data: response, isLoading, isFetching } = useQuery({
+    queryKey: ["mrpTodayContacts", limit, activeFilters],
+    queryFn: () => mrpApi.getTodayContacts(1, limit, activeFilters),
     placeholderData: keepPreviousData,
   });
 
@@ -105,36 +135,72 @@ export default function TodayContactsPage() {
                       <FileText className="w-4 h-4 mx-auto text-gray-400" />
                     </td>
                     <td className="px-2 py-2 align-top">
-                      <Input className="h-7 text-[11px] bg-gray-50" />
+                      <Input 
+                        value={filters.customer_number} 
+                        onChange={(e) => setFilters(prev => ({ ...prev, customer_number: e.target.value }))}
+                        onKeyDown={handleKeyDown}
+                        placeholder="Number"
+                        className="h-7 text-[11px] bg-gray-50" 
+                      />
                     </td>
                     <td className="px-2 py-2 align-top">
-                      <Input className="h-7 text-[11px] bg-gray-50" />
+                      <Input 
+                        value={filters.name} 
+                        onChange={(e) => setFilters(prev => ({ ...prev, name: e.target.value }))}
+                        onKeyDown={handleKeyDown}
+                        placeholder="Name"
+                        className="h-7 text-[11px] bg-gray-50" 
+                      />
                     </td>
                     <td className="px-2 py-2 align-top">
-                      <Select>
-                        <SelectTrigger className="h-7 text-[11px] bg-gray-50">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent></SelectContent>
-                      </Select>
+                      <Input 
+                        value={filters.status} 
+                        onChange={(e) => setFilters(prev => ({ ...prev, status: e.target.value }))}
+                        onKeyDown={handleKeyDown}
+                        placeholder="Status"
+                        className="h-7 text-[11px] bg-gray-50" 
+                      />
                     </td>
                     <td className="px-2 py-2 align-top">
-                      <div className="space-y-1">
-                        <Input type="text" placeholder="min" className="h-7 text-[11px] bg-gray-50" />
-                        <Input type="text" defaultValue="29/07/2026" className="h-7 text-[11px] bg-gray-50" />
-                      </div>
+                      <span className="text-[11px] text-gray-400">Next contact &lt;= Today</span>
                     </td>
                     <td className="px-2 py-2 align-top">
-                      <Input className="h-7 text-[11px] bg-gray-50" />
+                      <Input 
+                        value={filters.phone} 
+                        onChange={(e) => setFilters(prev => ({ ...prev, phone: e.target.value }))}
+                        onKeyDown={handleKeyDown}
+                        placeholder="Phone"
+                        className="h-7 text-[11px] bg-gray-50" 
+                      />
                     </td>
                     <td className="px-2 py-2 align-top">
-                      <Input className="h-7 text-[11px] bg-gray-50" />
+                      <Input 
+                        value={filters.email} 
+                        onChange={(e) => setFilters(prev => ({ ...prev, email: e.target.value }))}
+                        onKeyDown={handleKeyDown}
+                        placeholder="Email"
+                        className="h-7 text-[11px] bg-gray-50" 
+                      />
                     </td>
                     <td className="px-2 py-2 align-top text-center">
-                      <Button variant="ghost" size="sm" className="h-7 px-2 text-xs font-medium text-blue-600 hover:text-blue-800 hover:bg-transparent">Search</Button>
+                      <Button 
+                        onClick={handleSearch}
+                        variant="ghost" 
+                        size="sm" 
+                        className="h-7 px-2 text-xs font-medium text-blue-600 hover:text-blue-800 hover:bg-transparent"
+                      >
+                        Search
+                      </Button>
                     </td>
                     <td className="px-2 py-2 align-top text-center">
-                      <Button variant="ghost" size="sm" className="h-7 px-2 text-xs font-medium text-blue-600 hover:text-blue-800 hover:bg-transparent">Clear</Button>
+                      <Button 
+                        onClick={handleClear}
+                        variant="ghost" 
+                        size="sm" 
+                        className="h-7 px-2 text-xs font-medium text-blue-600 hover:text-blue-800 hover:bg-transparent"
+                      >
+                        Clear
+                      </Button>
                     </td>
                   </tr>
 

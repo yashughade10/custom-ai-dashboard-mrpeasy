@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { mrpApi } from "@/services/mrpApi";
-import { Edit2, BarChart2, CheckSquare } from "lucide-react";
+import { Edit2, BarChart2, CheckSquare, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 type BomsTableProps = {

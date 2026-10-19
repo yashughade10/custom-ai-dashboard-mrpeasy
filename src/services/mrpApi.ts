@@ -6,12 +6,12 @@ export const mrpApi = {
     if (!res.ok) throw new Error("Failed to fetch dashboard data");
     return res.json();
   },
-  
+
   getItems: async (
-    page = 1, 
-    limit = 50, 
-    searchOrFilters: string | Record<string, any> = "", 
-    filters: Record<string, string> = {}, 
+    page = 1,
+    limit = 50,
+    searchOrFilters: string | Record<string, any> = "",
+    filters: Record<string, string> = {},
     rangeFilters: Record<string, { min?: string; max?: string }> = {}
   ) => {
     let search = "";
@@ -111,20 +111,34 @@ export const mrpApi = {
     return res.json();
   },
 
-  getCustomers: async (page = 1, limit = 50) => {
-    const res = await fetch(`${API_BASE}/mrp/crm/customers?page=${page}&limit=${limit}`);
+  getCustomers: async (page = 1, limit = 50, filters: any = {}) => {
+    const searchParams = new URLSearchParams({
+      page: page.toString(),
+      limit: limit.toString(),
+      ...filters
+    });
+    const res = await fetch(`${API_BASE}/mrp/crm/customers?${searchParams.toString()}`);
     if (!res.ok) throw new Error("Failed to fetch customers");
     return res.json();
   },
 
-  getTodayContacts: async (page = 1, limit = 50) => {
-    const res = await fetch(`${API_BASE}/mrp/crm/today-contacts?page=${page}&limit=${limit}`);
+  getTodayContacts: async (page = 1, limit = 50, filters: any = {}) => {
+    const searchParams = new URLSearchParams({
+      page: page.toString(),
+      limit: limit.toString(),
+      ...filters
+    });
+    const res = await fetch(`${API_BASE}/mrp/crm/today-contacts?${searchParams.toString()}`);
     if (!res.ok) throw new Error("Failed to fetch today's contacts");
     return res.json();
   },
 
-  getCashFlowForecast: async () => {
-    const res = await fetch(`${API_BASE}/mrp/crm/cash-flow`);
+  getCashFlowForecast: async (startDate?: string, endDate?: string) => {
+    const params = new URLSearchParams();
+    if (startDate) params.append("startDate", startDate);
+    if (endDate) params.append("endDate", endDate);
+    const qs = params.toString() ? `?${params.toString()}` : "";
+    const res = await fetch(`${API_BASE}/mrp/crm/cash-flow${qs}`);
     if (!res.ok) throw new Error("Failed to fetch cash flow forecast");
     return res.json();
   },
@@ -213,14 +227,24 @@ export const mrpApi = {
     return res.json();
   },
 
-  getCustomerStatistics: async (page = 1, limit = 100) => {
-    const res = await fetch(`${API_BASE}/mrp/crm/customer-statistics?page=${page}&limit=${limit}`);
+  getCustomerStatistics: async (page = 1, limit = 100, filters: any = {}) => {
+    const searchParams = new URLSearchParams({
+      page: page.toString(),
+      limit: limit.toString(),
+      ...filters
+    });
+    const res = await fetch(`${API_BASE}/mrp/crm/customer-statistics?${searchParams.toString()}`);
     if (!res.ok) throw new Error("Failed to fetch customer statistics");
     return res.json();
   },
 
-  getCustomerOrders: async (page = 1, limit = 100) => {
-    const res = await fetch(`${API_BASE}/mrp/crm/customer-orders?page=${page}&limit=${limit}`);
+  getCustomerOrders: async (page = 1, limit = 100, filters: any = {}) => {
+    const searchParams = new URLSearchParams({
+      page: page.toString(),
+      limit: limit.toString(),
+      ...filters
+    });
+    const res = await fetch(`${API_BASE}/mrp/crm/customer-orders?${searchParams.toString()}`);
     if (!res.ok) throw new Error("Failed to fetch customer orders");
     return res.json();
   },
@@ -341,13 +365,12 @@ export const mrpApi = {
     return res.json();
   },
 
-  getVendors: async (page = 1, limit = 50, filters: any = {}) => {
+  getVendors: async (filters: any = {}) => {
     const searchParams = new URLSearchParams({
-      page: page.toString(),
-      limit: limit.toString(),
       ...filters
     });
-    const res = await fetch(`${API_BASE}/mrp/procurement/vendors?${searchParams.toString()}`);
+    const qs = searchParams.toString() ? `?${searchParams.toString()}` : "";
+    const res = await fetch(`${API_BASE}/mrp/procurement/vendors${qs}`);
     if (!res.ok) throw new Error("Failed to fetch vendors");
     return res.json();
   },
@@ -420,29 +443,61 @@ export const mrpApi = {
     return res.json();
   },
 
-  getManufacturingOrders: async (page = 1, limit = 50) => {
-    const res = await fetch(`${API_BASE}/mrp/production/manufacturing-orders?page=${page}&limit=${limit}`);
+  getManufacturingOrders: async (page = 1, limit = 50, filters: any = {}) => {
+    const searchParams = new URLSearchParams({
+      page: page.toString(),
+      limit: limit.toString(),
+      ...filters
+    });
+    const res = await fetch(`${API_BASE}/mrp/production/manufacturing-orders?${searchParams.toString()}`);
     if (!res.ok) throw new Error("Failed to fetch manufacturing orders");
+    return res.json();
+  },
+
+  getManufacturingOrderById: async (id: string | number) => {
+    const res = await fetch(`${API_BASE}/mrp/production/manufacturing-orders/${id}`);
+    if (!res.ok) throw new Error("Failed to fetch manufacturing order");
+    return res.json();
+  },
+
+  createManufacturingOrder: async (data: any) => {
+    const res = await fetch(`${API_BASE}/mrp/production/manufacturing-orders`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    });
+    if (!res.ok) {
+      const errData = await res.json().catch(() => ({}));
+      throw new Error(errData.error || "Failed to create manufacturing order");
+    }
+    return res.json();
+  },
+
+  updateManufacturingOrder: async (id: string | number, data: any) => {
+    const res = await fetch(`${API_BASE}/mrp/production/manufacturing-orders/${id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    });
+    if (!res.ok) {
+      const errData = await res.json().catch(() => ({}));
+      throw new Error(errData.error || "Failed to update manufacturing order");
+    }
+    return res.json();
+  },
+
+  deleteManufacturingOrder: async (id: string | number) => {
+    const res = await fetch(`${API_BASE}/mrp/production/manufacturing-orders/${id}`, {
+      method: "DELETE",
+    });
+    if (!res.ok) throw new Error("Failed to delete manufacturing order");
     return res.json();
   },
 
 
 
-  getProductGroups: async (
-    page = 1, 
-    limit = 1000, 
-    search = "", 
-    filters: Record<string, string> = {}
-  ) => {
-    const searchParams = new URLSearchParams({
-      page: page.toString(),
-      limit: limit.toString()
-    });
-    if (search) searchParams.append("search", search);
-    if (Object.keys(filters).length > 0) {
-      searchParams.append("filters", JSON.stringify(filters));
-    }
-    const res = await fetch(`${API_BASE}/mrp/stock/groups?${searchParams.toString()}`);
+  getProductGroups: async () => {
+    const res = await fetch(`${API_BASE}/mrp/stock/groups`);
     if (!res.ok) throw new Error("Failed to fetch product groups");
     return res.json();
   },
@@ -473,9 +528,9 @@ export const mrpApi = {
   },
 
   getUoms: async (
-    page = 1, 
-    limit = 1000, 
-    search = "", 
+    page = 1,
+    limit = 1000,
+    search = "",
     filters: Record<string, string> = {}
   ) => {
     const searchParams = new URLSearchParams({
@@ -517,9 +572,9 @@ export const mrpApi = {
   },
 
   getStorageLocations: async (
-    page = 1, 
-    limit = 1000, 
-    search = "", 
+    page = 1,
+    limit = 1000,
+    search = "",
     filters: Record<string, string> = {}
   ) => {
     const searchParams = new URLSearchParams({
@@ -560,7 +615,7 @@ export const mrpApi = {
     return res.json();
   },
 
-  getInventorySnapshot: async (params?: { 
+  getInventorySnapshot: async (params?: {
     location?: string;
     page?: number;
     limit?: number;
@@ -593,7 +648,7 @@ export const mrpApi = {
     if (search) {
       url += `&search=${encodeURIComponent(search)}`;
     }
-    
+
     // Add column filters
     const filterParams = new URLSearchParams();
     if (Object.keys(filters).length > 0) filterParams.append('filters', JSON.stringify(filters));
@@ -639,7 +694,7 @@ export const mrpApi = {
     if (!res.ok) throw new Error("Failed to delete stock lot");
     return res.json();
   },
-  
+
   updatePhysicalQuantity: async (data: { part_no: string, new_quantity: number, location?: string }) => {
     const res = await fetch(`${API_BASE}/mrp/stock/inventory/adjust`, {
       method: "PUT",
@@ -649,7 +704,7 @@ export const mrpApi = {
     if (!res.ok) throw new Error("Failed to adjust physical quantity");
     return res.json();
   },
-  
+
   // ==========================================
   // SHIPMENTS
   // ==========================================
@@ -752,7 +807,7 @@ export const mrpApi = {
       limit: limit.toString(),
       search: search
     });
-    
+
     // Add column filters
     if (Object.keys(filters).length > 0) searchParams.append('filters', JSON.stringify(filters));
     if (Object.keys(rangeFilters).length > 0) searchParams.append('rangeFilters', JSON.stringify(rangeFilters));

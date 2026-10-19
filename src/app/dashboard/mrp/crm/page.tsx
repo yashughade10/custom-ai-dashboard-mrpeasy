@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import { mrpApi } from "@/services/mrpApi";
@@ -23,6 +23,7 @@ import {
   Filter,
   Columns,
   Plus,
+  Loader2,
 } from "lucide-react";
 
 const crmTabs = [
@@ -48,15 +49,26 @@ const ORDER_STATUSES = [
 export default function CRMPage() {
   const [pipelineMode, setPipelineMode] = useState<"active" | "all">("active");
   const [searchQuery, setSearchQuery] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [selectedUser, setSelectedUser] = useState("all");
   const [viewMode, setViewMode] = useState<"kanban" | "table">("kanban");
   const [showSearchInput, setShowSearchInput] = useState(false);
   const [limit, setLimit] = useState(100);
   const router = useRouter();
 
-  const { data: response, isLoading } = useQuery({
-    queryKey: ["mrpCustomerOrders", pipelineMode, searchQuery, selectedUser, limit],
-    queryFn: () => mrpApi.getCustomerOrders(1, limit),
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedSearch(searchQuery);
+    }, 300);
+    return () => clearTimeout(handler);
+  }, [searchQuery]);
+
+  const { data: response, isLoading, isFetching } = useQuery({
+    queryKey: ["mrpCustomerOrders", pipelineMode, debouncedSearch, selectedUser, limit],
+    queryFn: () => mrpApi.getCustomerOrders(1, limit, {
+      pipeline: pipelineMode,
+      search: debouncedSearch.trim()
+    }),
     placeholderData: keepPreviousData,
   });
 
@@ -133,6 +145,12 @@ export default function CRMPage() {
 
             {/* Filter toolbar matching MRPeasy top right */}
             <div className="flex items-center gap-1.5">
+              {isFetching && (
+                <div className="flex items-center gap-1.5 text-xs text-blue-600 font-medium mr-2">
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  <span>Searching...</span>
+                </div>
+              )}
               {showSearchInput ? (
                 <div className="relative flex items-center">
                   <Input

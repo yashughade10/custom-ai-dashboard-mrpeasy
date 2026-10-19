@@ -5,7 +5,7 @@ import { RouteGuard } from "@/components/auth/RouteGuard";
 import { MrpTabBar } from "@/components/mrp/MrpTabBar";
 import ProductionCalendar from "@/components/production/ProductionCalendar";
 import { Button } from "@/components/ui/button";
-import { Plus, RefreshCw, Download } from "lucide-react";
+import { Plus, RefreshCw, Download, Search, X } from "lucide-react";
 import Link from "next/link";
 import { useQueryClient } from "@tanstack/react-query";
 import { Input } from "@/components/ui/input";
@@ -23,6 +23,7 @@ const productionTabs = [
 
 function ProductionSchedulePage() {
   const [viewMode, setViewMode] = useState<"calendar" | "gantt">("calendar");
+  const [searchQuery, setSearchQuery] = useState("");
   const queryClient = useQueryClient();
 
   const handleRefresh = () => {
@@ -60,6 +61,20 @@ function ProductionSchedulePage() {
           </div>
 
           <div className="flex items-center gap-2 self-start">
+            <div className="relative w-64">
+              <Search className="w-3.5 h-3.5 absolute left-2.5 top-2 text-gray-400" />
+              <Input
+                placeholder="Search schedule (MO#, part)..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="h-7 pl-8 pr-7 text-xs bg-white"
+              />
+              {searchQuery && (
+                <button onClick={() => setSearchQuery("")} className="absolute right-2 top-1.5 text-gray-400 hover:text-gray-600">
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              )}
+            </div>
 
             
             <Button onClick={handleExportPng} variant="outline" size="sm" className="h-7 px-3 gap-1.5 bg-gray-50/50 text-gray-600 rounded-sm">
@@ -83,7 +98,7 @@ function ProductionSchedulePage() {
 
         {/* Calendar Area */}
         <div className="flex-1 min-h-0">
-          <ProductionCalendar viewMode={viewMode} />
+          <ProductionCalendar viewMode={viewMode} searchQuery={searchQuery} />
         </div>
         
       </div>

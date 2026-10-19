@@ -22,6 +22,7 @@ const productionTabs = [
 function ManufacturingOrdersPage() {
   const searchParams = useSearchParams();
   const [isCreating, setIsCreating] = useState(searchParams.get("create") === "true");
+  const [editingOrder, setEditingOrder] = useState<any | null>(null);
 
   const handleExportPdf = () => {
     const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:4000/api";
@@ -47,6 +48,20 @@ function ManufacturingOrdersPage() {
               <CreateManufacturingOrder onBack={() => setIsCreating(false)} />
             </div>
           </div>
+        ) : editingOrder ? (
+          <div className="flex-1 flex flex-col">
+            <div className="px-6 py-4">
+              <h1 className="text-xl font-bold text-gray-900">
+                Manufacturing order {editingOrder.mo_number} details
+              </h1>
+            </div>
+            <div className="flex-1 overflow-hidden">
+              <CreateManufacturingOrder 
+                initialData={editingOrder} 
+                onBack={() => setEditingOrder(null)} 
+              />
+            </div>
+          </div>
         ) : (
           <>
             <div className="px-4 py-3 border-b border-gray-100 flex flex-wrap items-center justify-between gap-3 bg-white">
@@ -54,8 +69,11 @@ function ManufacturingOrdersPage() {
                 <h1 className="text-xl font-bold text-gray-900">Manufacturing orders</h1>
                 <Button 
                   size="sm" 
-                  className="bg-blue-600 hover:bg-blue-700 text-white gap-1.5 font-medium px-3 h-8"
-                  onClick={() => setIsCreating(true)}
+                  className="bg-blue-600 hover:bg-blue-700 text-white gap-1.5 font-medium px-3 h-8 cursor-pointer"
+                  onClick={() => {
+                    setEditingOrder(null);
+                    setIsCreating(true);
+                  }}
                 >
                   <Plus className="h-4 w-4" />
                   Create
@@ -65,7 +83,7 @@ function ManufacturingOrdersPage() {
                 <Button 
                   variant="outline" 
                   size="sm" 
-                  className="h-8 gap-1.5 bg-gray-50/50 text-gray-600"
+                  className="h-8 gap-1.5 bg-gray-50/50 text-gray-600 cursor-pointer"
                   onClick={handleExportPdf}
                 >
                   <Download className="h-3.5 w-3.5" /> PDF
@@ -73,7 +91,7 @@ function ManufacturingOrdersPage() {
                 <Button 
                   variant="outline" 
                   size="sm" 
-                  className="h-8 gap-1.5 bg-gray-50/50 text-gray-600"
+                  className="h-8 gap-1.5 bg-gray-50/50 text-gray-600 cursor-pointer"
                   onClick={handleExportCsv}
                 >
                   <Download className="h-3.5 w-3.5" /> CSV
@@ -83,7 +101,7 @@ function ManufacturingOrdersPage() {
 
             <div className="px-4 py-3 flex-1 flex flex-col overflow-hidden">
               <div className="flex-1 overflow-x-auto min-h-0 border border-gray-200 rounded-sm">
-                <ProductionOrdersTable />
+                <ProductionOrdersTable onEdit={(order) => setEditingOrder(order)} />
               </div>
             </div>
           </>

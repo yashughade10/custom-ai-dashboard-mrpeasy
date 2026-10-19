@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { Loader2 } from "lucide-react";
 import { useQuery, useQueryClient, keepPreviousData } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { mrpApi } from "@/services/mrpApi";
@@ -25,8 +26,17 @@ export default function CustomersPage() {
   const router = useRouter();
   const queryClient = useQueryClient();
   const [limit, setLimit] = useState(2000);
+  const [filters, setFilters] = useState<Record<string, string>>({});
+  const [debouncedFilters, setDebouncedFilters] = useState<Record<string, string>>({});
   const [syncing, setSyncing] = useState(false);
   const [syncMsg, setSyncMsg] = useState<string | null>(null);
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedFilters(filters);
+    }, 300);
+    return () => clearTimeout(handler);
+  }, [filters]);
 
   const handleXeroSync = async () => {
     setSyncing(true);
@@ -44,9 +54,9 @@ export default function CustomersPage() {
     }
   };
 
-  const { data: response, isLoading } = useQuery({
-    queryKey: ["mrpCustomers", limit],
-    queryFn: () => mrpApi.getCustomers(1, limit),
+  const { data: response, isLoading, isFetching } = useQuery({
+    queryKey: ["mrpCustomers", limit, debouncedFilters],
+    queryFn: () => mrpApi.getCustomers(1, limit, debouncedFilters),
     placeholderData: keepPreviousData,
   });
 
@@ -80,6 +90,12 @@ export default function CustomersPage() {
                 />
               </div>
               <div className="flex flex-col items-end gap-1 pr-2">
+                {isFetching && !isLoading && (
+                  <div className="flex items-center gap-1.5 text-xs text-blue-600 font-medium">
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    <span>Searching...</span>
+                  </div>
+                )}
                 <Button
                   size="sm"
                   variant="outline"
@@ -105,6 +121,7 @@ export default function CustomersPage() {
                   <MrpDataTable 
                     columns={columns} 
                     data={customers} 
+                    onFilterChange={(f) => setFilters(f)}
                     onRowClick={(row: any) => router.push(`/dashboard/mrp/crm/customers/${row.customer_number || row.id}`)}
                   />
                   {customers.length >= limit && (
