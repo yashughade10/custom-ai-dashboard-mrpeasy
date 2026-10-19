@@ -1,10 +1,12 @@
 "use client";
 
-import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useState, useEffect } from "react";
+import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import { mrpApi } from "@/services/mrpApi";
-import { Plus, Download, Flag, Edit2, Search, Settings2, CalendarDays } from "lucide-react";
+import { Plus, Download, Flag, Edit2, Search, Settings2, CalendarDays, Loader2, X } from "lucide-react";
 import { toast } from "sonner";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 
 export default function ProductionOrdersTable({ 
   onEdit,
@@ -13,44 +15,171 @@ export default function ProductionOrdersTable({
   onEdit?: (order: any) => void;
   onOpenCreate?: (fn: (defaults?: any) => void) => void;
 }) {
-  const [search, setSearch] = useState("");
-  
-  // Data fetching using the correct MRP backend endpoint
-  const { data: ordersData, isLoading } = useQuery({
-    queryKey: ["mrp-manufacturing-orders"],
-    queryFn: () => mrpApi.getManufacturingOrders(1, 100),
+  const [page, setPage] = useState(1);
+  const [searchInput, setSearchInput] = useState("");
+  const [activeSearch, setActiveSearch] = useState("");
+
+  // Column filter inputs
+  const [colFilters, setColFilters] = useState<Record<string, string>>({
+    group_number: "",
+    mo_number: "",
+    group_name: "",
+    part_no: "",
+    part_description: "",
+    status: "",
+    parts_status: "",
+    assigned_to: "",
+    type: "",
+    min_quantity: "",
+    max_quantity: "",
+    min_cost: "",
+    max_cost: "",
+    min_unit_cost: "",
+    max_unit_cost: "",
+    min_planned: "",
+    max_planned: "",
+    min_actual: "",
+    max_actual: "",
+  });
+
+  const [appliedColFilters, setAppliedColFilters] = useState<Record<string, string>>({});
+
+  // Debounce main search input
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setActiveSearch(searchInput.trim());
+      setPage(1);
+    }, 350);
+    return () => clearTimeout(handler);
+  }, [searchInput]);
+
+  // Combined filters sent to backend
+  const queryFilters: Record<string, string> = {
+    ...(activeSearch ? { search: activeSearch } : {}),
+    ...appliedColFilters,
+  };
+
+  // Data fetching using backend TiDB query
+  const { data: ordersData, isLoading, isFetching } = useQuery({
+    queryKey: ["mrp-manufacturing-orders", page, queryFilters],
+    queryFn: () => mrpApi.getManufacturingOrders(page, 50, queryFilters),
+    placeholderData: keepPreviousData,
   });
 
   const allOrders = ordersData?.data || [];
+  const pagination = ordersData?.pagination || {};
+  const totalPages = pagination.totalPages || 1;
 
-  const filteredOrders = allOrders.filter((o: any) => {
-    return !search || 
-           o.mo_number?.toLowerCase().includes(search.toLowerCase()) || 
-           o.part_no?.toLowerCase().includes(search.toLowerCase());
-  });
-
-  // Pull global totals natively from the real DB summary
+  // Real DB summary calculated on filtered set
   const summary = ordersData?.summary || {};
   const totalQuantity = parseFloat(summary.total_quantity) || 0;
   const totalCost = parseFloat(summary.total_cost) || 0;
   const totalPlanned = parseFloat(summary.total_planned) || 0;
   const totalActual = parseFloat(summary.total_actual) || 0;
 
+  const handleApplyColFilters = () => {
+    const activeCols: Record<string, string> = {};
+    Object.entries(colFilters).forEach(([k, v]) => {
+      if (v.trim()) activeCols[k] = v.trim();
+    });
+    setAppliedColFilters(activeCols);
+    setPage(1);
+  };
+
+  const handleClearAll = () => {
+    setSearchInput("");
+    setActiveSearch("");
+    setColFilters({
+      group_number: "",
+      mo_number: "",
+      group_name: "",
+      part_no: "",
+      part_description: "",
+      status: "",
+      parts_status: "",
+      assigned_to: "",
+      type: "",
+      min_quantity: "",
+      max_quantity: "",
+      min_cost: "",
+      max_cost: "",
+      min_unit_cost: "",
+      max_unit_cost: "",
+      min_planned: "",
+      max_planned: "",
+      min_actual: "",
+      max_actual: "",
+    });
+    setAppliedColFilters({});
+    setPage(1);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter") {
+      handleApplyColFilters();
+    }
+  };
+
   const formatDate = (d: string) => {
     if (!d) return "";
     const date = new Date(d);
-    return date.toLocaleString('en-GB', {day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit'});
+    return isNaN(date.getTime()) ? d : date.toLocaleString('en-GB', {day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit'});
   };
 
   const formatShortDate = (d: string) => {
     if (!d) return "";
     const date = new Date(d);
-    return date.toLocaleDateString('en-GB', {day:'2-digit', month:'2-digit', year:'numeric'});
+    return isNaN(date.getTime()) ? d : date.toLocaleDateString('en-GB', {day:'2-digit', month:'2-digit', year:'numeric'});
   };
 
   return (
     <div className="w-full bg-white text-[12px] text-gray-800">
-      <div className="overflow-x-auto w-full">
+      {/* Top Search and Filter Bar */}
+      <div className="p-3 border-b border-gray-200 flex flex-wrap items-center justify-between gap-3 bg-[#fafbfc]">
+        <div className="flex items-center gap-2 max-w-md w-full">
+          <div className="relative flex-1">
+            <Search className="w-4 h-4 absolute left-2.5 top-2 text-gray-400" />
+            <Input
+              placeholder="Search across all fields (MO#, part, description, status, customer)..."
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
+              className="h-8 pl-8 pr-8 text-xs bg-white"
+            />
+            {searchInput && (
+              <button 
+                onClick={() => setSearchInput("")} 
+                className="absolute right-2 top-2 text-gray-400 hover:text-gray-600"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            )}
+          </div>
+          {(searchInput || Object.keys(appliedColFilters).length > 0) && (
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={handleClearAll}
+              className="h-8 text-xs text-gray-600"
+            >
+              Reset Filters
+            </Button>
+          )}
+        </div>
+
+        <div className="flex items-center gap-3">
+          {isFetching && (
+            <div className="flex items-center gap-1.5 text-xs text-blue-600 font-medium">
+              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+              <span>Searching database...</span>
+            </div>
+          )}
+          <span className="text-xs text-gray-500 font-medium">
+            Total: <strong className="text-gray-800">{pagination.total || 0}</strong> orders
+          </span>
+        </div>
+      </div>
+
+      <div className="overflow-x-auto w-full relative">
         <table className="w-full border-collapse table-auto min-w-[2000px]">
           <thead>
             {/* Main Header */}
@@ -74,8 +203,8 @@ export default function ProductionOrdersTable({
               <th className="font-medium p-1 leading-tight text-right">Unit cost</th>
               <th className="font-medium p-1 leading-tight text-right">Planned time, h</th>
               <th className="font-medium p-1 leading-tight text-right">Actual time, h</th>
-              <th className="font-medium p-1 leading-tight">Supplier 1</th>
-              <th className="font-medium p-1 leading-tight">Supplier 2</th>
+              <th className="font-medium p-1 leading-tight">Customer orders</th>
+              <th className="font-medium p-1 leading-tight">Customer name</th>
               <th className="font-medium p-1 w-16 text-center">
                 <div className="flex items-center justify-end gap-3 text-gray-500 pr-2">
                   <Settings2 className="w-3.5 h-3.5 cursor-pointer" />
@@ -89,69 +218,212 @@ export default function ProductionOrdersTable({
               <td className="p-1.5 text-center align-top border-b border-gray-100">
                 <input type="checkbox" className="w-3.5 h-3.5 rounded-sm border-gray-300 accent-blue-600 mt-1" />
               </td>
-              <td className="p-1.5 align-top border-b border-gray-100"><input type="text" className="w-full h-[26px] bg-[#F3F4F6] border-none rounded-sm px-2 focus:ring-1 focus:ring-blue-500 outline-none text-[11px]" /></td>
-              <td className="p-1.5 align-top border-b border-gray-100"><input type="text" className="w-full h-[26px] bg-[#F3F4F6] border-none rounded-sm px-2 focus:ring-1 focus:ring-blue-500 outline-none text-[11px]" value={search} onChange={(e) => setSearch(e.target.value)} /></td>
-              <td className="p-1.5 align-top border-b border-gray-100"><input type="text" className="w-full h-[26px] bg-[#F3F4F6] border-none rounded-sm px-2 focus:ring-1 focus:ring-blue-500 outline-none text-[11px]" /></td>
-              <td className="p-1.5 align-top border-b border-gray-100"><input type="text" className="w-full h-[26px] bg-[#F3F4F6] border-none rounded-sm px-2 focus:ring-1 focus:ring-blue-500 outline-none text-[11px]" /></td>
-              <td className="p-1.5 align-top border-b border-gray-100"><input type="text" className="w-full h-[26px] bg-[#F3F4F6] border-none rounded-sm px-2 focus:ring-1 focus:ring-blue-500 outline-none text-[11px]" /></td>
+              <td className="p-1.5 align-top border-b border-gray-100">
+                <input 
+                  type="text" 
+                  value={colFilters.group_number}
+                  onChange={(e) => setColFilters(prev => ({ ...prev, group_number: e.target.value }))}
+                  onKeyDown={handleKeyDown}
+                  placeholder="Filter..."
+                  className="w-full h-[26px] bg-[#F3F4F6] border-none rounded-sm px-2 focus:ring-1 focus:ring-blue-500 outline-none text-[11px]" 
+                />
+              </td>
+              <td className="p-1.5 align-top border-b border-gray-100">
+                <input 
+                  type="text" 
+                  value={colFilters.mo_number} 
+                  onChange={(e) => setColFilters(prev => ({ ...prev, mo_number: e.target.value }))}
+                  onKeyDown={handleKeyDown}
+                  placeholder="Filter MO#..."
+                  className="w-full h-[26px] bg-[#F3F4F6] border-none rounded-sm px-2 focus:ring-1 focus:ring-blue-500 outline-none text-[11px]" 
+                />
+              </td>
+              <td className="p-1.5 align-top border-b border-gray-100">
+                <input 
+                  type="text" 
+                  value={colFilters.group_name}
+                  onChange={(e) => setColFilters(prev => ({ ...prev, group_name: e.target.value }))}
+                  onKeyDown={handleKeyDown}
+                  placeholder="Filter..."
+                  className="w-full h-[26px] bg-[#F3F4F6] border-none rounded-sm px-2 focus:ring-1 focus:ring-blue-500 outline-none text-[11px]" 
+                />
+              </td>
+              <td className="p-1.5 align-top border-b border-gray-100">
+                <input 
+                  type="text" 
+                  value={colFilters.part_no}
+                  onChange={(e) => setColFilters(prev => ({ ...prev, part_no: e.target.value }))}
+                  onKeyDown={handleKeyDown}
+                  placeholder="Filter part..."
+                  className="w-full h-[26px] bg-[#F3F4F6] border-none rounded-sm px-2 focus:ring-1 focus:ring-blue-500 outline-none text-[11px]" 
+                />
+              </td>
+              <td className="p-1.5 align-top border-b border-gray-100">
+                <input 
+                  type="text" 
+                  value={colFilters.part_description}
+                  onChange={(e) => setColFilters(prev => ({ ...prev, part_description: e.target.value }))}
+                  onKeyDown={handleKeyDown}
+                  placeholder="Filter desc..."
+                  className="w-full h-[26px] bg-[#F3F4F6] border-none rounded-sm px-2 focus:ring-1 focus:ring-blue-500 outline-none text-[11px]" 
+                />
+              </td>
               <td className="p-1.5 align-top border-b border-gray-100 space-y-1 w-20">
-                <input type="text" placeholder="min" className="w-full h-[26px] bg-[#F3F4F6] border-none rounded-sm px-2 focus:ring-1 focus:ring-blue-500 outline-none text-[11px] placeholder-gray-400" />
-                <input type="text" placeholder="max" className="w-full h-[26px] bg-[#F3F4F6] border-none rounded-sm px-2 focus:ring-1 focus:ring-blue-500 outline-none text-[11px] placeholder-gray-400" />
+                <input 
+                  type="text" 
+                  placeholder="min" 
+                  value={colFilters.min_quantity}
+                  onChange={(e) => setColFilters(prev => ({ ...prev, min_quantity: e.target.value }))}
+                  onKeyDown={handleKeyDown}
+                  className="w-full h-[26px] bg-[#F3F4F6] border-none rounded-sm px-2 focus:ring-1 focus:ring-blue-500 outline-none text-[11px] placeholder-gray-400" 
+                />
+                <input 
+                  type="text" 
+                  placeholder="max" 
+                  value={colFilters.max_quantity}
+                  onChange={(e) => setColFilters(prev => ({ ...prev, max_quantity: e.target.value }))}
+                  onKeyDown={handleKeyDown}
+                  className="w-full h-[26px] bg-[#F3F4F6] border-none rounded-sm px-2 focus:ring-1 focus:ring-blue-500 outline-none text-[11px] placeholder-gray-400" 
+                />
               </td>
               <td className="p-1.5 align-top border-b border-gray-100 w-24">
-                <select className="w-full h-[26px] bg-[#F3F4F6] border-none rounded-sm px-2 focus:ring-1 focus:ring-blue-500 outline-none text-[11px] appearance-none text-gray-500">
-                  <option></option>
-                </select>
+                <input 
+                  type="text"
+                  placeholder="Status..."
+                  value={colFilters.status}
+                  onChange={(e) => setColFilters(prev => ({ ...prev, status: e.target.value }))}
+                  onKeyDown={handleKeyDown}
+                  className="w-full h-[26px] bg-[#F3F4F6] border-none rounded-sm px-2 focus:ring-1 focus:ring-blue-500 outline-none text-[11px]"
+                />
               </td>
               <td className="p-1.5 align-top border-b border-gray-100 w-28">
-                <select className="w-full h-[26px] bg-[#F3F4F6] border-none rounded-sm px-2 focus:ring-1 focus:ring-blue-500 outline-none text-[11px] appearance-none text-gray-500">
-                  <option></option>
-                </select>
+                <input 
+                  type="text"
+                  placeholder="Parts status..."
+                  value={colFilters.parts_status}
+                  onChange={(e) => setColFilters(prev => ({ ...prev, parts_status: e.target.value }))}
+                  onKeyDown={handleKeyDown}
+                  className="w-full h-[26px] bg-[#F3F4F6] border-none rounded-sm px-2 focus:ring-1 focus:ring-blue-500 outline-none text-[11px]"
+                />
               </td>
               <td className="p-1.5 align-top border-b border-gray-100 space-y-1 w-[120px]">
-                <div className="relative"><input type="text" placeholder="min" className="w-full h-[26px] bg-[#F3F4F6] border-none rounded-sm pl-2 pr-6 focus:ring-1 focus:ring-blue-500 outline-none text-[11px] placeholder-gray-400" /><CalendarDays className="w-3.5 h-3.5 absolute right-1.5 top-1.5 text-gray-400 pointer-events-none" /></div>
-                <div className="relative"><input type="text" placeholder="max" className="w-full h-[26px] bg-[#F3F4F6] border-none rounded-sm pl-2 pr-6 focus:ring-1 focus:ring-blue-500 outline-none text-[11px] placeholder-gray-400" /><CalendarDays className="w-3.5 h-3.5 absolute right-1.5 top-1.5 text-gray-400 pointer-events-none" /></div>
+                <div className="relative"><input type="text" placeholder="min date" onKeyDown={handleKeyDown} className="w-full h-[26px] bg-[#F3F4F6] border-none rounded-sm pl-2 pr-6 focus:ring-1 focus:ring-blue-500 outline-none text-[11px] placeholder-gray-400" /><CalendarDays className="w-3.5 h-3.5 absolute right-1.5 top-1.5 text-gray-400 pointer-events-none" /></div>
+                <div className="relative"><input type="text" placeholder="max date" onKeyDown={handleKeyDown} className="w-full h-[26px] bg-[#F3F4F6] border-none rounded-sm pl-2 pr-6 focus:ring-1 focus:ring-blue-500 outline-none text-[11px] placeholder-gray-400" /><CalendarDays className="w-3.5 h-3.5 absolute right-1.5 top-1.5 text-gray-400 pointer-events-none" /></div>
               </td>
               <td className="p-1.5 align-top border-b border-gray-100 space-y-1 w-[120px]">
-                <div className="relative"><input type="text" placeholder="min" className="w-full h-[26px] bg-[#F3F4F6] border-none rounded-sm pl-2 pr-6 focus:ring-1 focus:ring-blue-500 outline-none text-[11px] placeholder-gray-400" /><CalendarDays className="w-3.5 h-3.5 absolute right-1.5 top-1.5 text-gray-400 pointer-events-none" /></div>
-                <div className="relative"><input type="text" placeholder="max" className="w-full h-[26px] bg-[#F3F4F6] border-none rounded-sm pl-2 pr-6 focus:ring-1 focus:ring-blue-500 outline-none text-[11px] placeholder-gray-400" /><CalendarDays className="w-3.5 h-3.5 absolute right-1.5 top-1.5 text-gray-400 pointer-events-none" /></div>
+                <div className="relative"><input type="text" placeholder="min start" onKeyDown={handleKeyDown} className="w-full h-[26px] bg-[#F3F4F6] border-none rounded-sm pl-2 pr-6 focus:ring-1 focus:ring-blue-500 outline-none text-[11px] placeholder-gray-400" /><CalendarDays className="w-3.5 h-3.5 absolute right-1.5 top-1.5 text-gray-400 pointer-events-none" /></div>
+                <div className="relative"><input type="text" placeholder="max start" onKeyDown={handleKeyDown} className="w-full h-[26px] bg-[#F3F4F6] border-none rounded-sm pl-2 pr-6 focus:ring-1 focus:ring-blue-500 outline-none text-[11px] placeholder-gray-400" /><CalendarDays className="w-3.5 h-3.5 absolute right-1.5 top-1.5 text-gray-400 pointer-events-none" /></div>
               </td>
               <td className="p-1.5 align-top border-b border-gray-100 space-y-1 w-[120px]">
-                <div className="relative"><input type="text" placeholder="min" className="w-full h-[26px] bg-[#F3F4F6] border-none rounded-sm pl-2 pr-6 focus:ring-1 focus:ring-blue-500 outline-none text-[11px] placeholder-gray-400" /><CalendarDays className="w-3.5 h-3.5 absolute right-1.5 top-1.5 text-gray-400 pointer-events-none" /></div>
-                <div className="relative"><input type="text" placeholder="max" className="w-full h-[26px] bg-[#F3F4F6] border-none rounded-sm pl-2 pr-6 focus:ring-1 focus:ring-blue-500 outline-none text-[11px] placeholder-gray-400" /><CalendarDays className="w-3.5 h-3.5 absolute right-1.5 top-1.5 text-gray-400 pointer-events-none" /></div>
+                <div className="relative"><input type="text" placeholder="min finish" onKeyDown={handleKeyDown} className="w-full h-[26px] bg-[#F3F4F6] border-none rounded-sm pl-2 pr-6 focus:ring-1 focus:ring-blue-500 outline-none text-[11px] placeholder-gray-400" /><CalendarDays className="w-3.5 h-3.5 absolute right-1.5 top-1.5 text-gray-400 pointer-events-none" /></div>
+                <div className="relative"><input type="text" placeholder="max finish" onKeyDown={handleKeyDown} className="w-full h-[26px] bg-[#F3F4F6] border-none rounded-sm pl-2 pr-6 focus:ring-1 focus:ring-blue-500 outline-none text-[11px] placeholder-gray-400" /><CalendarDays className="w-3.5 h-3.5 absolute right-1.5 top-1.5 text-gray-400 pointer-events-none" /></div>
               </td>
               <td className="p-1.5 align-top border-b border-gray-100 w-24">
-                <select className="w-full h-[26px] bg-[#F3F4F6] border-none rounded-sm px-2 focus:ring-1 focus:ring-blue-500 outline-none text-[11px] appearance-none text-gray-500">
-                  <option></option>
-                </select>
+                <input 
+                  type="text"
+                  placeholder="Assignee..."
+                  value={colFilters.assigned_to}
+                  onChange={(e) => setColFilters(prev => ({ ...prev, assigned_to: e.target.value }))}
+                  onKeyDown={handleKeyDown}
+                  className="w-full h-[26px] bg-[#F3F4F6] border-none rounded-sm px-2 focus:ring-1 focus:ring-blue-500 outline-none text-[11px]"
+                />
               </td>
-              <td className="p-1.5 align-top border-b border-gray-100"><input type="text" className="w-full h-[26px] bg-[#F3F4F6] border-none rounded-sm px-2 focus:ring-1 focus:ring-blue-500 outline-none text-[11px]" /></td>
+              <td className="p-1.5 align-top border-b border-gray-100">
+                <input 
+                  type="text" 
+                  value={colFilters.type}
+                  onChange={(e) => setColFilters(prev => ({ ...prev, type: e.target.value }))}
+                  onKeyDown={handleKeyDown}
+                  placeholder="Type..."
+                  className="w-full h-[26px] bg-[#F3F4F6] border-none rounded-sm px-2 focus:ring-1 focus:ring-blue-500 outline-none text-[11px]" 
+                />
+              </td>
               <td className="p-1.5 align-top border-b border-gray-100 space-y-1 w-[120px]">
-                <div className="relative"><input type="text" placeholder="min" className="w-full h-[26px] bg-[#F3F4F6] border-none rounded-sm pl-2 pr-6 focus:ring-1 focus:ring-blue-500 outline-none text-[11px] placeholder-gray-400" /><CalendarDays className="w-3.5 h-3.5 absolute right-1.5 top-1.5 text-gray-400 pointer-events-none" /></div>
-                <div className="relative"><input type="text" placeholder="max" className="w-full h-[26px] bg-[#F3F4F6] border-none rounded-sm pl-2 pr-6 focus:ring-1 focus:ring-blue-500 outline-none text-[11px] placeholder-gray-400" /><CalendarDays className="w-3.5 h-3.5 absolute right-1.5 top-1.5 text-gray-400 pointer-events-none" /></div>
+                <div className="relative"><input type="text" placeholder="min created" onKeyDown={handleKeyDown} className="w-full h-[26px] bg-[#F3F4F6] border-none rounded-sm pl-2 pr-6 focus:ring-1 focus:ring-blue-500 outline-none text-[11px] placeholder-gray-400" /><CalendarDays className="w-3.5 h-3.5 absolute right-1.5 top-1.5 text-gray-400 pointer-events-none" /></div>
+                <div className="relative"><input type="text" placeholder="max created" onKeyDown={handleKeyDown} className="w-full h-[26px] bg-[#F3F4F6] border-none rounded-sm pl-2 pr-6 focus:ring-1 focus:ring-blue-500 outline-none text-[11px] placeholder-gray-400" /><CalendarDays className="w-3.5 h-3.5 absolute right-1.5 top-1.5 text-gray-400 pointer-events-none" /></div>
               </td>
               <td className="p-1.5 align-top border-b border-gray-100 space-y-1 w-24">
-                <input type="text" placeholder="min" className="w-full h-[26px] bg-[#F3F4F6] border-none rounded-sm px-2 focus:ring-1 focus:ring-blue-500 outline-none text-[11px] placeholder-gray-400 text-right" />
-                <input type="text" placeholder="max" className="w-full h-[26px] bg-[#F3F4F6] border-none rounded-sm px-2 focus:ring-1 focus:ring-blue-500 outline-none text-[11px] placeholder-gray-400 text-right" />
+                <input 
+                  type="text" 
+                  placeholder="min" 
+                  value={colFilters.min_cost}
+                  onChange={(e) => setColFilters(prev => ({ ...prev, min_cost: e.target.value }))}
+                  onKeyDown={handleKeyDown}
+                  className="w-full h-[26px] bg-[#F3F4F6] border-none rounded-sm px-2 focus:ring-1 focus:ring-blue-500 outline-none text-[11px] placeholder-gray-400 text-right" 
+                />
+                <input 
+                  type="text" 
+                  placeholder="max" 
+                  value={colFilters.max_cost}
+                  onChange={(e) => setColFilters(prev => ({ ...prev, max_cost: e.target.value }))}
+                  onKeyDown={handleKeyDown}
+                  className="w-full h-[26px] bg-[#F3F4F6] border-none rounded-sm px-2 focus:ring-1 focus:ring-blue-500 outline-none text-[11px] placeholder-gray-400 text-right" 
+                />
               </td>
               <td className="p-1.5 align-top border-b border-gray-100 space-y-1 w-20">
-                <input type="text" placeholder="min" className="w-full h-[26px] bg-[#F3F4F6] border-none rounded-sm px-2 focus:ring-1 focus:ring-blue-500 outline-none text-[11px] placeholder-gray-400 text-right" />
-                <input type="text" placeholder="max" className="w-full h-[26px] bg-[#F3F4F6] border-none rounded-sm px-2 focus:ring-1 focus:ring-blue-500 outline-none text-[11px] placeholder-gray-400 text-right" />
+                <input 
+                  type="text" 
+                  placeholder="min" 
+                  value={colFilters.min_unit_cost}
+                  onChange={(e) => setColFilters(prev => ({ ...prev, min_unit_cost: e.target.value }))}
+                  onKeyDown={handleKeyDown}
+                  className="w-full h-[26px] bg-[#F3F4F6] border-none rounded-sm px-2 focus:ring-1 focus:ring-blue-500 outline-none text-[11px] placeholder-gray-400 text-right" 
+                />
+                <input 
+                  type="text" 
+                  placeholder="max" 
+                  value={colFilters.max_unit_cost}
+                  onChange={(e) => setColFilters(prev => ({ ...prev, max_unit_cost: e.target.value }))}
+                  onKeyDown={handleKeyDown}
+                  className="w-full h-[26px] bg-[#F3F4F6] border-none rounded-sm px-2 focus:ring-1 focus:ring-blue-500 outline-none text-[11px] placeholder-gray-400 text-right" 
+                />
               </td>
               <td className="p-1.5 align-top border-b border-gray-100 space-y-1 w-20">
-                <input type="text" placeholder="min" className="w-full h-[26px] bg-[#F3F4F6] border-none rounded-sm px-2 focus:ring-1 focus:ring-blue-500 outline-none text-[11px] placeholder-gray-400 text-right" />
-                <input type="text" placeholder="max" className="w-full h-[26px] bg-[#F3F4F6] border-none rounded-sm px-2 focus:ring-1 focus:ring-blue-500 outline-none text-[11px] placeholder-gray-400 text-right" />
+                <input 
+                  type="text" 
+                  placeholder="min" 
+                  value={colFilters.min_planned}
+                  onChange={(e) => setColFilters(prev => ({ ...prev, min_planned: e.target.value }))}
+                  onKeyDown={handleKeyDown}
+                  className="w-full h-[26px] bg-[#F3F4F6] border-none rounded-sm px-2 focus:ring-1 focus:ring-blue-500 outline-none text-[11px] placeholder-gray-400 text-right" 
+                />
+                <input 
+                  type="text" 
+                  placeholder="max" 
+                  value={colFilters.max_planned}
+                  onChange={(e) => setColFilters(prev => ({ ...prev, max_planned: e.target.value }))}
+                  onKeyDown={handleKeyDown}
+                  className="w-full h-[26px] bg-[#F3F4F6] border-none rounded-sm px-2 focus:ring-1 focus:ring-blue-500 outline-none text-[11px] placeholder-gray-400 text-right" 
+                />
               </td>
               <td className="p-1.5 align-top border-b border-gray-100 space-y-1 w-20">
-                <input type="text" placeholder="min" className="w-full h-[26px] bg-[#F3F4F6] border-none rounded-sm px-2 focus:ring-1 focus:ring-blue-500 outline-none text-[11px] placeholder-gray-400 text-right" />
-                <input type="text" placeholder="max" className="w-full h-[26px] bg-[#F3F4F6] border-none rounded-sm px-2 focus:ring-1 focus:ring-blue-500 outline-none text-[11px] placeholder-gray-400 text-right" />
+                <input 
+                  type="text" 
+                  placeholder="min" 
+                  value={colFilters.min_actual}
+                  onChange={(e) => setColFilters(prev => ({ ...prev, min_actual: e.target.value }))}
+                  onKeyDown={handleKeyDown}
+                  className="w-full h-[26px] bg-[#F3F4F6] border-none rounded-sm px-2 focus:ring-1 focus:ring-blue-500 outline-none text-[11px] placeholder-gray-400 text-right" 
+                />
+                <input 
+                  type="text" 
+                  placeholder="max" 
+                  value={colFilters.max_actual}
+                  onChange={(e) => setColFilters(prev => ({ ...prev, max_actual: e.target.value }))}
+                  onKeyDown={handleKeyDown}
+                  className="w-full h-[26px] bg-[#F3F4F6] border-none rounded-sm px-2 focus:ring-1 focus:ring-blue-500 outline-none text-[11px] placeholder-gray-400 text-right" 
+                />
               </td>
-              <td className="p-1.5 align-top border-b border-gray-100"><input type="text" className="w-full h-[26px] bg-[#F3F4F6] border-none rounded-sm px-2 focus:ring-1 focus:ring-blue-500 outline-none text-[11px]" /></td>
-              <td className="p-1.5 align-top border-b border-gray-100"><input type="text" className="w-full h-[26px] bg-[#F3F4F6] border-none rounded-sm px-2 focus:ring-1 focus:ring-blue-500 outline-none text-[11px]" /></td>
+              <td className="p-1.5 align-top border-b border-gray-100">
+                <input type="text" placeholder="Orders..." onKeyDown={handleKeyDown} className="w-full h-[26px] bg-[#F3F4F6] border-none rounded-sm px-2 focus:ring-1 focus:ring-blue-500 outline-none text-[11px]" />
+              </td>
+              <td className="p-1.5 align-top border-b border-gray-100">
+                <input type="text" placeholder="Customer..." onKeyDown={handleKeyDown} className="w-full h-[26px] bg-[#F3F4F6] border-none rounded-sm px-2 focus:ring-1 focus:ring-blue-500 outline-none text-[11px]" />
+              </td>
               <td className="p-1.5 align-top border-b border-gray-100 text-center">
                 <div className="flex items-center justify-end gap-2 pr-2 text-blue-600 font-medium pt-1">
-                  <button className="hover:underline">Search</button>
-                  <button className="text-gray-400 hover:underline">Clear</button>
+                  <button onClick={handleApplyColFilters} className="hover:underline cursor-pointer">Search</button>
+                  <button onClick={handleClearAll} className="text-gray-400 hover:underline cursor-pointer">Clear</button>
                 </div>
               </td>
             </tr>
@@ -170,9 +442,20 @@ export default function ProductionOrdersTable({
           <tbody>
             {isLoading ? (
               <tr>
-                <td colSpan={22} className="text-center py-12 text-gray-500">Loading...</td>
+                <td colSpan={22} className="text-center py-16 text-gray-500">
+                  <div className="flex flex-col items-center justify-center gap-2">
+                    <Loader2 className="w-6 h-6 animate-spin text-blue-600" />
+                    <span className="text-sm font-medium">Loading manufacturing orders from database...</span>
+                  </div>
+                </td>
               </tr>
-            ) : filteredOrders.map((order: any, i: number) => {
+            ) : allOrders.length === 0 ? (
+              <tr>
+                <td colSpan={22} className="text-center py-12 text-gray-400 text-sm">
+                  No manufacturing orders found matching your search.
+                </td>
+              </tr>
+            ) : allOrders.map((order: any, i: number) => {
               const isRed = order.parts_status === "Not booked";
               const isOrange = order.parts_status === "Requested";
               const rowTextColor = isRed ? "text-red-500" : (isOrange ? "text-orange-500" : "text-gray-800");
@@ -183,7 +466,7 @@ export default function ProductionOrdersTable({
                   className={`hover:bg-gray-50 border-b border-gray-100 ${rowTextColor}`}
                   onDoubleClick={() => onEdit?.(order)}
                 >
-                  <td className="p-1 text-center text-gray-400">{i + 1}</td>
+                  <td className="p-1 text-center text-gray-400">{(page - 1) * 50 + i + 1}</td>
                   <td className="p-1">{order.group_number}</td>
                   <td className="p-1">
                     <span 
@@ -220,8 +503,8 @@ export default function ProductionOrdersTable({
                   <td className="p-1 text-right">${parseFloat(order.unit_cost || 0).toFixed(2)}</td>
                   <td className="p-1 text-right">{parseFloat(order.planned_time_h || 0).toFixed(2)}</td>
                   <td className="p-1 text-right">{order.actual_time_h ? parseFloat(order.actual_time_h).toFixed(2) : ""}</td>
-                  <td className="p-1"></td>
-                  <td className="p-1"></td>
+                  <td className="p-1">{order.customer_orders || ""}</td>
+                  <td className="p-1">{order.customer_name || ""}</td>
                   <td className="p-1 text-right">
                     <div className="flex items-center justify-end gap-3 pr-2">
                       <button 
@@ -244,11 +527,32 @@ export default function ProductionOrdersTable({
         </table>
       </div>
       
-      <div className="flex justify-center mt-6 pb-6">
-        <button className="text-blue-600 font-medium text-[13px] hover:underline bg-transparent border-none">
-          Load more
-        </button>
-      </div>
+      {/* Pagination Controls */}
+      {totalPages > 1 && (
+        <div className="flex items-center justify-center gap-3 py-4 border-t border-gray-100">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setPage(p => Math.max(1, p - 1))}
+            disabled={page === 1 || isFetching}
+            className="h-7 text-xs"
+          >
+            ← Prev
+          </Button>
+          <span className="text-xs text-gray-500 font-medium">
+            Page {page} of {totalPages}
+          </span>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+            disabled={page >= totalPages || isFetching}
+            className="h-7 text-xs"
+          >
+            Next →
+          </Button>
+        </div>
+      )}
     </div>
   );
 }

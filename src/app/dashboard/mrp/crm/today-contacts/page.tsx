@@ -56,7 +56,7 @@ export default function TodayContactsPage() {
     }
   };
 
-  const { data: response, isLoading } = useQuery({
+  const { data: response, isLoading, isFetching } = useQuery({
     queryKey: ["mrpTodayContacts", limit, activeFilters],
     queryFn: () => mrpApi.getTodayContacts(1, limit, activeFilters),
     placeholderData: keepPreviousData,

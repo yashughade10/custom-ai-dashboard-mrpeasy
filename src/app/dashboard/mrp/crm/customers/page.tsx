@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { Loader2 } from "lucide-react";
 import { useQuery, useQueryClient, keepPreviousData } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { mrpApi } from "@/services/mrpApi";
@@ -53,7 +54,7 @@ export default function CustomersPage() {
     }
   };
 
-  const { data: response, isLoading } = useQuery({
+  const { data: response, isLoading, isFetching } = useQuery({
     queryKey: ["mrpCustomers", limit, debouncedFilters],
     queryFn: () => mrpApi.getCustomers(1, limit, debouncedFilters),
     placeholderData: keepPreviousData,
@@ -89,6 +90,12 @@ export default function CustomersPage() {
                 />
               </div>
               <div className="flex flex-col items-end gap-1 pr-2">
+                {isFetching && !isLoading && (
+                  <div className="flex items-center gap-1.5 text-xs text-blue-600 font-medium">
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    <span>Searching...</span>
+                  </div>
+                )}
                 <Button
                   size="sm"
                   variant="outline"

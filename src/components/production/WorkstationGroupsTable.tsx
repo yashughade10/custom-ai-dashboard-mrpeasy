@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { mrpApi } from "@/services/mrpApi";
-import { Edit2, BarChart2, CheckSquare } from "lucide-react";
+import { Edit2, BarChart2, CheckSquare, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 type WorkstationGroupsTableProps = {
@@ -17,7 +17,7 @@ export default function WorkstationGroupsTable({ onEdit }: WorkstationGroupsTabl
     maxInstances: ""
   });
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isFetching } = useQuery({
     queryKey: ["mrp-workstation-groups", filters],
     queryFn: () => mrpApi.getWorkstationGroups(1, 100, filters),
   });

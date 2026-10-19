@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { mrpApi } from "@/services/mrpApi";
-import { Plus, Edit2, BarChart2, CheckSquare } from "lucide-react";
+import { Plus, Edit2, BarChart2, CheckSquare, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 type WorkstationsTableProps = {
@@ -19,7 +19,7 @@ export default function WorkstationsTable({ onEdit }: WorkstationsTableProps) {
     maxProductivity: ""
   });
 
-  const { data: workstationsData, isLoading } = useQuery({
+  const { data: workstationsData, isLoading, isFetching } = useQuery({
     queryKey: ["mrp-workstations", filters],
     queryFn: () => mrpApi.getWorkstations(1, 100, filters),
   });

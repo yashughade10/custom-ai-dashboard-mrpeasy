@@ -43,7 +43,7 @@ export default function StatisticsPage() {
     setAppliedFilters({});
   };
 
-  const { data: response, isLoading } = useQuery({
+  const { data: response, isLoading, isFetching } = useQuery({
     queryKey: ["mrpCustomerStatistics", limit, appliedFilters],
     queryFn: () => mrpApi.getCustomerStatistics(1, limit, appliedFilters),
     placeholderData: keepPreviousData,

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { format, addMonths, subMonths, startOfMonth, endOfMonth, startOfWeek, endOfWeek, eachDayOfInterval, isSameMonth, parseISO, getWeek, addWeeks, subWeeks, addDays, subDays, startOfDay, endOfDay } from "date-fns";
-import { ChevronLeft, ChevronRight, X } from "lucide-react";
+import { ChevronLeft, ChevronRight, X, Loader2 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { mrpApi } from "@/services/mrpApi";
 import { Button } from "@/components/ui/button";
@@ -117,7 +117,12 @@ export default function ProductionCalendar({ viewMode = "calendar", searchQuery 
         </div>
       </div>
 
-      {viewMode === "calendar" ? (
+      {isLoading ? (
+        <div className="flex-1 flex flex-col items-center justify-center gap-2 py-20 text-gray-500">
+          <Loader2 className="w-7 h-7 animate-spin text-blue-600" />
+          <span className="text-sm font-medium">Loading production schedule...</span>
+        </div>
+      ) : viewMode === "calendar" ? (
         <>
           {/* Weekdays Header */}
           <div className={`grid ${calendarView === "day" ? "grid-cols-1" : "grid-cols-7"} border-b border-gray-200 bg-white ml-8`}>

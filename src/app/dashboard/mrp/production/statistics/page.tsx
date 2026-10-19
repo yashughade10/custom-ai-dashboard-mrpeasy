@@ -3,7 +3,8 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { mrpApi } from "@/services/mrpApi";
-import { Download, Search } from "lucide-react";
+import { Download, Search, Loader2, X } from "lucide-react";
+import { Input } from "@/components/ui/input";
 import { RouteGuard } from "@/components/auth/RouteGuard";
 import { MrpTabBar } from "@/components/mrp/MrpTabBar";
 import { Button } from "@/components/ui/button";
@@ -111,7 +112,7 @@ function StatisticsPage() {
             <td className="p-2.5 text-right">{formatCurrency(totals.costOverrun)}</td>
             <td className="p-2.5 text-right"></td>
           </tr>
-          {costsLoading ? <tr><td colSpan={11} className="p-8 text-center text-gray-500">Loading...</td></tr> : costs.map((item: any) => (
+          {costsLoading ? <tr><td colSpan={11} className="p-8 text-center text-gray-500"><div className="flex items-center justify-center gap-2 py-6 text-gray-500 font-medium"><Loader2 className="w-5 h-5 animate-spin text-blue-600" /><span>Loading report data...</span></div></td></tr> : costs.map((item: any) => (
             <tr key={item.id} className="border-b border-gray-100 hover:bg-gray-50">
               <td className="p-2.5 text-blue-600 hover:underline cursor-pointer">{item.mo_number}</td>
               <td className="p-2.5 text-blue-600 hover:underline cursor-pointer">{item.part_no}</td>
@@ -401,14 +402,14 @@ function StatisticsPage() {
               <Button 
                 variant="outline" 
                 className="h-8 px-3 text-xs font-medium text-gray-600 bg-gray-50 hover:bg-gray-100 flex gap-2"
-                onClick={() => window.open(`${process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:4001/api"}/mrp/production/statistics/export/pdf?report=${selectedReport}&fromDate=${fromDate}&toDate=${toDate}`, "_blank")}
+                onClick={() => window.open(`${process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:4000/api"}/mrp/production/statistics/export/pdf?report=${selectedReport}&fromDate=${fromDate}&toDate=${toDate}`, "_blank")}
               >
                 <Download className="w-3.5 h-3.5" /> PDF
               </Button>
               <Button 
                 variant="outline" 
                 className="h-8 px-3 text-xs font-medium text-gray-600 bg-gray-50 hover:bg-gray-100 flex gap-2"
-                onClick={() => window.open(`${process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:4001/api"}/mrp/production/statistics/export/csv?report=${selectedReport}&fromDate=${fromDate}&toDate=${toDate}`, "_blank")}
+                onClick={() => window.open(`${process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:4000/api"}/mrp/production/statistics/export/csv?report=${selectedReport}&fromDate=${fromDate}&toDate=${toDate}`, "_blank")}
               >
                 <Download className="w-3.5 h-3.5" /> CSV
               </Button>

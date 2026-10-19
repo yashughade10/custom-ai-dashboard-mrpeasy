@@ -23,6 +23,7 @@ import {
   Filter,
   Columns,
   Plus,
+  Loader2,
 } from "lucide-react";
 
 const crmTabs = [
@@ -62,7 +63,7 @@ export default function CRMPage() {
     return () => clearTimeout(handler);
   }, [searchQuery]);
 
-  const { data: response, isLoading } = useQuery({
+  const { data: response, isLoading, isFetching } = useQuery({
     queryKey: ["mrpCustomerOrders", pipelineMode, debouncedSearch, selectedUser, limit],
     queryFn: () => mrpApi.getCustomerOrders(1, limit, {
       pipeline: pipelineMode,
@@ -144,6 +145,12 @@ export default function CRMPage() {
 
             {/* Filter toolbar matching MRPeasy top right */}
             <div className="flex items-center gap-1.5">
+              {isFetching && (
+                <div className="flex items-center gap-1.5 text-xs text-blue-600 font-medium mr-2">
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  <span>Searching...</span>
+                </div>
+              )}
               {showSearchInput ? (
                 <div className="relative flex items-center">
                   <Input
