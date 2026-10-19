@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { mrpApi } from "@/services/mrpApi";
 
@@ -38,9 +39,20 @@ const formatCurrency = (val: number) => {
 };
 
 export default function CashFlowPage() {
+  const [startDate, setStartDate] = useState(() => {
+    const d = new Date();
+    return d.toISOString().split("T")[0];
+  });
+  const [endDate, setEndDate] = useState(() => {
+    const d = new Date();
+    d.setDate(d.getDate() + 84);
+    return d.toISOString().split("T")[0];
+  });
+  const [appliedRange, setAppliedRange] = useState({ start: "", end: "" });
+
   const { data: response, isLoading } = useQuery({
-    queryKey: ["mrpCashFlow"],
-    queryFn: () => mrpApi.getCashFlowForecast(),
+    queryKey: ["mrpCashFlow", appliedRange.start, appliedRange.end],
+    queryFn: () => mrpApi.getCashFlowForecast(appliedRange.start, appliedRange.end),
   });
 
   const cashFlowData = (response?.data || []).map((row: any) => ({
@@ -63,33 +75,47 @@ export default function CashFlowPage() {
             <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 mb-6">
               <div className="flex flex-wrap items-center gap-3 w-full lg:w-auto">
                 <h1 className="text-xl font-bold text-slate-900 mr-2">Cash flow forecast</h1>
-                
-                <Select defaultValue="period">
-                  <SelectTrigger className="h-8 w-[100px] text-xs bg-gray-50">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="period">Period</SelectItem>
-                    <SelectItem value="week">Week</SelectItem>
-                    <SelectItem value="month">Month</SelectItem>
-                  </SelectContent>
-                </Select>
 
                 <div className="flex items-center gap-2">
-                  <div className="relative">
-                    <CalendarIcon className="absolute left-2.5 top-2 w-3.5 h-3.5 text-gray-400" />
-                    <Input className="h-8 w-[120px] text-xs pl-8 bg-gray-50" defaultValue="27/07/2026" />
-                  </div>
+                  <Input 
+                    type="date"
+                    value={startDate}
+                    onChange={(e) => setStartDate(e.target.value)}
+                    className="h-8 w-[140px] text-xs bg-gray-50" 
+                  />
                   <span className="text-gray-400">-</span>
-                  <div className="relative">
-                    <CalendarIcon className="absolute left-2.5 top-2 w-3.5 h-3.5 text-gray-400" />
-                    <Input className="h-8 w-[120px] text-xs pl-8 bg-gray-50" defaultValue="27/09/2026" />
-                  </div>
+                  <Input 
+                    type="date"
+                    value={endDate}
+                    onChange={(e) => setEndDate(e.target.value)}
+                    className="h-8 w-[140px] text-xs bg-gray-50" 
+                  />
                 </div>
 
-                <Button size="icon" className="h-8 w-8 bg-blue-600 hover:bg-blue-700 text-white rounded-sm">
+                <Button 
+                  onClick={() => setAppliedRange({ start: startDate, end: endDate })}
+                  size="icon" 
+                  className="h-8 w-8 bg-blue-600 hover:bg-blue-700 text-white rounded-sm"
+                  title="Search cash flow in date range"
+                >
                   <Search className="w-4 h-4" />
                 </Button>
+                {appliedRange.start && (
+                  <Button 
+                    onClick={() => {
+                      const d1 = new Date().toISOString().split("T")[0];
+                      const d2 = new Date(Date.now() + 84 * 86400000).toISOString().split("T")[0];
+                      setStartDate(d1);
+                      setEndDate(d2);
+                      setAppliedRange({ start: "", end: "" });
+                    }}
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 text-xs text-blue-600"
+                  >
+                    Reset
+                  </Button>
+                )}
               </div>
 
               <div className="flex items-center gap-2 shrink-0">

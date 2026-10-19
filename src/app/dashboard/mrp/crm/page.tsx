@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import { mrpApi } from "@/services/mrpApi";
@@ -48,15 +48,26 @@ const ORDER_STATUSES = [
 export default function CRMPage() {
   const [pipelineMode, setPipelineMode] = useState<"active" | "all">("active");
   const [searchQuery, setSearchQuery] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [selectedUser, setSelectedUser] = useState("all");
   const [viewMode, setViewMode] = useState<"kanban" | "table">("kanban");
   const [showSearchInput, setShowSearchInput] = useState(false);
   const [limit, setLimit] = useState(100);
   const router = useRouter();
 
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedSearch(searchQuery);
+    }, 300);
+    return () => clearTimeout(handler);
+  }, [searchQuery]);
+
   const { data: response, isLoading } = useQuery({
-    queryKey: ["mrpCustomerOrders", pipelineMode, searchQuery, selectedUser, limit],
-    queryFn: () => mrpApi.getCustomerOrders(1, limit),
+    queryKey: ["mrpCustomerOrders", pipelineMode, debouncedSearch, selectedUser, limit],
+    queryFn: () => mrpApi.getCustomerOrders(1, limit, {
+      pipeline: pipelineMode,
+      search: debouncedSearch.trim()
+    }),
     placeholderData: keepPreviousData,
   });
 

@@ -23,10 +23,29 @@ const crmTabs = [
 
 export default function StatisticsPage() {
   const [limit, setLimit] = useState(100);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [startDate, setStartDate] = useState("2026-01-01");
+  const [endDate, setEndDate] = useState("2026-12-31");
+  const [appliedFilters, setAppliedFilters] = useState<{ search?: string; startDate?: string; endDate?: string }>({});
+
+  const handleSearch = () => {
+    setAppliedFilters({
+      search: searchQuery.trim(),
+      startDate: startDate || undefined,
+      endDate: endDate || undefined
+    });
+  };
+
+  const handleClear = () => {
+    setSearchQuery("");
+    setStartDate("2026-01-01");
+    setEndDate("2026-12-31");
+    setAppliedFilters({});
+  };
 
   const { data: response, isLoading } = useQuery({
-    queryKey: ["mrpCustomerStatistics", limit],
-    queryFn: () => mrpApi.getCustomerStatistics(1, limit),
+    queryKey: ["mrpCustomerStatistics", limit, appliedFilters],
+    queryFn: () => mrpApi.getCustomerStatistics(1, limit, appliedFilters),
     placeholderData: keepPreviousData,
   });
 
@@ -74,43 +93,50 @@ export default function StatisticsPage() {
                 
                 <div className="flex flex-col gap-2">
                   <div className="flex items-center gap-2">
-                    <span className="text-xs font-medium text-gray-700 w-12">Report</span>
-                    <Select defaultValue="customers">
-                      <SelectTrigger className="h-7 w-[180px] text-xs bg-gray-50 border-gray-200">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="customers">Customers</SelectItem>
-                        <SelectItem value="items">Items</SelectItem>
-                      </SelectContent>
-                    </Select>
+                    <span className="text-xs font-medium text-gray-700 w-16">Customer</span>
+                    <Input 
+                      placeholder="Search customer name or number..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+                      className="h-7 w-[240px] text-[11px] bg-gray-50 border-gray-200"
+                    />
                   </div>
 
                   <div className="flex items-center gap-2">
-                    <span className="text-xs font-medium text-gray-700 w-12">Period</span>
-                    <Select defaultValue="custom">
-                      <SelectTrigger className="h-7 w-[100px] text-xs bg-gray-50 border-gray-200">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="custom">Custom</SelectItem>
-                        <SelectItem value="ytd">YTD</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    
-                    <div className="relative">
-                      <CalendarIcon className="absolute left-2.5 top-1.5 w-3.5 h-3.5 text-gray-400" />
-                      <Input className="h-7 w-[110px] text-[11px] pl-8 bg-gray-50 border-gray-200" defaultValue="01/01/2026" />
-                    </div>
+                    <span className="text-xs font-medium text-gray-700 w-16">Period</span>
+                    <Input 
+                      type="date"
+                      value={startDate}
+                      onChange={(e) => setStartDate(e.target.value)}
+                      className="h-7 w-[130px] text-[11px] bg-gray-50 border-gray-200"
+                    />
                     <span className="text-gray-400">-</span>
-                    <div className="relative">
-                      <CalendarIcon className="absolute left-2.5 top-1.5 w-3.5 h-3.5 text-gray-400" />
-                      <Input className="h-7 w-[110px] text-[11px] pl-8 bg-gray-50 border-gray-200" defaultValue="29/07/2026" />
-                    </div>
+                    <Input 
+                      type="date"
+                      value={endDate}
+                      onChange={(e) => setEndDate(e.target.value)}
+                      className="h-7 w-[130px] text-[11px] bg-gray-50 border-gray-200"
+                    />
 
-                    <Button size="icon" className="h-7 w-7 bg-blue-600 hover:bg-blue-700 text-white rounded-sm ml-1">
-                      <Search className="w-3.5 h-3.5" />
+                    <Button 
+                      onClick={handleSearch}
+                      size="sm" 
+                      className="h-7 px-3 bg-blue-600 hover:bg-blue-700 text-white rounded-sm text-xs"
+                    >
+                      <Search className="w-3.5 h-3.5 mr-1" />
+                      Search
                     </Button>
+                    {(appliedFilters.search || appliedFilters.startDate || appliedFilters.endDate) && (
+                      <Button 
+                        onClick={handleClear}
+                        variant="ghost"
+                        size="sm"
+                        className="h-7 text-xs text-blue-600"
+                      >
+                        Reset
+                      </Button>
+                    )}
                   </div>
                 </div>
               </div>

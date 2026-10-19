@@ -72,20 +72,34 @@ export const mrpApi = {
     return res.json();
   },
 
-  getCustomers: async (page = 1, limit = 50) => {
-    const res = await fetch(`${API_BASE}/mrp/crm/customers?page=${page}&limit=${limit}`);
+  getCustomers: async (page = 1, limit = 50, filters: any = {}) => {
+    const searchParams = new URLSearchParams({
+      page: page.toString(),
+      limit: limit.toString(),
+      ...filters
+    });
+    const res = await fetch(`${API_BASE}/mrp/crm/customers?${searchParams.toString()}`);
     if (!res.ok) throw new Error("Failed to fetch customers");
     return res.json();
   },
 
-  getTodayContacts: async (page = 1, limit = 50) => {
-    const res = await fetch(`${API_BASE}/mrp/crm/today-contacts?page=${page}&limit=${limit}`);
+  getTodayContacts: async (page = 1, limit = 50, filters: any = {}) => {
+    const searchParams = new URLSearchParams({
+      page: page.toString(),
+      limit: limit.toString(),
+      ...filters
+    });
+    const res = await fetch(`${API_BASE}/mrp/crm/today-contacts?${searchParams.toString()}`);
     if (!res.ok) throw new Error("Failed to fetch today's contacts");
     return res.json();
   },
 
-  getCashFlowForecast: async () => {
-    const res = await fetch(`${API_BASE}/mrp/crm/cash-flow`);
+  getCashFlowForecast: async (startDate?: string, endDate?: string) => {
+    const params = new URLSearchParams();
+    if (startDate) params.append("startDate", startDate);
+    if (endDate) params.append("endDate", endDate);
+    const qs = params.toString() ? `?${params.toString()}` : "";
+    const res = await fetch(`${API_BASE}/mrp/crm/cash-flow${qs}`);
     if (!res.ok) throw new Error("Failed to fetch cash flow forecast");
     return res.json();
   },
@@ -174,14 +188,24 @@ export const mrpApi = {
     return res.json();
   },
 
-  getCustomerStatistics: async (page = 1, limit = 100) => {
-    const res = await fetch(`${API_BASE}/mrp/crm/customer-statistics?page=${page}&limit=${limit}`);
+  getCustomerStatistics: async (page = 1, limit = 100, filters: any = {}) => {
+    const searchParams = new URLSearchParams({
+      page: page.toString(),
+      limit: limit.toString(),
+      ...filters
+    });
+    const res = await fetch(`${API_BASE}/mrp/crm/customer-statistics?${searchParams.toString()}`);
     if (!res.ok) throw new Error("Failed to fetch customer statistics");
     return res.json();
   },
 
-  getCustomerOrders: async (page = 1, limit = 100) => {
-    const res = await fetch(`${API_BASE}/mrp/crm/customer-orders?page=${page}&limit=${limit}`);
+  getCustomerOrders: async (page = 1, limit = 100, filters: any = {}) => {
+    const searchParams = new URLSearchParams({
+      page: page.toString(),
+      limit: limit.toString(),
+      ...filters
+    });
+    const res = await fetch(`${API_BASE}/mrp/crm/customer-orders?${searchParams.toString()}`);
     if (!res.ok) throw new Error("Failed to fetch customer orders");
     return res.json();
   },
@@ -302,8 +326,12 @@ export const mrpApi = {
     return res.json();
   },
 
-  getVendors: async () => {
-    const res = await fetch(`${API_BASE}/mrp/procurement/vendors`);
+  getVendors: async (filters: any = {}) => {
+    const searchParams = new URLSearchParams({
+      ...filters
+    });
+    const qs = searchParams.toString() ? `?${searchParams.toString()}` : "";
+    const res = await fetch(`${API_BASE}/mrp/procurement/vendors${qs}`);
     if (!res.ok) throw new Error("Failed to fetch vendors");
     return res.json();
   },
@@ -376,8 +404,13 @@ export const mrpApi = {
     return res.json();
   },
 
-  getManufacturingOrders: async (page = 1, limit = 50) => {
-    const res = await fetch(`${API_BASE}/mrp/production/manufacturing-orders?page=${page}&limit=${limit}`);
+  getManufacturingOrders: async (page = 1, limit = 50, filters: any = {}) => {
+    const searchParams = new URLSearchParams({
+      page: page.toString(),
+      limit: limit.toString(),
+      ...filters
+    });
+    const res = await fetch(`${API_BASE}/mrp/production/manufacturing-orders?${searchParams.toString()}`);
     if (!res.ok) throw new Error("Failed to fetch manufacturing orders");
     return res.json();
   },
