@@ -22,9 +22,10 @@ const stockTabs = [
   { name: "Statistics", href: "/dashboard/mrp/inventory/statistics" },
 ];
 
-export const FieldRow = ({ label, children, required = false }: any) => (
-  <div className="flex flex-col sm:flex-row sm:items-center py-2 gap-2 sm:gap-4 border-b border-gray-100 last:border-0">
-    <div className="sm:w-1/3 text-right text-sm text-gray-600">
+export const FieldRow = ({ label, children, required = false, alignTop = false }: any) => (
+  <div className={`flex flex-col sm:flex-row ${alignTop ? 'sm:items-start pt-2 pb-2' : 'sm:items-center py-2'} gap-2 sm:gap-4 border-b border-gray-100 last:border-0`}>
+    <div className={`sm:w-1/3 text-right text-sm text-gray-600 ${alignTop ? 'sm:pt-2' : ''}`}>
+
       {label} {required && <span className="text-red-500">*</span>}
     </div>
     <div className="sm:w-2/3">

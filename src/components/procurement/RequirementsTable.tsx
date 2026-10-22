@@ -389,7 +389,7 @@ export default function RequirementsTable() {
                     <td className="p-2 border-r border-gray-200">
                       <button 
                         onClick={() => handlePartClick(item.part_no || item.part_number)}
-                        className="text-[#1e5aa0] hover:underline bg-transparent border-none cursor-pointer text-left p-0 text-[12px]"
+                        className="text-[#1e5aa0] hover:underline bg-transparent border-none cursor-pointer text-left p-0 text-[12px] whitespace-pre-wrap leading-relaxed max-w-[320px] inline-block align-top"
                       >
                         {item.part_no || item.part_number}
                       </button>

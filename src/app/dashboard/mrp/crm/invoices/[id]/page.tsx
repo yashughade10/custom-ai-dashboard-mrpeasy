@@ -489,7 +489,7 @@ export default function InvoiceDetailsPage() {
                       <td className="px-2 py-2 text-center text-gray-400">{idx + 1}</td>
                       <td className="px-2 py-2 font-mono text-gray-700">{line.part_no}</td>
                       <td className="px-2 py-2">
-                        <div className="font-medium text-gray-800">{line.part_description}</div>
+                        <div className="font-medium text-gray-800 whitespace-pre-wrap leading-relaxed">{line.part_description}</div>
                         {line.free_text && <div className="text-gray-500 mt-0.5">{line.free_text}</div>}
                       </td>
                       <td className="px-2 py-2 text-gray-500">{line.group_name || line.group_number}</td>

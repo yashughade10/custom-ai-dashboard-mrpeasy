@@ -116,7 +116,7 @@ function StatisticsPage() {
             <tr key={item.id} className="border-b border-gray-100 hover:bg-gray-50">
               <td className="p-2.5 text-blue-600 hover:underline cursor-pointer">{item.mo_number}</td>
               <td className="p-2.5 text-blue-600 hover:underline cursor-pointer">{item.part_no}</td>
-              <td className="p-2.5 truncate max-w-[300px]" title={item.part_description}>{item.part_description}</td>
+              <td className="p-2.5 whitespace-pre-wrap max-w-[320px] leading-relaxed align-top" title={item.part_description}>{item.part_description}</td>
               <td className="p-2.5">{item.status}</td>
               <td className="p-2.5 text-right">{parseFloat(item.quantity)} {item.part_no === '28325' ? '' : 'pcs'}</td>
               <td className="p-2.5 text-right">{formatCurrency(parseFloat(item.total_cost))}</td>
@@ -170,7 +170,7 @@ function StatisticsPage() {
           {productsLoading ? <tr><td colSpan={8} className="p-8 text-center text-gray-500">Loading...</td></tr> : products.map((item: any) => (
             <tr key={item.id} className="border-b border-gray-100 hover:bg-gray-50">
               <td className="p-2.5 text-blue-600 hover:underline cursor-pointer">{item.part_no}</td>
-              <td className="p-2.5 truncate max-w-[300px]" title={item.part_description}>{item.part_description}</td>
+              <td className="p-2.5 whitespace-pre-wrap max-w-[320px] leading-relaxed align-top" title={item.part_description}>{item.part_description}</td>
               <td className="p-2.5 text-right">{parseFloat(item.quantity)}</td>
               <td className="p-2.5 text-right">{formatCurrency(parseFloat(item.total_cost))}</td>
               <td className="p-2.5 text-right">{formatCurrency(parseFloat(item.unit_cost))}</td>
@@ -228,7 +228,7 @@ function StatisticsPage() {
             <tr key={item.id} className="border-b border-gray-100 hover:bg-gray-50">
               <td className="p-2.5 text-blue-600 hover:underline cursor-pointer">{item.mo_number}</td>
               <td className="p-2.5 text-blue-600 hover:underline cursor-pointer">{item.part_no}</td>
-              <td className="p-2.5 truncate max-w-[200px]" title={item.part_description}>{item.part_description}</td>
+              <td className="p-2.5 whitespace-pre-wrap max-w-[320px] leading-relaxed align-top" title={item.part_description}>{item.part_description}</td>
               <td className="p-2.5">{item.status}</td>
               <td className="p-2.5 text-right">{parseFloat(item.quantity)}</td>
               <td className="p-2.5 text-right">{formatNum(parseFloat(item.actual_duration_h))}</td>
@@ -271,7 +271,7 @@ function StatisticsPage() {
               <td className="p-2.5">{formatDate(item.start_datetime)}</td>
               <td className="p-2.5">{formatDate(item.due_date)}</td>
               <td className="p-2.5 text-blue-600 hover:underline cursor-pointer">{item.part_no}</td>
-              <td className="p-2.5 truncate max-w-[300px]" title={item.part_description}>{item.part_description}</td>
+              <td className="p-2.5 whitespace-pre-wrap max-w-[320px] leading-relaxed align-top" title={item.part_description}>{item.part_description}</td>
               <td className="p-2.5 text-right">{parseFloat(item.quantity)}</td>
               <td className="p-2.5 text-center">{item.unit}</td>
               <td className="p-2.5">{item.parts_status}</td>
@@ -328,7 +328,7 @@ function StatisticsPage() {
             <tr key={item.id} className="border-b border-gray-100 hover:bg-gray-50">
               <td className="p-2.5 text-blue-600 hover:underline cursor-pointer">{item.mo_number}</td>
               <td className="p-2.5 text-blue-600 hover:underline cursor-pointer">{item.part_no}</td>
-              <td className="p-2.5 truncate max-w-[250px]" title={item.part_description}>{item.part_description}</td>
+              <td className="p-2.5 whitespace-pre-wrap max-w-[320px] leading-relaxed align-top" title={item.part_description}>{item.part_description}</td>
               <td className="p-2.5">{item.status}</td>
               <td className="p-2.5 text-right">{parseFloat(item.quantity)} {item.unit}</td>
               <td className="p-2.5 text-right">{formatCurrency(parseFloat(item.total_cost))}</td>

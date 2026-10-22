@@ -9,6 +9,7 @@ export interface Column<T> {
   sortable?: boolean;
   searchable?: boolean;
   filterType?: 'text' | 'range' | 'date';
+  className?: string;
 }
 
 interface MrpDataTableProps<T> {
@@ -168,9 +169,20 @@ export function MrpDataTable<T>({ columns, data, onRowClick, className, totals, 
                 </td>
                 {columns.map((col, colIdx) => {
                   const val = col.accessorKey ? (row as any)[col.accessorKey] : undefined;
+                  const isPartDesc = col.accessorKey === 'part_description';
                   return (
-                    <td key={colIdx} className="px-3 py-1.5 border-r border-gray-200 truncate max-w-[200px]">
-                      {col.cell ? col.cell(row) : val}
+                    <td 
+                      key={colIdx} 
+                      className={`px-3 py-1.5 border-r border-gray-200 ${
+                        col.className || (isPartDesc ? "whitespace-pre-wrap max-w-[320px] leading-relaxed align-top" : "truncate max-w-[200px]")
+                      }`}
+                      title={typeof val === 'string' && !isPartDesc ? val : undefined}
+                    >
+                      {col.cell ? col.cell(row) : (
+                        isPartDesc && typeof val === 'string' ? (
+                          <div className="whitespace-pre-wrap leading-relaxed">{val}</div>
+                        ) : val
+                      )}
                     </td>
                   );
                 })}

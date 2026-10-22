@@ -292,7 +292,7 @@ export default function VendorReports({ vendorNumber }: { vendorNumber: string }
                     >
                       {item.part_no || "-"}
                     </td>
-                    <td className="py-2.5 px-4">{item.part_description || "-"}</td>
+                    <td className="py-2.5 px-4 whitespace-pre-wrap leading-relaxed max-w-[320px] align-top">{item.part_description || "-"}</td>
                     <td className="py-2.5 px-4 text-right">{parseFloat(item.quantity || 0).toFixed(2)}</td>
                     <td className="py-2.5 px-4 text-right">
                       {item.currency || "$"} {parseFloat(item.total || 0).toFixed(2)}

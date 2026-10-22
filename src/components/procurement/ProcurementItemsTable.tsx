@@ -699,7 +699,7 @@ export default function ProcurementItemsTable() {
                         }
                         
                         return (
-                          <td key={col.id} className={`p-2 border-r border-gray-200 whitespace-nowrap overflow-hidden text-ellipsis max-w-[200px] ${(baseCurrencyCols.includes(col.id) || inCurrencyCols.includes(col.id)) ? 'text-right' : ''}`} title={displayVal}>
+                          <td key={col.id} className={`p-2 border-r border-gray-200 ${col.id === 'part_description' ? 'whitespace-pre-wrap max-w-[320px] leading-relaxed align-top' : 'whitespace-nowrap overflow-hidden text-ellipsis max-w-[200px]'} ${(baseCurrencyCols.includes(col.id) || inCurrencyCols.includes(col.id)) ? 'text-right' : ''}`} title={displayVal}>
                             {displayVal}
                           </td>
                         );

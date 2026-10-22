@@ -515,7 +515,7 @@ export default function PurchaseOrderEditPage() {
                   <Link href={`/dashboard/mrp/inventory/${item.item_id || item.id || item.part_no}`}>
                     <div className="text-[#1e5aa0] font-medium hover:underline cursor-pointer">{item.part_no}</div>
                   </Link>
-                  <div className="text-gray-500 truncate">{item.part_description}</div>
+                  <div className="text-gray-700 whitespace-pre-wrap leading-relaxed">{item.part_description}</div>
                 </td>
                 <td className="px-3 py-4 border-r border-gray-100 text-[11px]">
                   <select className="w-full bg-transparent border border-gray-300 rounded-sm focus:outline-none p-2 text-gray-600">

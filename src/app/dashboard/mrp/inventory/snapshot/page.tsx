@@ -285,7 +285,7 @@ export default function InventorySnapshotPage() {
                         <td className="px-3 py-1.5 border-r border-gray-200 truncate max-w-[200px]">{item.group_name}</td>
                         <td className="px-3 py-1.5 border-r border-gray-200">{Number(item.quantity).toLocaleString()} {item.uom}</td>
                         <td className="px-3 py-1.5 border-r border-gray-200">${Number(item.cost).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
-                        <td className="px-3 py-1.5 border-r border-gray-200 truncate max-w-[250px]" title={item.part_description}>{item.part_description}</td>
+                        <td className="px-3 py-1.5 border-r border-gray-200 whitespace-pre-wrap max-w-[320px] leading-relaxed align-top" title={item.part_description}>{item.part_description}</td>
                         <td className="px-3 py-1.5 border-r border-gray-200">
                           <div className="flex items-center gap-2 justify-end">
                             <input

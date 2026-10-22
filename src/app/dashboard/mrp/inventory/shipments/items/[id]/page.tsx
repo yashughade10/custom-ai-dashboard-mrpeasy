@@ -6,6 +6,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { mrpApi } from "@/services/mrpApi";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { FieldRow } from "../../../lots/[id]/page"; // Reuse FieldRow for consistency
 
@@ -143,8 +144,15 @@ export default function ShipmentItemEditPage() {
               <Input name="part_no" value={formData.part_no} onChange={handleChange} className="bg-[#eef2f5] border-transparent" required />
             </FieldRow>
 
-            <FieldRow label="Part description">
-              <Input name="part_description" value={formData.part_description} onChange={handleChange} className="bg-[#eef2f5] border-transparent" />
+            <FieldRow label="Part description" alignTop>
+              <Textarea 
+                name="part_description" 
+                rows={4}
+                value={formData.part_description} 
+                onChange={handleChange} 
+                placeholder="Enter part description (press Enter for new lines)..."
+                className="bg-[#eef2f5] border-transparent text-sm w-full min-h-[90px] p-2.5 rounded-md leading-relaxed whitespace-pre-wrap resize-y focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring" 
+              />
             </FieldRow>
           </div>
 

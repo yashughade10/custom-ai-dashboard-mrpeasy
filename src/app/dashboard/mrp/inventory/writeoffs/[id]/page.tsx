@@ -111,7 +111,7 @@ export default function WriteoffDetailPage({ params }: { params: Promise<{ id: s
 
                 <div className="grid grid-cols-3 items-center gap-4">
                   <label className="text-sm text-gray-500 text-right">Stock item *</label>
-                  <div className="col-span-2 text-sm font-semibold">{wo.part_description} ({wo.part_no})</div>
+                  <div className="col-span-2 text-sm font-semibold whitespace-pre-wrap leading-relaxed">{wo.part_description} ({wo.part_no})</div>
                 </div>
 
                 <div className="grid grid-cols-3 items-center gap-4">

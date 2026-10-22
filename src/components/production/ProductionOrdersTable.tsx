@@ -479,7 +479,7 @@ export default function ProductionOrdersTable({
                   </td>
                   <td className="p-1">{order.group_name}</td>
                   <td className="p-1">{order.part_no}</td>
-                  <td className="p-1">{order.part_description}</td>
+                  <td className="p-1 whitespace-pre-wrap max-w-[350px] leading-relaxed align-top">{order.part_description}</td>
                   <td className="p-1">{order.quantity} pcs</td>
                   <td className="p-1">
                     <span>{order.status}</span>

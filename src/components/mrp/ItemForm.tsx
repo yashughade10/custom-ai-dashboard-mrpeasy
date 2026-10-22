@@ -85,9 +85,9 @@ export function SearchableSelect({ options, value, onChange, placeholder, disabl
 }
 
 // MRPeasy style field row
-export const FieldRow = ({ label, children, required = false }: any) => (
-  <div className="flex flex-col sm:flex-row sm:items-center py-2 gap-2 sm:gap-4 border-b border-gray-100 last:border-0">
-    <div className="sm:w-1/3 text-right text-sm text-gray-600">
+export const FieldRow = ({ label, children, required = false, alignTop = false }: any) => (
+  <div className={`flex flex-col sm:flex-row ${alignTop ? "sm:items-start pt-2.5 pb-2.5" : "sm:items-center py-2"} gap-2 sm:gap-4 border-b border-gray-100 last:border-0`}>
+    <div className={`sm:w-1/3 text-right text-sm text-gray-600 ${alignTop ? "sm:pt-1.5" : ""}`}>
       {label} {required && <span className="text-red-500">*</span>}
     </div>
     <div className="sm:w-2/3">
@@ -291,14 +291,19 @@ export function ItemForm({ initialData, isEdit }: ItemFormProps) {
             <FieldRow label="Copy item">
               <SearchableSelect
                 placeholder="Type to search and select an item..."
-                options={items.map(i => ({ value: i.id.toString(), label: `${i.part_no} - ${i.part_description}` }))}
+                options={items.map(i => ({ value: i.id.toString(), label: `${i.part_no} - ${(i.part_description || "").replace(/\r?\n/g, " ")}` }))}
                 onChange={handleCopyItem}
               />
             </FieldRow>
           )}
 
-          <FieldRow label="Part description" required>
-            <Input {...register("part_description")} className="bg-[#eef2f5] border-transparent" />
+          <FieldRow label="Part description" required alignTop>
+            <Textarea 
+              {...register("part_description")} 
+              placeholder="Enter part description (press Enter for new lines)..."
+              rows={4}
+              className="bg-[#eef2f5] border-transparent text-sm w-full min-h-[90px] p-2.5 rounded-md leading-relaxed whitespace-pre-wrap resize-y focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+            />
           </FieldRow>
 
           <FieldRow label="Product group">
@@ -352,7 +357,7 @@ export function ItemForm({ initialData, isEdit }: ItemFormProps) {
             </div>
           </FieldRow>
 
-          <FieldRow label="Notes">
+          <FieldRow label="Notes" alignTop>
             <Textarea {...register("notes")} className="bg-[#eef2f5] border-transparent min-h-[80px]" />
           </FieldRow>
 

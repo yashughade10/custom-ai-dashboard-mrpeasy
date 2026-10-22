@@ -24,9 +24,9 @@ export default function POBookingsReportsPage() {
     queryFn: () => mrpApi.getPurchaseOrder(poNumber),
   });
 
-  const { data: storageLocationsRes, isLoading: isLoadingLocations } = useQuery({
+  const { data: storageLocationsRes, isLoading: isLoadingLocations } = useQuery<any>({
     queryKey: ['storageLocations'],
-    queryFn: mrpApi.getStorageLocations,
+    queryFn: () => mrpApi.getStorageLocations(),
   });
 
   const storageLocations = Array.isArray(storageLocationsRes) ? storageLocationsRes : (storageLocationsRes?.data || []);
@@ -170,7 +170,7 @@ export default function POBookingsReportsPage() {
                 >
                   {item.part_no}
                 </td>
-                <td className="px-4 py-4 border-r border-gray-100 text-[12px]">
+                <td className="px-4 py-4 border-r border-gray-100 text-[12px] whitespace-pre-wrap leading-relaxed max-w-[320px] align-top">
                   {item.part_description}
                 </td>
                 <td className="px-4 py-4 border-r border-gray-100 text-[12px]">

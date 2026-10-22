@@ -129,7 +129,7 @@ export default function BomsTable({ onEdit }: BomsTableProps) {
                 <td className="p-1.5 font-medium">{bom.number || bom.code}</td>
                 <td className="p-1.5">{bom.name || bom.title}</td>
                 <td className="p-1.5">{bom.part_number || bom.product_code}</td>
-                <td className="p-1.5">{bom.part_description || bom.product_title}</td>
+                <td className="p-1.5 whitespace-pre-wrap max-w-[350px] leading-relaxed align-top">{bom.part_description || bom.product_title}</td>
                 <td className="p-1.5">{bom.group_number || bom.article_group_code}</td>
                 <td className="p-1.5">{bom.group_name || bom.article_group_title}</td>
                 <td className="p-1.5">{bom.cost ? bom.cost.replace(/&nbsp;/g, ' ') : `$${parseFloat(bom.approximate_cost || 0).toFixed(2)}`}</td>

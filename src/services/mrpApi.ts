@@ -365,10 +365,9 @@ export const mrpApi = {
     return res.json();
   },
 
-  getVendors: async (filters: any = {}) => {
-    const searchParams = new URLSearchParams({
-      ...filters
-    });
+  getVendors: async (page: any = 1, limit: any = 50, filters: any = {}) => {
+    const filterObj = typeof page === 'object' && page !== null ? page : { page, limit, ...filters };
+    const searchParams = new URLSearchParams(filterObj);
     const qs = searchParams.toString() ? `?${searchParams.toString()}` : "";
     const res = await fetch(`${API_BASE}/mrp/procurement/vendors${qs}`);
     if (!res.ok) throw new Error("Failed to fetch vendors");
@@ -496,8 +495,17 @@ export const mrpApi = {
 
 
 
-  getProductGroups: async () => {
-    const res = await fetch(`${API_BASE}/mrp/stock/groups`);
+  getProductGroups: async (page?: any, limit?: any, search?: string, filters?: any) => {
+    const params = typeof page === 'object' && page !== null ? page : {};
+    if (typeof page === 'number') {
+      params.page = page;
+      if (limit) params.limit = limit;
+      if (search) params.search = search;
+      if (filters && typeof filters === 'object') Object.assign(params, filters);
+    }
+    const searchParams = new URLSearchParams(params);
+    const qs = searchParams.toString() ? `?${searchParams.toString()}` : "";
+    const res = await fetch(`${API_BASE}/mrp/stock/groups${qs}`);
     if (!res.ok) throw new Error("Failed to fetch product groups");
     return res.json();
   },
