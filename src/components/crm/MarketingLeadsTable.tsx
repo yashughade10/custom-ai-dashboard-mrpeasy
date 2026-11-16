@@ -575,21 +575,30 @@ export default function MarketingLeadsTable() {
                     <TableCell className="text-xs text-foreground">
                       <div className="space-y-0.5">
                         {contact.company_name || contact.company ? (
-                          <div className="flex items-center gap-1 font-medium truncate max-w-[160px]">
+                          <div className="flex items-center gap-1 font-medium truncate max-w-[170px]">
                             <Building2 className="h-3 w-3 text-muted-foreground shrink-0" />
                             <span className="truncate">{contact.company_name || contact.company}</span>
                           </div>
                         ) : null}
                         {contact.product ? (
-                          <div className="text-[11px] text-muted-foreground truncate max-w-[160px] flex items-center gap-1">
+                          <div className="text-[11px] text-muted-foreground truncate max-w-[170px] flex items-center gap-1">
                             <Tag className="h-2.5 w-2.5 shrink-0" />
                             <span className="truncate">{contact.product}</span>
                           </div>
+                        ) : null}
+                        {contact.item_to_lift ? (
+                          <div 
+                            className="text-[11px] text-slate-700 dark:text-slate-300 truncate max-w-[170px] flex items-center gap-1 font-normal bg-muted/60 px-1.5 py-0.5 rounded border border-border/50"
+                            title={`Item to lift: ${contact.item_to_lift}`}
+                          >
+                            <span className="text-[10px] font-semibold text-primary shrink-0 uppercase">Lift:</span>
+                            <span className="truncate">{contact.item_to_lift}</span>
+                          </div>
                         ) : contact.subject ? (
-                          <div className="text-[11px] text-muted-foreground truncate max-w-[160px]">
+                          <div className="text-[11px] text-muted-foreground truncate max-w-[170px]">
                             {contact.subject}
                           </div>
-                        ) : !contact.company ? (
+                        ) : (!contact.company && !contact.product) ? (
                           <span className="text-muted-foreground">-</span>
                         ) : null}
                       </div>

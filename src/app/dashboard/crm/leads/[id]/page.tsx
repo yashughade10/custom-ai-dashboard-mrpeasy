@@ -129,7 +129,7 @@ function LeadDetailPage() {
         country: contact.country || "",
         product: contact.product || "",
         quantity: contact.quantity || 1,
-        item_to_lift: contact.item_to_lift || "",
+        item_to_lift: contact.item_to_lift || contact.itemToLift || "",
         size_capacity: contact.size_capacity || "",
         preferred_power_source: contact.preferred_power_source || "",
         lifting_options: contact.lifting_options || "",
@@ -453,13 +453,21 @@ function LeadDetailPage() {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4 pt-4">
-              {/* Subject & Inbound Message */}
-              {(formData.subject || formData.message) && (
+              {/* Subject & Inbound Message / Description */}
+              {(formData.subject || formData.message || formData.item_to_lift) && (
                 <div className="space-y-3 p-3.5 rounded-lg bg-muted/40 border text-xs">
                   {formData.subject && (
                     <div>
                       <span className="font-semibold text-foreground">Inquiry Subject: </span>
                       <span className="text-foreground">{formData.subject}</span>
+                    </div>
+                  )}
+                  {formData.item_to_lift && (
+                    <div>
+                      <span className="font-semibold text-foreground">Item to Lift / Requirement Description: </span>
+                      <span className="text-foreground font-medium bg-background px-2 py-0.5 rounded border border-border/60">
+                        {formData.item_to_lift}
+                      </span>
                     </div>
                   )}
                   {formData.message && (
@@ -498,18 +506,16 @@ function LeadDetailPage() {
                   />
                 </div>
 
-                {formData.item_to_lift && (
-                  <div className="grid gap-1.5">
-                    <Label htmlFor="item_to_lift" className="text-xs font-semibold">Item To Lift / Material</Label>
-                    <Input
-                      id="item_to_lift"
-                      value={formData.item_to_lift}
-                      onChange={(e) => setFormData({ ...formData, item_to_lift: e.target.value })}
-                      className="h-9 text-xs"
-                      placeholder="e.g. Glass, Steel Plates"
-                    />
-                  </div>
-                )}
+                <div className="grid gap-1.5">
+                  <Label htmlFor="item_to_lift" className="text-xs font-semibold">Item To Lift / Material Description</Label>
+                  <Input
+                    id="item_to_lift"
+                    value={formData.item_to_lift}
+                    onChange={(e) => setFormData({ ...formData, item_to_lift: e.target.value })}
+                    className="h-9 text-xs"
+                    placeholder="e.g. Glass, Steel Plates"
+                  />
+                </div>
 
                 {formData.size_capacity && (
                   <div className="grid gap-1.5">

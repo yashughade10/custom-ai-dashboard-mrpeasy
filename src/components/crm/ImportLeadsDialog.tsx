@@ -184,7 +184,17 @@ export default function ImportLeadsDialog({
           phone: getVal("phone") || getVal("mobile") || getVal("phonenumber") || "",
           date: parsedDate.toISOString(),
           product: getVal("product") || getVal("service") || "",
-          itemToLift: getVal("itemtolift") || getVal("item_to_lift") || getVal("liftitem") || "",
+          itemToLift: 
+            getVal("itemtolift") || 
+            getVal("item_to_lift") || 
+            getVal("itemstolift") || 
+            getVal("items_to_lift") || 
+            getVal("liftitem") || 
+            getVal("description") || 
+            getVal("itemdescription") || 
+            getVal("material") || 
+            getVal("item") || 
+            "",
           company: getVal("company") || getVal("companyname") || getVal("business") || "",
           city: getVal("city") || getVal("suburb") || "",
           country: getVal("country") || ""
