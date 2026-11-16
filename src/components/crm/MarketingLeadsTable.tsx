@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { fetchContacts, fetchOwners, syncLeadsNow, fetchContactCountries } from "@/services/api";
+import { fetchContacts, fetchOwners, syncLeadsNow, fetchContactCountries, updateContact } from "@/services/api";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -28,7 +28,9 @@ import {
   MapPin,
   Tag,
   RotateCcw,
-  ArrowUpDown
+  ArrowUpDown,
+  CheckCircle2,
+  ShieldCheck
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -37,7 +39,7 @@ export default function MarketingLeadsTable() {
   const queryClient = useQueryClient();
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
-  const [lifecycleFilter, setLifecycleFilter] = useState("lead");
+  const [lifecycleFilter, setLifecycleFilter] = useState("all");
   const [sourceFilter, setSourceFilter] = useState("all");
   const [countryFilter, setCountryFilter] = useState("all");
   const [sortOrder, setSortOrder] = useState("newest");
@@ -85,6 +87,27 @@ export default function MarketingLeadsTable() {
     },
     onError: (err: any) => {
       toast.error("Website sync notice: " + (err.message || "Failed to sync"));
+    }
+  });
+
+  const qualifyMutation = useMutation({
+    mutationFn: ({ id, isCurrentlyQualified }: { id: string; isCurrentlyQualified: boolean }) =>
+      updateContact(id, {
+        lifecycle_stage: isCurrentlyQualified ? "lead" : "salesqualifiedlead",
+        lead_status: isCurrentlyQualified ? "New" : "Qualified",
+        change_reason: isCurrentlyQualified ? "Reverted lead to Inbound Lead" : "Marked lead as Qualified (SQL)"
+      }),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["crm-contacts-leads"] });
+      queryClient.invalidateQueries({ queryKey: ["crm-contacts"] });
+      toast.success(
+        variables.isCurrentlyQualified 
+          ? "Lead moved back to Inbound Lead" 
+          : "Lead successfully marked as Qualified (SQL)!"
+      );
+    },
+    onError: (err: any) => {
+      toast.error("Failed to update lead: " + (err.message || "Unknown error"));
     }
   });
 
@@ -266,11 +289,11 @@ export default function MarketingLeadsTable() {
 
   const newLeadsCount = leads.filter((c: any) => Boolean(getLeadRecencyBadge(c))).length;
 
-  const hasActiveFilters = sourceFilter !== "all" || lifecycleFilter !== "lead" || countryFilter !== "all" || sortOrder !== "newest" || search !== "";
+  const hasActiveFilters = sourceFilter !== "all" || lifecycleFilter !== "all" || countryFilter !== "all" || sortOrder !== "newest" || search !== "";
 
   const handleResetFilters = () => {
     setSourceFilter("all");
-    setLifecycleFilter("lead");
+    setLifecycleFilter("all");
     setCountryFilter("all");
     setSortOrder("newest");
     setSearch("");
@@ -331,12 +354,12 @@ export default function MarketingLeadsTable() {
                 }}
                 className="flex h-9 w-full rounded-md border border-input bg-background pl-8 pr-7 py-1 text-xs shadow-sm focus:outline-none focus:ring-1 focus:ring-primary font-medium cursor-pointer"
               >
+                <option value="all">All Stages (All Leads)</option>
                 <option value="lead">Inbound Leads</option>
-                <option value="salesqualifiedlead">Qualified (SQL)</option>
+                <option value="salesqualifiedlead">Qualified (Valid)</option>
                 <option value="opportunity">In Pipeline (Deal)</option>
                 <option value="customer">Converted (Customers)</option>
                 <option value="other">Disqualified / Lost</option>
-                <option value="all">All Stages</option>
               </select>
             </div>
 
@@ -479,6 +502,8 @@ export default function MarketingLeadsTable() {
                 const fullName = `${contact.firstname || ""} ${contact.lastname || ""}`.trim() || "Unnamed Lead";
                 const isLost = contact.lifecycle_stage === "other" || contact.lifecycle_stage === "lost" || contact.lifecycle_stage === "disqualified";
                 const isCustomer = contact.lifecycle_stage === "customer";
+                const isOpportunity = contact.lifecycle_stage === "opportunity";
+                const isQualified = contact.lifecycle_stage === "salesqualifiedlead" || contact.lifecycle_stage === "marketingqualifiedlead";
 
                 const recencyBadge = getLeadRecencyBadge(contact);
                 const isNew = Boolean(recencyBadge);
@@ -582,7 +607,28 @@ export default function MarketingLeadsTable() {
 
                     <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
                       <div className="flex items-center justify-end gap-1">
-                        {!isCustomer && !isLost && (
+                        {!isCustomer && !isLost && !isOpportunity && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className={cn(
+                              "h-7 px-2 text-xs border transition-colors",
+                              isQualified
+                                ? "text-indigo-700 bg-indigo-50/70 hover:bg-indigo-100 border-indigo-300 dark:bg-indigo-950/40 dark:border-indigo-800"
+                                : "text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50 border-indigo-200/80 dark:border-indigo-800"
+                            )}
+                            title={isQualified ? "Click to revert to Inbound Lead" : "Mark Lead as Qualified (SQL)"}
+                            disabled={qualifyMutation.isPending}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              qualifyMutation.mutate({ id: contact.id.toString(), isCurrentlyQualified: isQualified });
+                            }}
+                          >
+                            <ShieldCheck className="h-3 w-3 mr-1 text-indigo-600" />
+                            {isQualified ? "Qualified" : "Qualify"}
+                          </Button>
+                        )}
+                        {!isCustomer && !isLost && !isOpportunity && (
                           <Button
                             variant="outline"
                             size="sm"
@@ -596,6 +642,12 @@ export default function MarketingLeadsTable() {
                             <Sparkles className="h-3 w-3 mr-1 text-blue-600" />
                             Convert
                           </Button>
+                        )}
+                        {isOpportunity && (
+                          <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-amber-700 dark:text-amber-300 bg-amber-500/15 border border-amber-500/30 px-2 py-0.5 rounded-full shrink-0">
+                            <CheckCircle2 className="h-3 w-3 text-amber-600 dark:text-amber-400" />
+                            In Pipeline
+                          </span>
                         )}
                         {!isLost && !isCustomer && (
                           <Button

@@ -39,6 +39,7 @@ import {
   FileText,
   Info
 } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 function LeadDetailPage() {
   const params = useParams();
@@ -151,6 +152,29 @@ function LeadDetailPage() {
   const isCustomer = formData.lifecycle_stage === "customer";
   const isOpportunity = formData.lifecycle_stage === "opportunity";
   const isLost = formData.lifecycle_stage === "other" || formData.lifecycle_stage === "lost" || formData.lifecycle_stage === "disqualified";
+  const isQualified = formData.lifecycle_stage === "salesqualifiedlead" || formData.lifecycle_stage === "marketingqualifiedlead";
+
+  const qualifyMutation = useMutation({
+    mutationFn: (toQualified: boolean) =>
+      updateContact(leadId, {
+        lifecycle_stage: toQualified ? "salesqualifiedlead" : "lead",
+        lead_status: toQualified ? "Qualified" : "New",
+        change_reason: toQualified ? "Marked lead as Qualified (SQL)" : "Reverted lead to Inbound Lead"
+      }),
+    onSuccess: (_, toQualified) => {
+      queryClient.invalidateQueries({ queryKey: ["crm-contact", leadId] });
+      queryClient.invalidateQueries({ queryKey: ["crm-contacts-leads"] });
+      queryClient.invalidateQueries({ queryKey: ["crm-contacts"] });
+      setFormData(prev => ({
+        ...prev,
+        lifecycle_stage: toQualified ? "salesqualifiedlead" : "lead"
+      }));
+      toast.success(toQualified ? "Lead successfully marked as Qualified (SQL)!" : "Lead moved back to Inbound Lead");
+    },
+    onError: (err: any) => {
+      toast.error("Failed to update lead: " + (err.message || "Unknown error"));
+    }
+  });
 
   const getSourceBadge = () => {
     const s = (formData.source_website || "").toLowerCase();
@@ -247,6 +271,24 @@ function LeadDetailPage() {
         </div>
 
         <div className="flex items-center gap-2 flex-wrap self-end sm:self-auto">
+          {!isCustomer && !isLost && !isOpportunity && (
+            <Button
+              size="sm"
+              variant="outline"
+              className={cn(
+                "h-8 text-xs font-medium gap-1.5 transition-colors",
+                isQualified
+                  ? "text-indigo-700 bg-indigo-50/70 hover:bg-indigo-100 border-indigo-300 dark:bg-indigo-950/40 dark:border-indigo-800"
+                  : "text-indigo-700 hover:bg-indigo-50 border-indigo-200 dark:border-indigo-800"
+              )}
+              disabled={qualifyMutation.isPending}
+              onClick={() => qualifyMutation.mutate(!isQualified)}
+            >
+              <ShieldCheck className="h-3.5 w-3.5 text-indigo-600" />
+              {isQualified ? "Qualified (Click to Revert)" : "Mark as Qualified"}
+            </Button>
+          )}
+
           {!isCustomer && !isLost && (
             <Button
               size="sm"
@@ -697,6 +739,22 @@ function LeadDetailPage() {
                 </div>
               ) : (
                 <div className="space-y-3">
+                  <div className="flex items-center justify-between gap-2 p-2 rounded bg-indigo-50/60 dark:bg-indigo-950/20 border border-indigo-100 dark:border-indigo-900">
+                    <div className="flex items-center gap-1.5 text-xs text-indigo-900 dark:text-indigo-200 font-medium">
+                      <ShieldCheck className="h-3.5 w-3.5 text-indigo-600" />
+                      Status: {isQualified ? "Sales Qualified (SQL)" : "Inbound Lead"}
+                    </div>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="h-6 px-2 text-[11px] text-indigo-700 hover:bg-indigo-100 dark:hover:bg-indigo-900/50"
+                      disabled={qualifyMutation.isPending}
+                      onClick={() => qualifyMutation.mutate(!isQualified)}
+                    >
+                      {isQualified ? "Revert" : "Qualify"}
+                    </Button>
+                  </div>
                   <p className="text-muted-foreground text-[11px] leading-relaxed">
                     Convert this lead when initial interest is qualified and ready for quotation or pipeline management.
                   </p>

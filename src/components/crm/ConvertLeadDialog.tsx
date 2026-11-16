@@ -112,6 +112,7 @@ export default function ConvertLeadDialog({
       if (updateLifecycle) {
         await updateContact(contact.id.toString(), { 
           lifecycle_stage: "opportunity",
+          lead_status: "Converted",
           change_reason: `Converted to Pipeline Opportunity: "${oppName.trim()}" (Stage: ${stage}, Value: $${parseFloat(expectedValue) || 0})`
         });
       }
