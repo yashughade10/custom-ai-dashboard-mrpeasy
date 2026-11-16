@@ -265,7 +265,7 @@ export default function ConvertLeadDialog({
                 <option value="">Unassigned</option>
                 {owners?.map((o: any) => (
                   <option key={o.id} value={o.id.toString()}>
-                    {o.firstname} {o.lastname}
+                    {o.name || `${o.firstname || ''} ${o.lastname || ''}`.trim()} {o.email ? `(${o.email})` : ''}
                   </option>
                 ))}
               </select>

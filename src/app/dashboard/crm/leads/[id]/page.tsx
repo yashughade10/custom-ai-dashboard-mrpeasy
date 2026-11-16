@@ -38,7 +38,9 @@ import {
   CalendarCheck,
   FileText,
   Info,
-  Loader2
+  Loader2,
+  AlertTriangle,
+  AlertCircle
 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
@@ -170,6 +172,12 @@ function LeadDetailPage() {
   const isOpportunity = formData.lifecycle_stage === "opportunity";
   const isLost = formData.lifecycle_stage === "other" || formData.lifecycle_stage === "lost" || formData.lifecycle_stage === "disqualified";
   const isQualified = formData.lifecycle_stage === "salesqualifiedlead" || formData.lifecycle_stage === "marketingqualifiedlead";
+  const isUnactioned = !isCustomer && !isLost && !isOpportunity && !isQualified;
+
+  const leadDate = contact?.createdate || contact?.lastmodifieddate;
+  const leadCreatedTime = leadDate ? new Date(leadDate).getTime() : 0;
+  const leadIdleHours = leadCreatedTime ? (Date.now() - leadCreatedTime) / (1000 * 60 * 60) : 0;
+  const leadIdleDays = Math.floor(leadIdleHours / 24);
 
   const qualifyMutation = useMutation({
     mutationFn: (toQualified: boolean) =>
@@ -376,13 +384,13 @@ function LeadDetailPage() {
           </div>
         </div>
 
-        <div className="flex items-center gap-2 flex-wrap self-end sm:self-auto">
+        <div className="flex items-center gap-2 flex-wrap w-full sm:w-auto">
           {!isCustomer && !isLost && !isOpportunity && (
             <Button
               size="sm"
               variant="outline"
               className={cn(
-                "h-8 text-xs font-medium gap-1.5 transition-colors",
+                "h-8 text-xs font-medium gap-1.5 transition-colors flex-1 sm:flex-initial justify-center",
                 isQualified
                   ? "text-indigo-700 bg-indigo-50/70 hover:bg-indigo-100 border-indigo-300 dark:bg-indigo-950/40 dark:border-indigo-800"
                   : "text-indigo-700 hover:bg-indigo-50 border-indigo-200 dark:border-indigo-800"
@@ -391,18 +399,18 @@ function LeadDetailPage() {
               onClick={() => qualifyMutation.mutate(!isQualified)}
             >
               <ShieldCheck className="h-3.5 w-3.5 text-indigo-600" />
-              {isQualified ? "Qualified (Click to Revert)" : "Mark as Qualified"}
+              {isQualified ? "Qualified" : "Mark Qualified"}
             </Button>
           )}
 
           {!isCustomer && !isLost && (
             <Button
               size="sm"
-              className="bg-blue-600 hover:bg-blue-700 text-white gap-1.5 h-8 text-xs font-medium shadow-sm"
+              className="bg-blue-600 hover:bg-blue-700 text-white gap-1.5 h-8 text-xs font-medium shadow-sm flex-1 sm:flex-initial justify-center"
               onClick={() => setConvertOpen(true)}
             >
               <Sparkles className="h-3.5 w-3.5" />
-              Convert to Opportunity
+              Convert
             </Button>
           )}
 
@@ -410,7 +418,7 @@ function LeadDetailPage() {
             <Button
               variant="outline"
               size="sm"
-              className="h-8 text-xs text-rose-600 hover:bg-rose-50 border-rose-200"
+              className="h-8 text-xs text-rose-600 hover:bg-rose-50 border-rose-200 flex-1 sm:flex-initial justify-center"
               onClick={() => setDisqualifyOpen(true)}
             >
               <Ban className="h-3.5 w-3.5 mr-1" />
@@ -422,13 +430,73 @@ function LeadDetailPage() {
             size="sm"
             onClick={handleSave}
             disabled={updateMutation.isPending}
-            className="h-8 gap-1.5 text-xs font-medium"
+            className="h-8 gap-1.5 text-xs font-medium flex-1 sm:flex-initial justify-center"
           >
             <Save className="h-3.5 w-3.5" />
-            {updateMutation.isPending ? "Saving..." : "Save Changes"}
+            {updateMutation.isPending ? "Saving..." : "Save"}
           </Button>
         </div>
       </div>
+
+      {/* Un-actioned Lead Alert Banner */}
+      {isUnactioned && (
+        <div
+          className={cn(
+            "flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-4 rounded-lg border shadow-sm transition-all",
+            leadIdleDays >= 3
+              ? "bg-rose-500/10 border-rose-500/30 text-rose-950 dark:text-rose-200"
+              : leadIdleDays >= 1
+              ? "bg-amber-500/10 border-amber-500/30 text-amber-950 dark:text-amber-200"
+              : "bg-emerald-500/10 border-emerald-500/30 text-emerald-950 dark:text-emerald-200"
+          )}
+        >
+          <div className="flex items-start sm:items-center gap-3">
+            <div className="p-2 rounded-full bg-background/80 shadow-xs shrink-0">
+              {leadIdleDays >= 3 ? (
+                <AlertCircle className="h-5 w-5 text-rose-600 dark:text-rose-400" />
+              ) : leadIdleDays >= 1 ? (
+                <AlertTriangle className="h-5 w-5 text-amber-600 dark:text-amber-400" />
+              ) : (
+                <Clock className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+              )}
+            </div>
+            <div>
+              <p className="text-xs sm:text-sm font-bold flex items-center gap-2">
+                <span>
+                  {leadIdleDays >= 3
+                    ? `🚨 Overdue Attention Required — Idle for ${leadIdleDays} days with no action taken`
+                    : leadIdleDays >= 1
+                    ? `⚠️ Action Needed — Lead received ${leadIdleDays} day${leadIdleDays > 1 ? "s" : ""} ago and is awaiting qualification`
+                    : "✨ New Inbound Lead — Received today and ready for qualification"}
+                </span>
+              </p>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                Take action on this inquiry: mark as qualified, convert into an opportunity deal, or disqualify if invalid.
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 w-full sm:w-auto shrink-0 justify-start sm:justify-end pt-1 sm:pt-0">
+            <Button
+              size="sm"
+              variant="outline"
+              className="h-8 text-xs bg-background/80 hover:bg-background border-border/80 font-medium text-indigo-700 dark:text-indigo-300 flex-1 sm:flex-initial justify-center"
+              disabled={qualifyMutation.isPending}
+              onClick={() => qualifyMutation.mutate(true)}
+            >
+              <ShieldCheck className="h-3.5 w-3.5 mr-1 text-indigo-600" />
+              Qualify Lead
+            </Button>
+            <Button
+              size="sm"
+              className="h-8 text-xs bg-blue-600 hover:bg-blue-700 text-white font-medium shadow-sm flex-1 sm:flex-initial justify-center"
+              onClick={() => setConvertOpen(true)}
+            >
+              <Sparkles className="h-3.5 w-3.5 mr-1" />
+              Convert
+            </Button>
+          </div>
+        </div>
+      )}
 
       {/* Main Content Form */}
       <form onSubmit={handleSave} className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -761,7 +829,7 @@ function LeadDetailPage() {
                     <option value="">Unassigned</option>
                     {owners?.map((o: any) => (
                       <option key={o.id} value={o.id.toString()}>
-                        {o.firstname} {o.lastname}
+                        {o.name || `${o.firstname || ''} ${o.lastname || ''}`.trim()} {o.email ? `(${o.email})` : ''}
                       </option>
                     ))}
                   </select>

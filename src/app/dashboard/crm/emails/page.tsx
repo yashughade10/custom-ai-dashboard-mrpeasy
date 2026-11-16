@@ -11,17 +11,17 @@ function CrmEmailsPage() {
   const [activeTab, setActiveTab] = useState<"hotLeads" | "newsletter" | "selective">("selective");
 
   return (
-    <div className="p-6 w-full space-y-6">
+    <div className="p-3 sm:p-6 w-full space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Email Campaigns</h1>
-          <p className="text-muted-foreground mt-2">
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Email Campaigns</h1>
+          <p className="text-muted-foreground mt-1 text-xs sm:text-sm">
             Segment your contacts and send targeted emails or newsletters.
           </p>
         </div>
       </div>
 
-      <div className="flex space-x-2 border-b pb-4">
+      <div className="flex flex-wrap gap-2 border-b pb-4">
         <Button 
           variant={activeTab === "hotLeads" ? "default" : "outline"} 
           onClick={() => setActiveTab("hotLeads")}

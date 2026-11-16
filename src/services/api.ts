@@ -172,6 +172,19 @@ async function fetchContactLifecycleHistory(id: string) {
   }
 }
 
+async function createContact(data: Record<string, any>) {
+  const response = await apiFetch(`${API_BASE_URL}/crm/contacts`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({}));
+    throw new Error(err.message || "Failed to create contact");
+  }
+  return (await response.json()).data;
+}
+
 async function updateContact(id: string, data: Record<string, any>) {
   const response = await apiFetch(`${API_BASE_URL}/crm/contacts/${id}`, {
     method: "PUT",
@@ -664,6 +677,7 @@ export {
   fetchContactCountries,
   fetchContact,
   fetchContactLifecycleHistory,
+  createContact,
   updateContact,
   fetchCompanies,
   fetchCompany,
