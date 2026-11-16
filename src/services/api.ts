@@ -146,6 +146,15 @@ async function fetchContactCountries(): Promise<string[]> {
   }
 }
 
+async function fetchDailyLeadsSummary(params?: { date?: string; timeframe?: string }) {
+  const query = new URLSearchParams(params as any).toString();
+  const response = await apiFetch(`${API_BASE_URL}/crm/contacts/daily-summary?${query}`);
+  if (!response.ok) {
+    throw new Error("Failed to fetch daily leads summary");
+  }
+  return await response.json();
+}
+
 async function fetchContact(id: string) {
   const response = await apiFetch(`${API_BASE_URL}/crm/contacts/${id}`);
   if (!response.ok) throw new Error("Failed to fetch contact");
@@ -649,6 +658,7 @@ export {
   loginDashboard,
   fetchCrmStats,
   fetchContacts,
+  fetchDailyLeadsSummary,
   syncLeadsNow,
   importCsvLeads,
   fetchContactCountries,

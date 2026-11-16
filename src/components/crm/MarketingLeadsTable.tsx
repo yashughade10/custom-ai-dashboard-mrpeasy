@@ -35,7 +35,11 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-export default function MarketingLeadsTable() {
+interface MarketingLeadsTableProps {
+  onOpenSummary?: () => void;
+}
+
+export default function MarketingLeadsTable({ onOpenSummary }: MarketingLeadsTableProps = {}) {
   const router = useRouter();
   const queryClient = useQueryClient();
   const [page, setPage] = useState(1);
@@ -430,6 +434,20 @@ export default function MarketingLeadsTable() {
               <RefreshCw className={`h-3.5 w-3.5 ${syncMutation.isPending ? 'animate-spin text-primary' : ''}`} />
               {syncMutation.isPending ? "Syncing..." : "Sync"}
             </Button>
+
+            {/* Today's Summary Button */}
+            {onOpenSummary && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={onOpenSummary}
+                className="h-9 gap-1.5 text-xs font-medium border-indigo-200 text-indigo-700 bg-indigo-50/50 hover:bg-indigo-100 hover:text-indigo-800 dark:border-indigo-800 dark:bg-indigo-950/30 dark:text-indigo-300"
+                title="Open Daily Leads Summary & Action Center"
+              >
+                <Sparkles className="h-3.5 w-3.5 text-indigo-600 dark:text-indigo-400" />
+                Summary
+              </Button>
+            )}
           </div>
         </div>
 
