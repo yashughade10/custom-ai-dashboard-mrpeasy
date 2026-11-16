@@ -30,7 +30,8 @@ import {
   RotateCcw,
   ArrowUpDown,
   CheckCircle2,
-  ShieldCheck
+  ShieldCheck,
+  Loader2
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -49,6 +50,7 @@ export default function MarketingLeadsTable() {
   const [convertDialogOpen, setConvertDialogOpen] = useState(false);
   const [disqualifyContact, setDisqualifyContact] = useState<any | null>(null);
   const [disqualifyOpen, setDisqualifyOpen] = useState(false);
+  const [navigatingId, setNavigatingId] = useState<string | null>(null);
 
   const queryLifecycle = lifecycleFilter === "all" ? "" : lifecycleFilter;
   const querySource = sourceFilter === "all" ? "" : sourceFilter;
@@ -115,11 +117,13 @@ export default function MarketingLeadsTable() {
   const pagination = data?.pagination || { total: 0, page: 1, limit: 50, totalPages: 1 };
 
   const handleRowClick = (id: string) => {
+    setNavigatingId(id);
     router.push(`/dashboard/crm/leads/${id}`);
   };
 
   const handleEditClick = (e: React.MouseEvent, id: string) => {
     e.stopPropagation();
+    setNavigatingId(id);
     router.push(`/dashboard/crm/leads/${id}`);
   };
 
@@ -507,21 +511,33 @@ export default function MarketingLeadsTable() {
 
                 const recencyBadge = getLeadRecencyBadge(contact);
                 const isNew = Boolean(recencyBadge);
+                const isNavigatingThis = navigatingId === contact.id.toString();
 
                 return (
                   <TableRow
                     key={contact.id}
                     className={cn(
                       "cursor-pointer hover:bg-muted/50 transition-colors",
-                      isNew && "bg-amber-500/[0.04] dark:bg-amber-500/[0.07]"
+                      isNew && "bg-amber-500/[0.04] dark:bg-amber-500/[0.07]",
+                      isNavigatingThis && "bg-primary/[0.06] opacity-80"
                     )}
                     onClick={() => handleRowClick(contact.id.toString())}
                   >
                     <TableCell className="font-medium text-foreground">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <UserCircle2 className="h-4 w-4 text-blue-600 shrink-0" />
+                        {isNavigatingThis ? (
+                          <Loader2 className="h-4 w-4 text-primary animate-spin shrink-0" />
+                        ) : (
+                          <UserCircle2 className="h-4 w-4 text-blue-600 shrink-0" />
+                        )}
                         <span className="truncate max-w-[150px] font-semibold">{fullName}</span>
-                        {recencyBadge}
+                        {isNavigatingThis ? (
+                          <span className="inline-flex items-center text-[10px] text-primary font-medium bg-primary/10 px-1.5 py-0.5 rounded animate-pulse">
+                            Opening...
+                          </span>
+                        ) : (
+                          recencyBadge
+                        )}
                       </div>
                     </TableCell>
 
