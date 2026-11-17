@@ -70,13 +70,17 @@ function LeadDetailPage() {
     queryFn: fetchOwners,
   });
 
-  const { data: callHistoryData } = useQuery({
+  const { data: callHistoryData, isLoading: isLoadingCalls } = useQuery({
     queryKey: ["crm-contact-call-history", leadId],
     queryFn: () => fetchActivities({ contact_id: leadId, type: "call" }),
     enabled: !!leadId,
     staleTime: 5 * 1000
   });
-  const callHistory = callHistoryData?.activities || [];
+  const callHistory = Array.isArray(callHistoryData?.data)
+    ? callHistoryData.data
+    : Array.isArray(callHistoryData?.activities)
+    ? callHistoryData.activities
+    : [];
 
   const [formData, setFormData] = useState({
     firstname: "",
@@ -948,7 +952,12 @@ function LeadDetailPage() {
             </CardHeader>
 
             <CardContent className="p-4">
-              {callHistory.length === 0 ? (
+              {isLoadingCalls ? (
+                <div className="py-6 text-center text-muted-foreground flex items-center justify-center gap-2">
+                  <Loader2 className="h-4 w-4 animate-spin text-primary" />
+                  <span className="text-xs">Loading call history...</span>
+                </div>
+              ) : callHistory.length === 0 ? (
                 <div className="py-6 text-center text-muted-foreground space-y-2">
                   <Phone className="h-7 w-7 mx-auto text-muted-foreground/40" />
                   <p className="text-xs font-medium">No calls logged for this lead yet.</p>
@@ -1180,6 +1189,10 @@ function LeadDetailPage() {
         contact={contact}
         open={callDialogOpen}
         onOpenChange={setCallDialogOpen}
+        onSuccess={() => {
+          queryClient.invalidateQueries({ queryKey: ["crm-contact-call-history", leadId] });
+          queryClient.invalidateQueries({ queryKey: ["crm-contact", leadId] });
+        }}
       />
     </div>
   );

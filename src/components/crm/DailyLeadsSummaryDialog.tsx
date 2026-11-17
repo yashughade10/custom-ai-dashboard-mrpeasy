@@ -34,7 +34,10 @@ import {
   Globe,
   Layers,
   Calendar,
-  UserCheck
+  UserCheck,
+  Copy,
+  Check,
+  FileText
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import LogCallDialog from "./LogCallDialog";
@@ -52,7 +55,8 @@ export default function DailyLeadsSummaryDialog({
   const queryClient = useQueryClient();
 
   const [timeframe, setTimeframe] = useState<"today" | "yesterday" | "7d">("today");
-  const [activeTab, setActiveTab] = useState<"pending" | "all" | "calls">("pending");
+  const [activeTab, setActiveTab] = useState<"pending" | "all" | "calls" | "summaryText">("pending");
+  const [copied, setCopied] = useState(false);
 
   // Modals for actions
   const [selectedContactForConvert, setSelectedContactForConvert] = useState<any | null>(null);
@@ -85,6 +89,83 @@ export default function DailyLeadsSummaryDialog({
   const callLogs = summary.callLogs || metrics.calls?.recentCalls || [];
   const callsMetric = metrics.calls || { total: 0, byOutcome: {} };
   const period = summary.period || { label: "Today" };
+  const deals = summary.deals || metrics.deals?.items || [];
+
+  // Derive text summary from backend or build clean formatted fallback
+  const textSummary: string = summary.textSummary || aiSummary?.textSummary || (() => {
+    const lines: string[] = [];
+    lines.push("================================================================================");
+    lines.push("VAC LIFT AUSTRALIA — DAILY CRM & SALES OPERATIONS ACTIONS SUMMARY");
+    lines.push(`Period: ${period.label || timeframe} | Generated: ${new Date().toLocaleTimeString('en-AU', { timeZone: 'Australia/Sydney', hour: '2-digit', minute: '2-digit' })} AEST`);
+    lines.push("================================================================================");
+    lines.push("");
+    lines.push("1. EXECUTIVE HIGHLIGHTS & KEY METRICS");
+    lines.push("--------------------------------------------------------------------------------");
+    lines.push(`• Total Inbound Leads: ${metrics.total}`);
+    lines.push(`• Leads Sales Qualified (SQL): ${metrics.qualified} (Acknowledgment email sent, CC: Sales@vaclifts.com)`);
+    lines.push(`• Actions Pending Review: ${metrics.pendingAction}`);
+    lines.push(`• Deals in Pipeline / Converted: ${metrics.converted}`);
+    lines.push(`• Spam / Disqualified Leads: ${metrics.disqualified}`);
+    lines.push(`• Sales Phone Outreach: ${callsMetric.total || callLogs.length} call(s) logged`);
+    lines.push("");
+    lines.push("2. PHONE CALLS & SALES OUTREACH ACTIONS");
+    lines.push("--------------------------------------------------------------------------------");
+    if ((callsMetric.total || callLogs.length) === 0) {
+      lines.push("No phone calls logged for this period yet.");
+    } else {
+      lines.push(`Total Calls: ${callsMetric.total || callLogs.length} [Picked: ${callsMetric.byOutcome?.picked || 0} | Rang Unanswered: ${callsMetric.byOutcome?.ringing_unanswered || 0} | Not Picked: ${callsMetric.byOutcome?.not_picked || 0} | Invalid Number: ${callsMetric.byOutcome?.not_valid_number || 0}]`);
+      lines.push("");
+      callLogs.forEach((c: any, idx: number) => {
+        lines.push(`  ${idx + 1}. ${c.contact?.name || c.contact_name || 'Lead'} - Outcome: ${c.outcome || 'Call'}${c.duration_minutes ? ` (${c.duration_minutes}m)` : ''}`);
+        lines.push(`     Discussion Notes: ${c.summary || c.notes || c.description || 'No notes entered'}`);
+      });
+    }
+    lines.push("");
+    lines.push("3. LEAD STATUS & QUALIFICATION ACTIONS");
+    lines.push("--------------------------------------------------------------------------------");
+    lines.push(`• Qualified Leads (SQL): ${metrics.qualified}`);
+    lines.push(`• Pending Review / Backlog: ${pendingLeads.length}`);
+    lines.push(`• Spam / Disqualified: ${metrics.disqualified}`);
+    lines.push("");
+    if (deals && deals.length > 0) {
+      lines.push("4. OPPORTUNITIES & PIPELINE PROGRESS");
+      lines.push("--------------------------------------------------------------------------------");
+      deals.forEach((d: any) => {
+        lines.push(`• ${d.dealname || 'Deal'} | Stage: ${d.dealstage || 'Pipeline'} | Value: ${d.amount ? `$${Number(d.amount).toLocaleString()} AUD` : 'N/A'}`);
+      });
+      lines.push("");
+    }
+    lines.push("5. RECOMMENDED NEXT ACTIONS & ACTION CHECKLIST");
+    lines.push("--------------------------------------------------------------------------------");
+    if ((callsMetric.byOutcome?.ringing_unanswered || 0) > 0 || (callsMetric.byOutcome?.not_picked || 0) > 0) {
+      lines.push("[ ] Schedule retry calls for leads where calls went unanswered today.");
+    }
+    if ((callsMetric.byOutcome?.not_valid_number || 0) > 0) {
+      lines.push("[ ] Send direct emails to leads with invalid phone numbers.");
+    }
+    if (metrics.pendingAction > 0) {
+      lines.push(`[ ] Qualify and review the ${metrics.pendingAction} pending lead(s).`);
+    }
+    lines.push("[ ] Prepare tailored quotes / cut-sheets for all connected calls.");
+    lines.push("[ ] Verify all newly qualified leads have acknowledgment email delivered (CC: Sales@vaclifts.com).");
+    lines.push("================================================================================");
+    return lines.join("\n");
+  })();
+
+  const handleCopySummary = async () => {
+    if (!textSummary) {
+      toast.error("No text summary available to copy.");
+      return;
+    }
+    try {
+      await navigator.clipboard.writeText(textSummary);
+      setCopied(true);
+      toast.success("Daily CRM actions text summary copied to clipboard!");
+      setTimeout(() => setCopied(false), 2500);
+    } catch (err) {
+      toast.error("Failed to copy summary to clipboard.");
+    }
+  };
 
   // Qualify lead mutation
   const qualifyMutation = useMutation({
@@ -167,6 +248,17 @@ export default function DailyLeadsSummaryDialog({
 
               {/* Action buttons & Timeframe selector pills */}
               <div className="flex flex-wrap items-center gap-2 self-start sm:self-auto">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="h-7 text-xs px-2.5 font-medium gap-1.5 border-emerald-200 text-emerald-700 hover:bg-emerald-50 dark:border-emerald-800 dark:text-emerald-300 dark:hover:bg-emerald-950/50"
+                  onClick={handleCopySummary}
+                  title="Copy formatted daily actions text summary to clipboard"
+                >
+                  {copied ? <Check className="h-3.5 w-3.5 text-emerald-600" /> : <Copy className="h-3.5 w-3.5" />}
+                  {copied ? "Copied!" : "Copy Summary"}
+                </Button>
+
                 <Button
                   size="sm"
                   variant="outline"
@@ -365,9 +457,20 @@ export default function DailyLeadsSummaryDialog({
                           {aiSummary.headline || "Daily Leads Performance Overview"}
                         </h4>
                       </div>
-                      <span className="text-[11px] text-muted-foreground font-medium">
-                        Period: {period.label}
-                      </span>
+                      <div className="flex items-center gap-2">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setActiveTab("summaryText")}
+                          className="h-6 text-[11px] px-2 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-100/50 dark:hover:bg-indigo-900/50 gap-1 font-semibold"
+                        >
+                          <FileText className="h-3 w-3" />
+                          View Text Summary &rarr;
+                        </Button>
+                        <span className="text-[11px] text-muted-foreground font-medium">
+                          Period: {period.label}
+                        </span>
+                      </div>
                     </div>
 
                     <p className="text-xs text-muted-foreground leading-relaxed">
@@ -460,6 +563,16 @@ export default function DailyLeadsSummaryDialog({
                           </Badge>
                         )}
                       </Button>
+
+                      <Button
+                        size="sm"
+                        variant={activeTab === "summaryText" ? "default" : "outline"}
+                        className="h-8 text-xs gap-1.5 font-medium"
+                        onClick={() => setActiveTab("summaryText")}
+                      >
+                        <FileText className="h-3.5 w-3.5 text-indigo-600" />
+                        Text Summary
+                      </Button>
                     </div>
 
                     <span className="text-xs text-muted-foreground hidden sm:inline">
@@ -467,6 +580,8 @@ export default function DailyLeadsSummaryDialog({
                         ? "Take immediate actions to progress inbound leads"
                         : activeTab === "calls"
                         ? "Review phone outreach logs & discussion notes"
+                        : activeTab === "summaryText"
+                        ? "Daily operations narrative text summary with one-click copy"
                         : "Complete roster for selected timeframe"}
                     </span>
                   </div>
@@ -865,6 +980,50 @@ export default function DailyLeadsSummaryDialog({
                           })}
                         </div>
                       )}
+                    </div>
+                  )}
+
+                  {/* Tab 4: Operations Text Summary */}
+                  {activeTab === "summaryText" && (
+                    <div className="space-y-3">
+                      <div className="p-4 rounded-xl border bg-card shadow-sm space-y-3">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pb-3 border-b">
+                          <div>
+                            <h4 className="text-sm font-bold text-foreground flex items-center gap-2">
+                              <FileText className="h-4 w-4 text-indigo-600" />
+                              Daily CRM Operations & Actions Text Summary
+                            </h4>
+                            <p className="text-xs text-muted-foreground mt-0.5">
+                              Consolidated plain-text summary covering inbound inquiries, outreach calls, outcomes, qualifications, and opportunities.
+                            </p>
+                          </div>
+                          <div className="flex items-center gap-2 shrink-0">
+                            <Badge variant="outline" className="text-[11px] font-mono">
+                              {period.label}
+                            </Badge>
+                            <Button
+                              size="sm"
+                              className="h-8 text-xs font-semibold gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm"
+                              onClick={handleCopySummary}
+                            >
+                              {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
+                              {copied ? "Copied to Clipboard!" : "Copy Text Summary"}
+                            </Button>
+                          </div>
+                        </div>
+
+                        {/* Text Preview Box */}
+                        <div className="relative">
+                          <pre className="p-4 rounded-lg bg-slate-950 text-slate-100 dark:bg-slate-900/90 font-mono text-[11px] sm:text-xs leading-relaxed whitespace-pre-wrap select-all overflow-x-auto max-h-[460px] border border-slate-800 shadow-inner">
+                            {textSummary}
+                          </pre>
+                        </div>
+
+                        <div className="flex items-center justify-between text-[11px] text-muted-foreground pt-1">
+                          <span>💡 Click &ldquo;Copy Text Summary&rdquo; to paste directly into daily handover notes, emails, or Slack.</span>
+                          <span className="font-mono">{textSummary.length} characters</span>
+                        </div>
+                      </div>
                     </div>
                   )}
                 </div>

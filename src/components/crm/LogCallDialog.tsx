@@ -118,7 +118,11 @@ export default function LogCallDialog({
     staleTime: 5 * 1000
   });
 
-  const pastCalls = pastCallsData?.activities || [];
+  const pastCalls = Array.isArray(pastCallsData?.data)
+    ? pastCallsData.data
+    : Array.isArray(pastCallsData?.activities)
+    ? pastCallsData.activities
+    : [];
 
   // Sync state when contact changes
   useEffect(() => {
@@ -174,7 +178,7 @@ export default function LogCallDialog({
         status: "completed",
         completed_at: new Date().toISOString(),
         duration_minutes: duration ? Number(duration) : 2,
-        contact_id: Number(contact.id),
+        contact_id: contact.id ? String(contact.id) : undefined,
         assigned_to: contact.owner_id || undefined
       });
 
