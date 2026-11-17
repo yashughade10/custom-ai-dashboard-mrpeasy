@@ -17,12 +17,13 @@ interface DisqualifyLeadDialogProps {
 }
 
 const LOSS_REASONS = [
+  "Spam / Bot / Fake inquiry",
+  "Test submission / Incomplete details",
   "No budget / Price sensitive",
   "Unresponsive / Ghosted after outreach",
-  "Competitor chosen / Vendor mismatch",
   "Wrong specifications / Not possible with Vaclift",
+  "Competitor / Vendor mismatch",
   "Project cancelled or postponed indefinitely",
-  "Spam / Test inquiry / Incomplete details",
   "Other"
 ];
 
@@ -44,8 +45,9 @@ export default function DisqualifyLeadDialog({
     mutationFn: async () => {
       if (!contact?.id) throw new Error("No contact selected");
       return await updateContact(contact.id.toString(), {
-        lifecycle_stage: "other", // Marks as disqualified / non-active
-        change_reason: `Disqualified / Lost: ${reason}${notes.trim() ? ` - ${notes.trim()}` : ""}`
+        lifecycle_stage: "spam",
+        lead_status: "Spam",
+        change_reason: `Marked as Spam: ${reason}${notes.trim() ? ` - ${notes.trim()}` : ""}`
       });
     },
     onSuccess: () => {
@@ -54,14 +56,14 @@ export default function DisqualifyLeadDialog({
       if (contact?.id) {
         queryClient.invalidateQueries({ queryKey: ["crm-contact", contact.id.toString()] });
       }
-      toast.info(`Lead "${fullName}" marked as Disqualified / Lost`, {
+      toast.info(`Lead "${fullName}" marked as Spam`, {
         description: `Reason: ${reason}`
       });
       onOpenChange(false);
       onSuccess?.();
     },
     onError: (err: any) => {
-      toast.error("Failed to disqualify lead: " + (err.message || "Unknown error"));
+      toast.error("Failed to mark lead as spam: " + (err.message || "Unknown error"));
     }
   });
 
@@ -69,20 +71,20 @@ export default function DisqualifyLeadDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[460px]">
         <DialogHeader>
-          <div className="flex items-center gap-2 text-amber-600 font-semibold text-xs tracking-wider uppercase">
+          <div className="flex items-center gap-2 text-rose-600 font-semibold text-xs tracking-wider uppercase">
             <AlertTriangle className="h-4 w-4" />
-            Lead Qualification Status
+            Lead Status
           </div>
-          <DialogTitle className="text-xl">Mark Lead as Disqualified / Lost</DialogTitle>
+          <DialogTitle className="text-xl">Mark Lead as Spam</DialogTitle>
           <DialogDescription>
-            Flag <strong>{fullName}</strong> as unqualified so your sales team doesn't spend time on inactive leads.
+            Flag <strong>{fullName}</strong> as spam to remove it from active leads and move it to the Spam tab.
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4 py-2">
           <div className="grid gap-1.5">
             <Label htmlFor="loss-reason" className="text-xs font-semibold">
-              Disqualification Reason <span className="text-red-500">*</span>
+              Reason <span className="text-red-500">*</span>
             </Label>
             <select
               id="loss-reason"
@@ -107,7 +109,7 @@ export default function DisqualifyLeadDialog({
               rows={3}
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
-              placeholder="e.g. Customer needed 5 ton lifter, maximum capacity is 2 ton. May revisit in Q3."
+              placeholder="e.g. Incomplete submission, bot marketing spam, or invalid phone/email."
               className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-xs shadow-sm focus:outline-none focus:ring-1 focus:ring-primary resize-none"
             />
           </div>
@@ -136,7 +138,7 @@ export default function DisqualifyLeadDialog({
                 Updating...
               </>
             ) : (
-              "Confirm Disqualification"
+              "Confirm Spam"
             )}
           </Button>
         </DialogFooter>

@@ -43,6 +43,7 @@ import {
     PieChart,
     Settings,
     ShieldCheck,
+    ShieldAlert,
     History,
     Book,
     Cloud
@@ -76,6 +77,7 @@ const navItems = [
             { name: "Contacts", hash: "contacts", href: "/dashboard/crm/contacts", icon: Contact },
             { name: "Companies", hash: "companies", href: "/dashboard/crm/companies", icon: Building2 },
             { name: "Leads", hash: "leads", href: "/dashboard/crm/leads", icon: UserPlus },
+            { name: "Spam", hash: "spam", href: "/dashboard/crm/spam", icon: ShieldAlert },
             { name: "Opportunities", hash: "opportunities", href: "/dashboard/crm/opportunities", icon: Lightbulb },
             { name: "Activities", hash: "activities", href: "/dashboard/crm/activities", icon: CalendarClock },
             { name: "Emails", hash: "emails", href: "/dashboard/crm/emails", icon: Mail },

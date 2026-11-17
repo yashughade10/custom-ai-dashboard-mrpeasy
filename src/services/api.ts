@@ -97,7 +97,17 @@ async function fetchCrmStats() {
   return (await response.json()).data;
 }
 
-async function fetchContacts(params?: { page?: number; search?: string; lifecycle?: string; source?: string; country?: string; sort?: string; limit?: number }) {
+async function fetchContacts(params?: {
+  page?: number;
+  search?: string;
+  lifecycle?: string;
+  source?: string;
+  country?: string;
+  sort?: string;
+  limit?: number;
+  exclude_spam?: boolean | string;
+  is_spam?: boolean | string;
+}) {
   const cleanParams: Record<string, string> = {};
   if (params) {
     for (const [k, v] of Object.entries(params)) {
@@ -151,6 +161,17 @@ async function fetchDailyLeadsSummary(params?: { date?: string; timeframe?: stri
   const response = await apiFetch(`${API_BASE_URL}/crm/contacts/daily-summary?${query}`);
   if (!response.ok) {
     throw new Error("Failed to fetch daily leads summary");
+  }
+  return await response.json();
+}
+
+async function triggerDailyCrmSummaryEmail() {
+  const response = await apiFetch(`${API_BASE_URL}/crm/reports/daily-crm-summary`, {
+    method: "POST",
+  });
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({}));
+    throw new Error(err.message || "Failed to trigger daily CRM summary email");
   }
   return await response.json();
 }
@@ -376,7 +397,7 @@ async function updateOpportunityStage(id: string, stage: string) {
 }
 
 // Activities
-async function fetchActivities(params?: { page?: number; type?: string; status?: string; assigned_to?: string }) {
+async function fetchActivities(params?: { page?: number; type?: string; status?: string; assigned_to?: string; contact_id?: string | number; deal_id?: string | number }) {
   const q = new URLSearchParams(params as any).toString();
   const response = await apiFetch(`${API_BASE_URL}/crm/activities?${q}`);
   if (!response.ok) throw new Error("Failed to fetch activities");
@@ -672,6 +693,7 @@ export {
   fetchCrmStats,
   fetchContacts,
   fetchDailyLeadsSummary,
+  triggerDailyCrmSummaryEmail,
   syncLeadsNow,
   importCsvLeads,
   fetchContactCountries,

@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { fetchContact, updateContact, fetchOwners } from "@/services/api";
+import { fetchContact, updateContact, fetchOwners, fetchActivities } from "@/services/api";
 import { RouteGuard } from "@/components/auth/RouteGuard";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -21,11 +21,13 @@ import {
   Building2, 
   Mail, 
   Phone, 
+  PhoneCall,
   UserCircle2, 
   MapPin, 
   Briefcase, 
   Sparkles, 
   Ban, 
+  RotateCcw,
   Save, 
   RefreshCw, 
   CheckCircle2, 
@@ -44,6 +46,7 @@ import {
 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
+import LogCallDialog from "@/components/crm/LogCallDialog";
 
 function LeadDetailPage() {
   const params = useParams();
@@ -53,6 +56,7 @@ function LeadDetailPage() {
 
   const [convertOpen, setConvertOpen] = useState(false);
   const [disqualifyOpen, setDisqualifyOpen] = useState(false);
+  const [callDialogOpen, setCallDialogOpen] = useState(false);
   const [loadingSeconds, setLoadingSeconds] = useState(0);
 
   const { data: contact, isLoading, error } = useQuery({
@@ -66,6 +70,14 @@ function LeadDetailPage() {
     queryFn: fetchOwners,
   });
 
+  const { data: callHistoryData } = useQuery({
+    queryKey: ["crm-contact-call-history", leadId],
+    queryFn: () => fetchActivities({ contact_id: leadId, type: "call" }),
+    enabled: !!leadId,
+    staleTime: 5 * 1000
+  });
+  const callHistory = callHistoryData?.activities || [];
+
   const [formData, setFormData] = useState({
     firstname: "",
     lastname: "",
@@ -73,6 +85,7 @@ function LeadDetailPage() {
     phone: "",
     company: "",
     lifecycle_stage: "lead",
+    lead_status: "New",
     owner_id: "",
     source_website: "",
     form_type: "",
@@ -120,6 +133,7 @@ function LeadDetailPage() {
         phone: contact.phone || "",
         company: contact.company_name || contact.company || "",
         lifecycle_stage: contact.lifecycle_stage || "lead",
+        lead_status: contact.lead_status || "New",
         owner_id: contact.owner_id ? contact.owner_id.toString() : "",
         source_website: contact.source_website || "",
         form_type: contact.form_type || "",
@@ -170,7 +184,7 @@ function LeadDetailPage() {
 
   const isCustomer = formData.lifecycle_stage === "customer";
   const isOpportunity = formData.lifecycle_stage === "opportunity";
-  const isLost = formData.lifecycle_stage === "other" || formData.lifecycle_stage === "lost" || formData.lifecycle_stage === "disqualified";
+  const isLost = formData.lifecycle_stage === "other" || formData.lifecycle_stage === "lost" || formData.lifecycle_stage === "disqualified" || formData.lifecycle_stage === "spam" || formData.lead_status === "Spam" || formData.lead_status === "Disqualified";
   const isQualified = formData.lifecycle_stage === "salesqualifiedlead" || formData.lifecycle_stage === "marketingqualifiedlead";
   const isUnactioned = !isCustomer && !isLost && !isOpportunity && !isQualified;
 
@@ -194,7 +208,11 @@ function LeadDetailPage() {
         ...prev,
         lifecycle_stage: toQualified ? "salesqualifiedlead" : "lead"
       }));
-      toast.success(toQualified ? "Lead successfully marked as Qualified (SQL)!" : "Lead moved back to Inbound Lead");
+      toast.success(
+        toQualified 
+          ? "Lead marked as Qualified! Automated acknowledgment sent & CC'd to sales." 
+          : "Lead moved back to Inbound Lead"
+      );
     },
     onError: (err: any) => {
       toast.error("Failed to update lead: " + (err.message || "Unknown error"));
@@ -238,7 +256,7 @@ function LeadDetailPage() {
   const getBadge = () => {
     if (isCustomer) return <Badge className="bg-emerald-600 text-white font-medium">Customer</Badge>;
     if (isOpportunity) return <Badge className="bg-amber-600 text-white font-medium">In Pipeline (Deal)</Badge>;
-    if (isLost) return <Badge variant="destructive">Disqualified / Lost</Badge>;
+    if (isLost) return <Badge variant="destructive">Spam / Disqualified</Badge>;
     if (formData.lifecycle_stage === "salesqualifiedlead") return <Badge className="bg-indigo-600 text-white">Sales Qualified (SQL)</Badge>;
     if (formData.lifecycle_stage === "marketingqualifiedlead") return <Badge className="bg-blue-600 text-white">Marketing Qualified (MQL)</Badge>;
     return <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">Inbound Lead</Badge>;
@@ -385,6 +403,18 @@ function LeadDetailPage() {
         </div>
 
         <div className="flex items-center gap-2 flex-wrap w-full sm:w-auto">
+          {/* Call button */}
+          <Button
+            size="sm"
+            variant="outline"
+            className="h-8 text-xs font-semibold gap-1.5 text-emerald-700 bg-emerald-50/70 hover:bg-emerald-100 hover:text-emerald-800 border-emerald-300 dark:bg-emerald-950/40 dark:border-emerald-800 dark:text-emerald-300 flex-1 sm:flex-initial justify-center shadow-sm"
+            onClick={() => setCallDialogOpen(true)}
+            title={contact?.phone ? `Call ${contact.phone}` : "Log Phone Call"}
+          >
+            <PhoneCall className="h-3.5 w-3.5 text-emerald-600" />
+            Call
+          </Button>
+
           {!isCustomer && !isLost && !isOpportunity && (
             <Button
               size="sm"
@@ -414,15 +444,40 @@ function LeadDetailPage() {
             </Button>
           )}
 
-          {!isLost && !isCustomer && (
+          {isLost ? (
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-8 text-xs text-emerald-700 bg-emerald-50/70 hover:bg-emerald-100 border-emerald-300 dark:bg-emerald-950/40 dark:border-emerald-800 dark:text-emerald-300 flex-1 sm:flex-initial justify-center"
+              onClick={() => {
+                updateContact(leadId, {
+                  lifecycle_stage: "lead",
+                  lead_status: "New",
+                  change_reason: "Marked as Not Spam / Restored to Lead"
+                }).then(() => {
+                  queryClient.invalidateQueries({ queryKey: ["crm-contact", leadId] });
+                  queryClient.invalidateQueries({ queryKey: ["crm-contacts-leads"] });
+                  queryClient.invalidateQueries({ queryKey: ["crm-contacts"] });
+                  setFormData(prev => ({ ...prev, lifecycle_stage: "lead", lead_status: "New" }));
+                  toast.success("Lead marked as Not Spam and restored to Leads!");
+                }).catch(err => {
+                  toast.error("Failed to restore lead: " + (err.message || "Unknown error"));
+                });
+              }}
+            >
+              <RotateCcw className="h-3.5 w-3.5 mr-1" />
+              Not Spam
+            </Button>
+          ) : !isCustomer && (
             <Button
               variant="outline"
               size="sm"
               className="h-8 text-xs text-rose-600 hover:bg-rose-50 border-rose-200 flex-1 sm:flex-initial justify-center"
               onClick={() => setDisqualifyOpen(true)}
+              title="Mark Lead as Spam"
             >
               <Ban className="h-3.5 w-3.5 mr-1" />
-              Disqualify
+              Spam
             </Button>
           )}
 
@@ -861,6 +916,115 @@ function LeadDetailPage() {
               queryClient.invalidateQueries({ queryKey: ["crm-contact", leadId] });
             }}
           />
+
+          {/* Phone Outreach & Call History Card */}
+          <Card className="border shadow-sm">
+            <CardHeader className="pb-3 border-b flex flex-row items-center justify-between">
+              <div>
+                <CardTitle className="text-sm font-bold flex items-center gap-2 text-foreground">
+                  <PhoneCall className="h-4 w-4 text-emerald-600" />
+                  Call Outreach History
+                  {callHistory.length > 0 && (
+                    <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-4 font-semibold">
+                      {callHistory.length} call{callHistory.length === 1 ? "" : "s"} logged
+                    </Badge>
+                  )}
+                </CardTitle>
+                <CardDescription className="text-xs text-muted-foreground mt-0.5">
+                  Complete permanent log of all phone calls, outcomes, and customer discussions.
+                </CardDescription>
+              </div>
+
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                className="h-7 text-xs font-semibold gap-1 text-emerald-700 bg-emerald-50/70 hover:bg-emerald-100 border-emerald-300"
+                onClick={() => setCallDialogOpen(true)}
+              >
+                <PhoneCall className="h-3 w-3 text-emerald-600" />
+                Log Call
+              </Button>
+            </CardHeader>
+
+            <CardContent className="p-4">
+              {callHistory.length === 0 ? (
+                <div className="py-6 text-center text-muted-foreground space-y-2">
+                  <Phone className="h-7 w-7 mx-auto text-muted-foreground/40" />
+                  <p className="text-xs font-medium">No calls logged for this lead yet.</p>
+                  <p className="text-[11px] text-muted-foreground max-w-xs mx-auto">
+                    Click &quot;Log Call&quot; to dial, choose an outcome, and record discussion notes.
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-2.5">
+                  {callHistory.map((call: any) => {
+                    const oc = (call.outcome || "").toLowerCase();
+                    const isPicked = oc.includes("pick") || oc.includes("connect");
+                    const isRang = oc.includes("ring");
+                    const isInvalid = oc.includes("invalid") || oc.includes("not a valid");
+
+                    return (
+                      <div
+                        key={call.id}
+                        className="p-3 rounded-lg border bg-muted/20 hover:bg-muted/40 transition-colors space-y-1.5 text-xs"
+                      >
+                        <div className="flex items-center justify-between gap-2 flex-wrap">
+                          <div className="flex items-center gap-2">
+                            <Badge
+                              className={cn(
+                                "text-[10px] font-semibold border",
+                                isPicked
+                                  ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                                  : isInvalid
+                                  ? "bg-rose-50 text-rose-700 border-rose-200"
+                                  : isRang
+                                  ? "bg-amber-50 text-amber-700 border-amber-200"
+                                  : "bg-slate-50 text-slate-700 border-slate-200"
+                              )}
+                            >
+                              <PhoneCall className="h-3 w-3 mr-1" />
+                              {call.outcome || "Call"}
+                            </Badge>
+                            {call.duration_minutes && (
+                              <span className="text-[10px] text-muted-foreground font-medium">
+                                {call.duration_minutes}m
+                              </span>
+                            )}
+                          </div>
+
+                          <span className="text-[11px] text-muted-foreground">
+                            {call.created_at
+                              ? new Date(call.created_at).toLocaleDateString("en-AU", {
+                                  day: "numeric",
+                                  month: "short",
+                                  year: "numeric",
+                                  hour: "2-digit",
+                                  minute: "2-digit"
+                                })
+                              : ""}
+                          </span>
+                        </div>
+
+                        {call.description && (
+                          <div className="p-2 rounded bg-card border text-[11px] text-foreground leading-relaxed">
+                            <span className="font-semibold text-[10px] text-muted-foreground uppercase block mb-0.5">
+                              Call Notes:
+                            </span>
+                            {call.description}
+                          </div>
+                        )}
+
+                        <div className="text-[10px] text-muted-foreground pt-0.5">
+                          Logged by: <strong>{call.assigned_name || "Sales Team"}</strong>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </CardContent>
+          </Card>
         </div>
 
         {/* Right Column: Actions, Timeline & Pipeline Records */}
@@ -1009,6 +1173,13 @@ function LeadDetailPage() {
         contact={contact}
         open={disqualifyOpen}
         onOpenChange={setDisqualifyOpen}
+      />
+
+      {/* Log phone call dialog */}
+      <LogCallDialog
+        contact={contact}
+        open={callDialogOpen}
+        onOpenChange={setCallDialogOpen}
       />
     </div>
   );

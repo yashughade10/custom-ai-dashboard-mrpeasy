@@ -16,6 +16,7 @@ import {
   Building2, 
   Mail, 
   Phone, 
+  PhoneCall,
   UserCircle2, 
   Calendar,
   Pencil,
@@ -37,12 +38,14 @@ import {
   Clock
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import LogCallDialog from "./LogCallDialog";
 
 interface MarketingLeadsTableProps {
   onOpenSummary?: () => void;
+  isSpamView?: boolean;
 }
 
-export default function MarketingLeadsTable({ onOpenSummary }: MarketingLeadsTableProps = {}) {
+export default function MarketingLeadsTable({ onOpenSummary, isSpamView = false }: MarketingLeadsTableProps = {}) {
   const router = useRouter();
   const queryClient = useQueryClient();
   const [page, setPage] = useState(1);
@@ -52,11 +55,13 @@ export default function MarketingLeadsTable({ onOpenSummary }: MarketingLeadsTab
   const [countryFilter, setCountryFilter] = useState("all");
   const [sortOrder, setSortOrder] = useState("newest");
 
-  // Conversion & Disqualification modal states
+  // Conversion, Disqualification & Call modal states
   const [convertingContact, setConvertingContact] = useState<any | null>(null);
   const [convertDialogOpen, setConvertDialogOpen] = useState(false);
   const [disqualifyContact, setDisqualifyContact] = useState<any | null>(null);
   const [disqualifyOpen, setDisqualifyOpen] = useState(false);
+  const [callContact, setCallContact] = useState<any | null>(null);
+  const [callDialogOpen, setCallDialogOpen] = useState(false);
   const [navigatingId, setNavigatingId] = useState<string | null>(null);
 
   const queryLifecycle = lifecycleFilter === "all" ? "" : lifecycleFilter;
@@ -64,7 +69,7 @@ export default function MarketingLeadsTable({ onOpenSummary }: MarketingLeadsTab
   const queryCountry = countryFilter === "all" ? "" : countryFilter;
 
   const { data, isLoading } = useQuery({
-    queryKey: ["crm-contacts-leads", { page, search, lifecycle: queryLifecycle, source: querySource, country: queryCountry, sort: sortOrder }],
+    queryKey: ["crm-contacts-leads", { page, search, lifecycle: queryLifecycle, source: querySource, country: queryCountry, sort: sortOrder, isSpamView }],
     queryFn: () => fetchContacts({ 
       page, 
       search, 
@@ -72,7 +77,9 @@ export default function MarketingLeadsTable({ onOpenSummary }: MarketingLeadsTab
       source: querySource || undefined,
       country: queryCountry || undefined,
       sort: sortOrder || undefined,
-      limit: 50 
+      limit: 10,
+      is_spam: isSpamView ? "true" : undefined,
+      exclude_spam: !isSpamView ? "true" : undefined,
     }),
     placeholderData: (previousData) => previousData,
   });
@@ -112,7 +119,7 @@ export default function MarketingLeadsTable({ onOpenSummary }: MarketingLeadsTab
       toast.success(
         variables.isCurrentlyQualified 
           ? "Lead moved back to Inbound Lead" 
-          : "Lead successfully marked as Qualified (SQL)!"
+          : "Lead marked as Qualified! Automated acknowledgment sent & CC'd to sales."
       );
     },
     onError: (err: any) => {
@@ -120,8 +127,25 @@ export default function MarketingLeadsTable({ onOpenSummary }: MarketingLeadsTab
     }
   });
 
+  const unspamMutation = useMutation({
+    mutationFn: (id: string) =>
+      updateContact(id, {
+        lifecycle_stage: "lead",
+        lead_status: "New",
+        change_reason: "Marked as Not Spam / Restored to Active Lead"
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["crm-contacts-leads"] });
+      queryClient.invalidateQueries({ queryKey: ["crm-contacts"] });
+      toast.success("Lead marked as Not Spam and restored to Leads!");
+    },
+    onError: (err: any) => {
+      toast.error("Failed to restore lead: " + (err.message || "Unknown error"));
+    }
+  });
+
   const leads = data?.data || [];
-  const pagination = data?.pagination || { total: 0, page: 1, limit: 50, totalPages: 1 };
+  const pagination = data?.pagination || { total: 0, page: 1, limit: 10, totalPages: 1 };
 
   const handleRowClick = (id: string) => {
     setNavigatingId(id);
@@ -238,9 +262,10 @@ export default function MarketingLeadsTable({ onOpenSummary }: MarketingLeadsTab
       case "other":
       case "lost":
       case "disqualified":
+      case "spam":
         return (
           <Badge variant="outline" className="bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-950/40 dark:text-rose-300 dark:border-rose-800 text-[11px] capitalize">
-            Disqualified
+            Spam
           </Badge>
         );
       default:
@@ -255,8 +280,8 @@ export default function MarketingLeadsTable({ onOpenSummary }: MarketingLeadsTab
   const isContactUnactioned = (contact: any) => {
     const stage = (contact.lifecycle_stage || "lead").toLowerCase();
     const status = (contact.lead_status || "").toLowerCase();
-    const isActionedStage = ["salesqualifiedlead", "marketingqualifiedlead", "opportunity", "customer", "other", "lost", "disqualified"].includes(stage);
-    const isActionedStatus = ["qualified", "converted", "disqualified", "customer", "lost"].includes(status);
+    const isActionedStage = ["salesqualifiedlead", "marketingqualifiedlead", "opportunity", "customer", "other", "lost", "disqualified", "spam"].includes(stage);
+    const isActionedStatus = ["qualified", "converted", "disqualified", "customer", "lost", "spam"].includes(status);
     return !isActionedStage && !isActionedStatus;
   };
 
@@ -418,13 +443,22 @@ export default function MarketingLeadsTable({ onOpenSummary }: MarketingLeadsTab
                 }}
                 className="flex h-9 w-full rounded-md border border-input bg-background pl-8 pr-7 py-1 text-xs shadow-sm focus:outline-none focus:ring-1 focus:ring-primary font-medium cursor-pointer"
               >
-                <option value="all">All Stages (All Leads)</option>
-                <option value="unactioned">⚠️ Needs Action</option>
-                <option value="lead">Inbound Leads</option>
-                <option value="salesqualifiedlead">Qualified (Valid)</option>
-                <option value="opportunity">In Pipeline (Deal)</option>
-                <option value="customer">Converted (Customers)</option>
-                <option value="other">Disqualified / Lost</option>
+                {isSpamView ? (
+                  <>
+                    <option value="all">All Spam & Disqualified</option>
+                    <option value="spam">Flagged as Spam</option>
+                    <option value="other">Lost / Inactive</option>
+                  </>
+                ) : (
+                  <>
+                    <option value="all">All Active Stages</option>
+                    <option value="unactioned">⚠️ Needs Action</option>
+                    <option value="lead">Inbound Leads</option>
+                    <option value="salesqualifiedlead">Qualified (Valid)</option>
+                    <option value="opportunity">In Pipeline (Deal)</option>
+                    <option value="customer">Converted (Customers)</option>
+                  </>
+                )}
               </select>
             </div>
 
@@ -558,7 +592,7 @@ export default function MarketingLeadsTable({ onOpenSummary }: MarketingLeadsTab
               </button>
             )}
             <div>
-              Total: <span className="font-bold text-foreground">{pagination.total.toLocaleString()}</span> leads
+              Total: <span className="font-bold text-foreground">{pagination.total.toLocaleString()}</span> {isSpamView ? "spam / disqualified" : "leads"}
             </div>
           </div>
         </div>
@@ -569,13 +603,13 @@ export default function MarketingLeadsTable({ onOpenSummary }: MarketingLeadsTab
         <Table containerClassName="overflow-x-auto lg:overflow-x-hidden" className="w-full table-fixed min-w-[760px] lg:min-w-0">
           <TableHeader className="bg-muted/50">
             <TableRow>
-              <TableHead className="w-[17%] font-semibold pl-3">Lead Contact</TableHead>
-              <TableHead className="w-[9%] font-semibold">Source & Form</TableHead>
-              <TableHead className="w-[15%] font-semibold">Email & Phone</TableHead>
-              <TableHead className="w-[14%] font-semibold">Company / Inquiry</TableHead>
+              <TableHead className="w-[16%] font-semibold pl-3">Lead Contact</TableHead>
+              <TableHead className="w-[8%] font-semibold">Source & Form</TableHead>
+              <TableHead className="w-[14%] font-semibold">Email & Phone</TableHead>
+              <TableHead className="w-[13%] font-semibold">Company / Inquiry</TableHead>
               <TableHead className="w-[9%] font-semibold">Lifecycle</TableHead>
-              <TableHead className="w-[11%] font-semibold">Date</TableHead>
-              <TableHead className="w-[25%] text-right font-semibold pr-3">Actions</TableHead>
+              <TableHead className="w-[10%] font-semibold">Date</TableHead>
+              <TableHead className="w-[30%] text-right font-semibold pr-3">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -584,7 +618,7 @@ export default function MarketingLeadsTable({ onOpenSummary }: MarketingLeadsTab
                 <TableCell colSpan={7} className="text-center py-10 text-muted-foreground">
                   <div className="flex flex-col items-center justify-center gap-2">
                     <RefreshCw className="h-5 w-5 animate-spin text-primary" />
-                    <span>Loading marketing leads...</span>
+                    <span>Loading {isSpamView ? "spam entries..." : "marketing leads..."}</span>
                   </div>
                 </TableCell>
               </TableRow>
@@ -593,15 +627,15 @@ export default function MarketingLeadsTable({ onOpenSummary }: MarketingLeadsTab
                 <TableCell colSpan={7} className="text-center py-10 text-muted-foreground">
                   <div className="flex flex-col items-center justify-center gap-2">
                     <UserCircle2 className="h-8 w-8 text-muted-foreground/50" />
-                    <p className="font-medium">No leads found in this view</p>
-                    <p className="text-xs text-muted-foreground">Try adjusting your filters or search query.</p>
+                    <p className="font-medium">{isSpamView ? "No spam or disqualified leads found" : "No leads found in this view"}</p>
+                    <p className="text-xs text-muted-foreground">{isSpamView ? "Spam inquiries will appear here when flagged." : "Try adjusting your filters or search query."}</p>
                   </div>
                 </TableCell>
               </TableRow>
             ) : (
               leads.map((contact: any) => {
                 const fullName = `${contact.firstname || ""} ${contact.lastname || ""}`.trim() || "Unnamed Lead";
-                const isLost = contact.lifecycle_stage === "other" || contact.lifecycle_stage === "lost" || contact.lifecycle_stage === "disqualified";
+                const isLost = contact.lifecycle_stage === "other" || contact.lifecycle_stage === "lost" || contact.lifecycle_stage === "disqualified" || contact.lifecycle_stage === "spam" || contact.lead_status === "Spam" || contact.lead_status === "Disqualified";
                 const isCustomer = contact.lifecycle_stage === "customer";
                 const isOpportunity = contact.lifecycle_stage === "opportunity";
                 const isQualified = contact.lifecycle_stage === "salesqualifiedlead" || contact.lifecycle_stage === "marketingqualifiedlead";
@@ -717,49 +751,84 @@ export default function MarketingLeadsTable({ onOpenSummary }: MarketingLeadsTab
                       )}
                     </TableCell>
 
-                    <TableCell className="text-right py-2.5 px-3 whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
+                    <TableCell className="text-right py-2 px-2.5 whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
                       <div className="flex items-center justify-end gap-1.5 flex-nowrap">
-                        {!isCustomer && !isLost && !isOpportunity && (
+                        {/* Call Button */}
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="h-7 px-2 text-[11px] font-semibold text-emerald-700 bg-emerald-50/70 hover:bg-emerald-100 hover:text-emerald-800 border-emerald-300 dark:bg-emerald-950/40 dark:border-emerald-800 dark:text-emerald-300 shrink-0"
+                          title={contact.phone ? `Call ${contact.phone}` : "Log Phone Call"}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setCallContact(contact);
+                            setCallDialogOpen(true);
+                          }}
+                        >
+                          <PhoneCall className="h-3 w-3 mr-1 text-emerald-600" />
+                          Call
+                        </Button>
+
+                        {isSpamView ? (
                           <Button
                             variant="outline"
                             size="sm"
-                            className={cn(
-                              "h-7 px-2 text-[11px] font-medium border transition-colors shrink-0",
-                              isQualified
-                                ? "text-indigo-700 bg-indigo-50/70 hover:bg-indigo-100 border-indigo-300 dark:bg-indigo-950/40 dark:border-indigo-800"
-                                : "text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50 border-indigo-200/80 dark:border-indigo-800"
+                            className="h-7 px-2 text-[11px] font-medium text-emerald-700 bg-emerald-50/70 hover:bg-emerald-100 border-emerald-300 dark:bg-emerald-950/40 dark:border-emerald-800 dark:text-emerald-300 shrink-0"
+                            title="Mark as Not Spam (Restore to Leads)"
+                            disabled={unspamMutation.isPending}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              unspamMutation.mutate(contact.id.toString());
+                            }}
+                          >
+                            <RotateCcw className="h-3 w-3 mr-1 text-emerald-600" />
+                            Not Spam
+                          </Button>
+                        ) : (
+                          <>
+                            {!isCustomer && !isLost && !isOpportunity && (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className={cn(
+                                  "h-7 px-2 text-[11px] font-medium border transition-colors shrink-0",
+                                  isQualified
+                                    ? "text-indigo-700 bg-indigo-50/70 hover:bg-indigo-100 border-indigo-300 dark:bg-indigo-950/40 dark:border-indigo-800"
+                                    : "text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50 border-indigo-200/80 dark:border-indigo-800"
+                                )}
+                                title={isQualified ? "Click to revert to Inbound Lead" : "Mark Lead as Qualified (SQL)"}
+                                disabled={qualifyMutation.isPending}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  qualifyMutation.mutate({ id: contact.id.toString(), isCurrentlyQualified: isQualified });
+                                }}
+                              >
+                                <ShieldCheck className="h-3 w-3 mr-1 text-indigo-600" />
+                                {isQualified ? "Qualified" : "Qualify"}
+                              </Button>
                             )}
-                            title={isQualified ? "Click to revert to Inbound Lead" : "Mark Lead as Qualified (SQL)"}
-                            disabled={qualifyMutation.isPending}
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              qualifyMutation.mutate({ id: contact.id.toString(), isCurrentlyQualified: isQualified });
-                            }}
-                          >
-                            <ShieldCheck className="h-3 w-3 mr-1 text-indigo-600" />
-                            {isQualified ? "Qualified" : "Qualify"}
-                          </Button>
-                        )}
-                        {!isLost && !isCustomer && (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="h-7 px-2 text-[11px] font-medium text-rose-600 hover:text-rose-700 hover:bg-rose-50 border-rose-200/80 dark:border-rose-900/60 dark:text-rose-400 shrink-0"
-                            title="Disqualify Lead"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setDisqualifyContact(contact);
-                              setDisqualifyOpen(true);
-                            }}
-                          >
-                            <Ban className="h-3 w-3 mr-1 text-rose-500" />
-                            Disqualify
-                          </Button>
+                            {!isLost && !isCustomer && (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="h-7 px-2 text-[11px] font-medium text-rose-600 hover:text-rose-700 hover:bg-rose-50 border-rose-200/80 dark:border-rose-900/60 dark:text-rose-400 shrink-0"
+                                title="Mark Lead as Spam"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setDisqualifyContact(contact);
+                                  setDisqualifyOpen(true);
+                                }}
+                              >
+                                <Ban className="h-3 w-3 mr-1 text-rose-500" />
+                                Spam
+                              </Button>
+                            )}
+                          </>
                         )}
                         <Button
                           variant="ghost"
                           size="sm"
-                          className="h-7 px-2 text-[11px] text-muted-foreground hover:text-foreground shrink-0"
+                          className="h-7 px-1.5 text-[11px] text-muted-foreground hover:text-foreground shrink-0"
                           onClick={(e) => handleEditClick(e, contact.id.toString())}
                           title="View / edit lead details"
                         >
@@ -781,18 +850,18 @@ export default function MarketingLeadsTable({ onOpenSummary }: MarketingLeadsTab
         {isLoading ? (
           <div className="p-8 text-center bg-card rounded-lg border text-muted-foreground flex flex-col items-center justify-center gap-2">
             <RefreshCw className="h-5 w-5 animate-spin text-primary" />
-            <span className="text-xs">Loading marketing leads...</span>
+            <span className="text-xs">Loading {isSpamView ? "spam entries..." : "marketing leads..."}</span>
           </div>
         ) : leads.length === 0 ? (
           <div className="p-8 text-center bg-card rounded-lg border text-muted-foreground flex flex-col items-center justify-center gap-2">
             <UserCircle2 className="h-8 w-8 text-muted-foreground/50" />
-            <p className="font-medium text-sm">No leads found in this view</p>
-            <p className="text-xs text-muted-foreground">Try adjusting your filters or search query.</p>
+            <p className="font-medium text-sm">{isSpamView ? "No spam or disqualified leads found" : "No leads found in this view"}</p>
+            <p className="text-xs text-muted-foreground">{isSpamView ? "Spam inquiries will appear here when flagged." : "Try adjusting your filters or search query."}</p>
           </div>
         ) : (
           leads.map((contact: any) => {
             const fullName = `${contact.firstname || ""} ${contact.lastname || ""}`.trim() || "Unnamed Lead";
-            const isLost = contact.lifecycle_stage === "other" || contact.lifecycle_stage === "lost" || contact.lifecycle_stage === "disqualified";
+            const isLost = contact.lifecycle_stage === "other" || contact.lifecycle_stage === "lost" || contact.lifecycle_stage === "disqualified" || contact.lifecycle_stage === "spam" || contact.lead_status === "Spam" || contact.lead_status === "Disqualified";
             const isCustomer = contact.lifecycle_stage === "customer";
             const isOpportunity = contact.lifecycle_stage === "opportunity";
             const isQualified = contact.lifecycle_stage === "salesqualifiedlead" || contact.lifecycle_stage === "marketingqualifiedlead";
@@ -891,37 +960,65 @@ export default function MarketingLeadsTable({ onOpenSummary }: MarketingLeadsTab
                 )}
 
                 {/* Mobile Actions Toolbar */}
-                <div className="flex items-center justify-end gap-2 pt-2 border-t border-border/40" onClick={(e) => e.stopPropagation()}>
-                  {!isCustomer && !isLost && !isOpportunity && (
+                <div className="flex items-center justify-end gap-1.5 pt-2 border-t border-border/40 flex-wrap" onClick={(e) => e.stopPropagation()}>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-7 px-2.5 text-xs font-semibold text-emerald-700 bg-emerald-50/80 hover:bg-emerald-100 border-emerald-300 dark:bg-emerald-950/40 dark:border-emerald-800 dark:text-emerald-300"
+                    onClick={() => {
+                      setCallContact(contact);
+                      setCallDialogOpen(true);
+                    }}
+                  >
+                    <PhoneCall className="h-3.5 w-3.5 mr-1 text-emerald-600" />
+                    Call
+                  </Button>
+
+                  {isSpamView ? (
                     <Button
                       variant="outline"
                       size="sm"
-                      className={cn(
-                        "h-7 px-2.5 text-xs font-medium border transition-colors",
-                        isQualified
-                          ? "text-indigo-700 bg-indigo-50/70 hover:bg-indigo-100 border-indigo-300"
-                          : "text-indigo-600 hover:bg-indigo-50 border-indigo-200"
+                      className="h-7 px-2.5 text-xs font-medium text-emerald-700 bg-emerald-50/80 hover:bg-emerald-100 border-emerald-300 dark:bg-emerald-950/40 dark:border-emerald-800 dark:text-emerald-300"
+                      disabled={unspamMutation.isPending}
+                      onClick={() => unspamMutation.mutate(contact.id.toString())}
+                    >
+                      <RotateCcw className="h-3.5 w-3.5 mr-1 text-emerald-600" />
+                      Not Spam
+                    </Button>
+                  ) : (
+                    <>
+                      {!isCustomer && !isLost && !isOpportunity && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className={cn(
+                            "h-7 px-2.5 text-xs font-medium border transition-colors",
+                            isQualified
+                              ? "text-indigo-700 bg-indigo-50/70 hover:bg-indigo-100 border-indigo-300"
+                              : "text-indigo-600 hover:bg-indigo-50 border-indigo-200"
+                          )}
+                          disabled={qualifyMutation.isPending}
+                          onClick={() => qualifyMutation.mutate({ id: contact.id.toString(), isCurrentlyQualified: isQualified })}
+                        >
+                          <ShieldCheck className="h-3.5 w-3.5 mr-1 text-indigo-600" />
+                          {isQualified ? "Qualified" : "Qualify"}
+                        </Button>
                       )}
-                      disabled={qualifyMutation.isPending}
-                      onClick={() => qualifyMutation.mutate({ id: contact.id.toString(), isCurrentlyQualified: isQualified })}
-                    >
-                      <ShieldCheck className="h-3.5 w-3.5 mr-1 text-indigo-600" />
-                      {isQualified ? "Qualified" : "Qualify"}
-                    </Button>
-                  )}
-                  {!isLost && !isCustomer && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="h-7 px-2.5 text-xs font-medium text-rose-600 hover:bg-rose-50 border-rose-200"
-                      onClick={() => {
-                        setDisqualifyContact(contact);
-                        setDisqualifyOpen(true);
-                      }}
-                    >
-                      <Ban className="h-3.5 w-3.5 mr-1 text-rose-500" />
-                      Disqualify
-                    </Button>
+                      {!isLost && !isCustomer && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="h-7 px-2.5 text-xs font-medium text-rose-600 hover:bg-rose-50 border-rose-200"
+                          onClick={() => {
+                            setDisqualifyContact(contact);
+                            setDisqualifyOpen(true);
+                          }}
+                        >
+                          <Ban className="h-3.5 w-3.5 mr-1 text-rose-500" />
+                          Spam
+                        </Button>
+                      )}
+                    </>
                   )}
                   <Button
                     variant="ghost"
@@ -983,6 +1080,13 @@ export default function MarketingLeadsTable({ onOpenSummary }: MarketingLeadsTab
         contact={disqualifyContact}
         open={disqualifyOpen}
         onOpenChange={setDisqualifyOpen}
+      />
+
+      {/* Log phone call dialog */}
+      <LogCallDialog
+        contact={callContact}
+        open={callDialogOpen}
+        onOpenChange={setCallDialogOpen}
       />
     </div>
   );
