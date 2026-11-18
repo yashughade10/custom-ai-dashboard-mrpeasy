@@ -9,7 +9,9 @@ import {
     SidebarProvider,
 } from "@/components/ui/sidebar";
 import { useAuth } from "@/hooks/use-auth";
-import { useRouter } from "next/navigation";
+import { usePwa } from "@/components/pwa/PwaProvider";
+import { isRouteHiddenInPwa } from "@/lib/pwa-routes";
+import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Loader2 } from "lucide-react";
 
@@ -19,8 +21,12 @@ export default function DashboardLayout({
     children: React.ReactNode;
 }) {
     const auth = useAuth();
+    const { isInstalled } = usePwa();
+    const pathname = usePathname();
     const router = useRouter();
     const [ready, setReady] = useState(false);
+
+    const isBlockedInPwa = isInstalled && isRouteHiddenInPwa(pathname);
 
     useEffect(() => {
         const timer = setTimeout(() => setReady(true), 100);
@@ -30,10 +36,14 @@ export default function DashboardLayout({
     useEffect(() => {
         if (ready && !auth.isLoggedIn) {
             router.replace("/");
+            return;
         }
-    }, [ready, auth.isLoggedIn, router]);
+        if (ready && isBlockedInPwa) {
+            router.replace("/dashboard");
+        }
+    }, [ready, auth.isLoggedIn, isBlockedInPwa, router]);
 
-    if (!ready || !auth.isLoggedIn) {
+    if (!ready || !auth.isLoggedIn || isBlockedInPwa) {
         return (
             <div className="flex items-center justify-center min-h-screen">
                 <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />

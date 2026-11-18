@@ -17,6 +17,7 @@ import { useRouter, usePathname } from 'next/navigation';
 import { useAuth } from '@/hooks/use-auth';
 import GlobalSearch from './GlobalSearch';
 import CreateLeadDialog from '@/components/crm/CreateLeadDialog';
+import { InstallPwaButton } from '@/components/pwa/InstallPwaButton';
 import { Button } from '@/components/ui/button';
 import { UserPlus } from 'lucide-react';
 
@@ -64,6 +65,8 @@ function AppHeader() {
                 )}
 
                 <GlobalSearch />
+
+                <InstallPwaButton />
 
                 {mounted ? (
                     <DropdownMenu>

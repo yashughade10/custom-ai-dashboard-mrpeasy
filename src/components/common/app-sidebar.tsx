@@ -52,6 +52,8 @@ import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 import React from "react"
 import { useAuth, hasModuleAccess } from "@/hooks/use-auth"
+import { usePwa } from "@/components/pwa/PwaProvider"
+import { isRouteHiddenInPwa } from "@/lib/pwa-routes"
 
 const navItems = [
     { name: "Overview", href: "/dashboard", icon: LayoutDashboard },
@@ -181,12 +183,29 @@ export function AppSidebar() {
     const router = useRouter();
     const [activeHash, setActiveHash] = React.useState("");
     const auth = useAuth();
+    const { isInstalled } = usePwa();
 
-    const filteredNavItems = navItems.filter(item => {
-        const moduleKey = navItemModuleMap[item.name];
-        if (!moduleKey) return true; // No mapping = always show
-        return hasModuleAccess(auth, moduleKey);
-    });
+    const filteredNavItems = navItems
+        .filter(item => {
+            if (isInstalled && isRouteHiddenInPwa(item.href)) return false;
+            const moduleKey = navItemModuleMap[item.name];
+            if (!moduleKey) return true; // No mapping = always show
+            return hasModuleAccess(auth, moduleKey);
+        })
+        .map(item => {
+            if (!("children" in item) || !item.children) return item;
+            return {
+                ...item,
+                children: item.children.filter(
+                    child =>
+                        !(
+                            isInstalled &&
+                            "href" in child &&
+                            isRouteHiddenInPwa((child as { href?: string }).href)
+                        )
+                ),
+            };
+        });
 
     React.useEffect(() => {
         const handleHashChange = () => {
