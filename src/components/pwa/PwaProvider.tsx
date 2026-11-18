@@ -23,6 +23,7 @@ interface PwaContextValue {
   canInstall: boolean;
   isInstalled: boolean;
   isIOS: boolean;
+  isMobile: boolean;
   isOnline: boolean;
   promptInstall: () => Promise<"accepted" | "dismissed" | "unavailable">;
 }
@@ -31,6 +32,7 @@ const PwaContext = createContext<PwaContextValue>({
   canInstall: false,
   isInstalled: false,
   isIOS: false,
+  isMobile: false,
   isOnline: true,
   promptInstall: async () => "unavailable",
 });
@@ -44,6 +46,7 @@ export function PwaProvider({ children }: { children: React.ReactNode }) {
     useState<BeforeInstallPromptEvent | null>(null);
   const [isInstalled, setIsInstalled] = useState(false);
   const [isIOS, setIsIOS] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
   const [isOnline, setIsOnline] = useState(true);
 
   useEffect(() => {
@@ -53,7 +56,9 @@ export function PwaProvider({ children }: { children: React.ReactNode }) {
     const checkStandalone = () => {
       const standalone =
         mediaQuery.matches ||
-        Boolean((window.navigator as Navigator & { standalone?: boolean }).standalone);
+        Boolean(
+          (window.navigator as Navigator & { standalone?: boolean }).standalone
+        );
       setIsInstalled(standalone);
     };
     checkStandalone();
@@ -61,9 +66,16 @@ export function PwaProvider({ children }: { children: React.ReactNode }) {
 
     const ua = window.navigator.userAgent;
     const iosDevice =
-      /iPad|iPhone|iPod/.test(ua) &&
+      (/iPad|iPhone|iPod/.test(ua) ||
+        (window.navigator.platform === "MacIntel" &&
+          window.navigator.maxTouchPoints > 1)) &&
       !(window as Window & { MSStream?: unknown }).MSStream;
     setIsIOS(iosDevice);
+
+    const mobileDevice =
+      iosDevice ||
+      /Android|webOS|BlackBerry|IEMobile|Opera Mini/i.test(ua);
+    setIsMobile(mobileDevice);
 
     setIsOnline(window.navigator.onLine);
 
@@ -129,12 +141,12 @@ export function PwaProvider({ children }: { children: React.ReactNode }) {
       canInstall: Boolean(deferredPrompt) && !isInstalled,
       isInstalled,
       isIOS,
+      isMobile,
       isOnline,
       promptInstall,
     }),
-    [deferredPrompt, isInstalled, isIOS, isOnline, promptInstall]
+    [deferredPrompt, isInstalled, isIOS, isMobile, isOnline, promptInstall]
   );
 
   return <PwaContext.Provider value={value}>{children}</PwaContext.Provider>;
 }
-

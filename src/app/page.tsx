@@ -2,6 +2,7 @@
 "use client";
 
 import { SignIn } from "@/components/forms/SignIn";
+import { InstallPwaButton } from "@/components/pwa/InstallPwaButton";
 import { Card, CardContent } from "@/components/ui/card";
 import { Check } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -68,6 +69,13 @@ export default function Home() {
                 <SignIn />
               </CardContent>
             </Card>
+            <div className="mt-4 flex justify-center">
+              <InstallPwaButton
+                label="Install App on Device"
+                compactOnMobile={false}
+                className="h-9 px-4 border-[#014FA2]/30 text-[#014FA2] hover:bg-[#014FA2]/5"
+              />
+            </div>
             {/* <p className="mt-4 text-center text-xs text-muted-foreground">
               By continuing, you agree to our terms and privacy policy.
             </p> */}
